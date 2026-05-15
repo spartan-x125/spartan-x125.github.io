@@ -1,0 +1,43 @@
+---
+import "../styles/global.css";
+
+const profile = {
+  name: "spartan-x125",
+  role: "Personal homepage",
+  intro:
+    "A quiet corner for notes, projects, experiments, and the things I am learning along the way.",
+};
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={profile.intro} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{profile.name}</title>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">{profile.role}</p>
+        <h1 id="page-title">{profile.name}</h1>
+        <p class="intro">{profile.intro}</p>
+        <div class="actions" aria-label="Primary links">
+          <a href="https://github.com/spartan-x125">GitHub</a>
+          <a href="#projects">Projects</a>
+        </div>
+      </section>
+
+      <section id="projects" class="panel" aria-labelledby="projects-title">
+        <h2 id="projects-title">Projects</h2>
+        <p>
+          This Astro site is ready for posts, project pages, and custom components.
+          Start by editing <code>src/pages/index.astro</code>.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
