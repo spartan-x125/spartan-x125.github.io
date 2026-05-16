@@ -1,11 +1,11 @@
 export const profile = {
   name: "spartan-x125",
   title: "Personal Blog",
-  signature: "记录技术、生活和那些值得慢慢想清楚的东西。",
-  bio: "这里是我的个人静态博客。我会把学习笔记、项目实践、阅读摘录和一些阶段性的想法整理在这里。",
-  avatar: "/favicon.svg",
+  signature: "我们生而眺望。",
+  bio: "大概是一个博客，不一定什么时候会维护，总之先整一个。",
+  avatar: "/avatar/avatar.jpg",
   github: "https://github.com/spartan-x125",
-  email: "mailto:spartan-x125@example.com",
+  email: "mailto:spartan_x@126.com",
 };
 
 export const backgroundImages = [
