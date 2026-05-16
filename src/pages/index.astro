@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { profile, backgroundImages, friendLinks } from "../data/profile";
+import { profile, backgroundImages, friendLinks, musicTracks } from "../data/profile";
 
 const postModules = import.meta.glob("../content/posts/*.md");
 const posts = (
@@ -73,11 +73,50 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
           </a>
         </div>
 
-        <section class="music-card" aria-labelledby="music-title">
-          <div>
+        <section
+          class="music-card"
+          aria-labelledby="music-title"
+          data-tracks={JSON.stringify(musicTracks)}
+        >
+          <div class="music-heading">
             <p class="eyebrow">Now Playing</p>
           </div>
-          <div class="music-player" set:html={profile.music.html}></div>
+          <div class="music-player">
+            <img class="music-cover" id="music-cover" src={musicTracks[0]?.cover} alt="" />
+            <div class="music-info">
+              <h2 id="music-title">{musicTracks[0]?.title}</h2>
+              <p id="music-artist">{musicTracks[0]?.artist}</p>
+              <div class="music-progress-row">
+                <span id="music-current">0:00</span>
+                <input
+                  class="music-progress"
+                  id="music-progress"
+                  type="range"
+                  min="0"
+                  max="100"
+                  value="0"
+                  step="0.1"
+                  aria-label="播放进度"
+                />
+                <span id="music-duration">--:--</span>
+              </div>
+              <div class="music-controls">
+                <button id="music-play" type="button" aria-label="播放或暂停">▶</button>
+                <button id="music-next" type="button" aria-label="下一首">›</button>
+                <button id="music-shuffle" type="button" aria-label="随机播放">⤨</button>
+                <button id="music-list-toggle" type="button" aria-label="查看播放列表">☰</button>
+              </div>
+            </div>
+            <audio id="music-audio" preload="metadata" src={musicTracks[0]?.src}></audio>
+            <div class="music-list" id="music-list" hidden>
+              {musicTracks.map((track, index) => (
+                <button type="button" data-track-index={index}>
+                  <span>{track.title}</span>
+                  <small>{track.artist}</small>
+                </button>
+              ))}
+            </div>
+          </div>
         </section>
       </aside>
 

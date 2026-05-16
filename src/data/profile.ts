@@ -15,12 +15,20 @@ export const profile = {
     ],
   },
   music: {
-    //title: "网易云音乐",
-    //description: "放一首歌，让博客有一点自己的节奏。",
-    html:
-      '<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="https://music.163.com/outchain/player?type=2&id=2714380979&auto=1&height=66"></iframe>',
+    title: "終着",
+    artist: "ヰ世界情緒",
+    src: "/music/track.mp3",
   },
 };
+
+export const musicTracks = [
+  {
+    title: "終着",
+    artist: "ヰ世界情緒",
+    src: "/music/track.mp3",
+    cover: "/avatar/avatar.jpg",
+  },
+];
 
 export const friendLinks = [
   {
