@@ -364,7 +364,7 @@ p {
 
 .music-controls {
   display: grid;
-  grid-template-columns: repeat(4, 32px);
+  grid-template-columns: repeat(5, 32px);
   gap: 7px;
   margin-top: 9px;
 }
@@ -850,7 +850,7 @@ code {
   }
 
   .music-controls {
-    grid-template-columns: repeat(4, 30px);
+    grid-template-columns: repeat(5, 30px);
   }
 
   .music-controls button {

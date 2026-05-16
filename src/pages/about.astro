@@ -17,7 +17,7 @@ import { profile, backgroundImages, friendLinks } from "../data/profile";
     <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
-    <div class="background-layer" aria-hidden="true"></div>
+    <div class="background-layer" aria-hidden="true" transition:persist></div>
     <header class="topbar">
       <a class="brand" href="/">{profile.title}</a>
       <nav class="topnav" aria-label="站点导航">

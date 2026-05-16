@@ -41,7 +41,7 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
     <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
-    <div class="background-layer" aria-hidden="true"></div>
+    <div class="background-layer" aria-hidden="true" transition:persist></div>
 
     <header class="topbar">
       <a class="brand" href="/">{profile.title}</a>

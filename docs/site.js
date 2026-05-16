@@ -19,13 +19,20 @@
 
     const thirtyMinutes = 30 * 60 * 1000;
     const storageKey = "blog-background-state";
+    const applyBackground = (index) => {
+      layer.style.backgroundImage = `url("${backgrounds[index]}")`;
+      document.documentElement.style.setProperty(
+        "--active-background-image",
+        `url("${backgrounds[index]}")`,
+      );
+    };
     const setBackground = () => {
       const index = Math.floor(Math.random() * backgrounds.length);
       localStorage.setItem(
         storageKey,
         JSON.stringify({ index, changedAt: Date.now() }),
       );
-      layer.style.backgroundImage = `url("${backgrounds[index]}")`;
+      applyBackground(index);
     };
 
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
@@ -35,7 +42,7 @@
       backgrounds[saved.index] &&
       Date.now() - saved.changedAt < thirtyMinutes
     ) {
-      layer.style.backgroundImage = `url("${backgrounds[saved.index]}")`;
+      applyBackground(saved.index);
     } else {
       setBackground();
     }
@@ -58,13 +65,16 @@
     const duration = document.getElementById("music-duration");
     const progress = document.getElementById("music-progress");
     const playButton = document.getElementById("music-play");
+    const prevButton = document.getElementById("music-prev");
     const nextButton = document.getElementById("music-next");
-    const shuffleButton = document.getElementById("music-shuffle");
+    const modeButton = document.getElementById("music-mode");
     const listToggle = document.getElementById("music-list-toggle");
     const list = document.getElementById("music-list");
     const listButtons = Array.from(document.querySelectorAll("[data-track-index]"));
     let currentIndex = Number(localStorage.getItem("music-track-index") || 0);
-    let shuffle = localStorage.getItem("music-shuffle") === "true";
+    const modes = ["list", "shuffle", "repeat"];
+    let mode = localStorage.getItem("music-mode") || "list";
+    if (!modes.includes(mode)) mode = "list";
 
     const formatTime = (seconds) => {
       if (!Number.isFinite(seconds)) return "--:--";
@@ -93,6 +103,23 @@
       });
     };
 
+    const renderMode = () => {
+      const labels = {
+        list: "↻",
+        shuffle: "⤨",
+        repeat: "1",
+      };
+      const titles = {
+        list: "列表播放",
+        shuffle: "随机播放",
+        repeat: "单曲循环",
+      };
+      modeButton.textContent = labels[mode];
+      modeButton.title = titles[mode];
+      modeButton.setAttribute("aria-label", `当前模式：${titles[mode]}，点击切换`);
+      modeButton.classList.toggle("is-active", mode !== "list");
+    };
+
     const playCurrent = async () => {
       try {
         await audio.play();
@@ -102,16 +129,32 @@
       }
     };
 
+    const getRandomIndex = () => {
+      if (tracks.length <= 1) return currentIndex;
+      let next = currentIndex;
+      while (next === currentIndex) {
+        next = Math.floor(Math.random() * tracks.length);
+      }
+      return next;
+    };
+
     const nextTrack = () => {
       if (tracks.length === 0) return;
-      if (shuffle && tracks.length > 1) {
-        let next = currentIndex;
-        while (next === currentIndex) {
-          next = Math.floor(Math.random() * tracks.length);
-        }
-        currentIndex = next;
+      if (mode === "shuffle") {
+        currentIndex = getRandomIndex();
       } else {
         currentIndex = (currentIndex + 1) % tracks.length;
+      }
+      renderTrack();
+      playCurrent();
+    };
+
+    const prevTrack = () => {
+      if (tracks.length === 0) return;
+      if (mode === "shuffle") {
+        currentIndex = getRandomIndex();
+      } else {
+        currentIndex = (currentIndex - 1 + tracks.length) % tracks.length;
       }
       renderTrack();
       playCurrent();
@@ -126,13 +169,15 @@
       }
     });
 
+    prevButton?.addEventListener("click", prevTrack);
     nextButton?.addEventListener("click", nextTrack);
 
-    shuffleButton?.classList.toggle("is-active", shuffle);
-    shuffleButton?.addEventListener("click", () => {
-      shuffle = !shuffle;
-      localStorage.setItem("music-shuffle", String(shuffle));
-      shuffleButton.classList.toggle("is-active", shuffle);
+    renderMode();
+    modeButton?.addEventListener("click", () => {
+      const nextMode = modes[(modes.indexOf(mode) + 1) % modes.length];
+      mode = nextMode;
+      localStorage.setItem("music-mode", mode);
+      renderMode();
     });
 
     listToggle?.addEventListener("click", () => {
@@ -164,7 +209,14 @@
       }
     });
 
-    audio?.addEventListener("ended", nextTrack);
+    audio?.addEventListener("ended", () => {
+      if (mode === "repeat") {
+        audio.currentTime = 0;
+        playCurrent();
+      } else {
+        nextTrack();
+      }
+    });
     renderTrack();
   }
 
