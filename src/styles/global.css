@@ -177,9 +177,19 @@ p {
   margin-top: 0;
 }
 
-.profile-card h1 {
+.profile-card h1,
+.profile-name {
+  display: inline-block;
   margin: 18px 0 8px;
+  color: var(--text);
   font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+  text-decoration: none;
+}
+
+.profile-name:hover {
+  color: var(--accent-strong);
 }
 
 .signature,
@@ -225,6 +235,34 @@ p {
 
 .profile-links {
   margin-top: 18px;
+}
+
+.music-card {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.music-card h2 {
+  margin-bottom: 6px;
+  font-size: 1.05rem;
+}
+
+.music-card p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 520;
+  line-height: 1.6;
+}
+
+.music-card iframe {
+  display: block;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-strong);
 }
 
 .app-link {
@@ -409,6 +447,66 @@ textarea {
   font-weight: 700;
 }
 
+.friends-section {
+  margin-top: 30px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
+.friends-section h2 {
+  margin-bottom: 14px;
+  font-size: 1.35rem;
+}
+
+.friend-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.friend-card {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: var(--surface-strong);
+  color: var(--text);
+  text-decoration: none;
+  box-shadow: 0 8px 18px rgba(25, 32, 42, 0.08);
+}
+
+.friend-card strong {
+  font-size: 1rem;
+}
+
+.friend-card span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 520;
+  line-height: 1.55;
+}
+
+.about-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.about-avatar {
+  width: 112px;
+  height: 112px;
+  flex: 0 0 auto;
+}
+
+.about-page .article-content {
+  margin-top: 26px;
+}
+
+.about-friends {
+  margin-top: 28px;
+}
+
 .article-shell,
 .studio-shell {
   width: min(980px, calc(100% - 32px));
@@ -540,6 +638,10 @@ code {
   .search-box {
     width: 100%;
   }
+
+  .friend-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
@@ -567,5 +669,10 @@ code {
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .about-hero {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

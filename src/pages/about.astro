@@ -1,0 +1,60 @@
+---
+import "../styles/global.css";
+import { profile, backgroundImages, friendLinks } from "../data/profile";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={profile.bio} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{profile.about.heading} | {profile.name}</title>
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="/">{profile.title}</a>
+      <nav class="topnav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+      </nav>
+    </header>
+
+    <main class="article-shell">
+      <article class="article-page about-page">
+        <a class="back-link" href="/">← 返回首页</a>
+        <div class="about-hero">
+          <img class="avatar about-avatar" src={profile.avatar} alt={`${profile.name} 的头像`} />
+          <div>
+            <p class="eyebrow">Profile</p>
+            <h1>{profile.name}</h1>
+            <p class="article-description">{profile.signature}</p>
+          </div>
+        </div>
+
+        <div class="article-content">
+          {profile.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+
+        <section class="friends-section about-friends" aria-labelledby="about-friends-title">
+          <p class="eyebrow">Friends</p>
+          <h2 id="about-friends-title">友情站</h2>
+          <div class="friend-list">
+            {
+              friendLinks.map((friend) => (
+                <a class="friend-card" href={friend.url}>
+                  <strong>{friend.name}</strong>
+                  <span>{friend.description}</span>
+                </a>
+              ))
+            }
+          </div>
+        </section>
+      </article>
+    </main>
+    <script is:inline src="/site.js"></script>
+  </body>
+</html>

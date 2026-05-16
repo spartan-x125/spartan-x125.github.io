@@ -1,12 +1,44 @@
 export const profile = {
-  name: "spartan-x125",
-  title: "Personal Blog",
+  name: "Spartan_x",
+  title: "Just a Simple Blog",
   signature: "我们生而眺望。",
-  bio: "大概是一个博客，不一定什么时候会维护，总之先整一个。",
+  //bio: "大概是一个博客，不一定什么时候会维护，总之先整一个。",
   avatar: "/avatar/avatar.jpg",
   github: "https://github.com/spartan-x125",
   email: "mailto:spartan_x@126.com",
+  about: {
+    heading: "关于我",
+    paragraphs: [
+      "你好，这里是 Spartan_x 的个人博客。",
+      "我会在这里记录技术学习、项目实践、阅读摘录，以及一些阶段性的想法。",
+      "这个站点基于 Astro 构建，内容以 Markdown 维护，并通过 GitHub Pages 发布。",
+    ],
+  },
+  music: {
+    //title: "网易云音乐",
+    //description: "放一首歌，让博客有一点自己的节奏。",
+    embedUrl:
+      "https://music.163.com/outchain/player?type=2&id=2714380979&auto=0&height=66",
+  },
 };
+
+export const friendLinks = [
+  {
+    name: "Photonyan",
+    description: "PKU",
+    url: "http://www.photonyan.fun/",
+  },
+  {
+    name: "Fanzt",
+    description: "SJTU",
+    url: "https://fanzt.github.io/",
+  },
+  {
+    name: "Phymani",
+    description: "SDU",
+    url: "https://www.phymani.me/",
+  },
+];
 
 export const backgroundImages = [
   "/backgrounds/105031853_p0.jpg",
