@@ -14,11 +14,26 @@
   const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
   if (layer && backgrounds.length > 0) {
     const thirtyMinutes = 30 * 60 * 1000;
+    const storageKey = "blog-background-state";
     const setBackground = () => {
       const index = Math.floor(Math.random() * backgrounds.length);
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ index, changedAt: Date.now() }),
+      );
       layer.style.backgroundImage = `url("${backgrounds[index]}")`;
     };
-    setBackground();
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+    if (
+      saved &&
+      Number.isInteger(saved.index) &&
+      backgrounds[saved.index] &&
+      Date.now() - saved.changedAt < thirtyMinutes
+    ) {
+      layer.style.backgroundImage = `url("${backgrounds[saved.index]}")`;
+    } else {
+      setBackground();
+    }
     window.setInterval(setBackground, thirtyMinutes);
   }
 })();

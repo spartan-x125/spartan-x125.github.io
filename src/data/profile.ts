@@ -34,9 +34,14 @@ export const friendLinks = [
     url: "https://fanzt.github.io/",
   },
   {
-    name: "Phymani",
+    name: "Whitney",
     description: "SDU",
     url: "https://www.phymani.me/",
+  },
+  {
+    name: "for_each",
+    //description: "",
+    url: "https://cwd316.com/",
   },
 ];
 
