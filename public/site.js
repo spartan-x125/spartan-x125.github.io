@@ -13,12 +13,12 @@
   const layer = document.querySelector(".background-layer");
   const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
   if (layer && backgrounds.length > 0) {
-    const fiveMinutes = 5 * 60 * 1000;
+    const thirtyMinutes = 30 * 60 * 1000;
     const setBackground = () => {
-      const index = Math.floor(Date.now() / fiveMinutes) % backgrounds.length;
+      const index = Math.floor(Math.random() * backgrounds.length);
       layer.style.backgroundImage = `url("${backgrounds[index]}")`;
     };
     setBackground();
-    window.setInterval(setBackground, fiveMinutes);
+    window.setInterval(setBackground, thirtyMinutes);
   }
 })();

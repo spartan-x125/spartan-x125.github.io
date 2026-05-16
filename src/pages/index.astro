@@ -76,18 +76,8 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
         <section class="music-card" aria-labelledby="music-title">
           <div>
             <p class="eyebrow">Now Playing</p>
-            <h2 id="music-title">{profile.music.title}</h2>
-            <p>{profile.music.description}</p>
           </div>
-          <iframe
-            title="网易云音乐播放器"
-            src={profile.music.embedUrl}
-            width="100%"
-            height="86"
-            frameborder="no"
-            marginwidth="0"
-            marginheight="0"
-          ></iframe>
+          <div class="music-player" set:html={profile.music.html}></div>
         </section>
       </aside>
 
