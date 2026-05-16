@@ -564,6 +564,15 @@ textarea {
 
 .tag-button {
   cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.tag-button:hover {
+  transform: translateY(-1px);
 }
 
 .tag-button.is-active {

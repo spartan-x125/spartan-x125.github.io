@@ -254,11 +254,63 @@
     updateProgress();
   }
 
+  function initPostFilters() {
+    const searchInput = document.getElementById("post-search");
+    const tagButtons = Array.from(document.querySelectorAll(".tag-button"));
+    const cards = Array.from(document.querySelectorAll(".post-card"));
+    const emptyState = document.getElementById("empty-state");
+    if (!searchInput || tagButtons.length === 0 || cards.length === 0) return;
+    if (searchInput.dataset.ready === "true") return;
+    searchInput.dataset.ready = "true";
+
+    let activeTag =
+      tagButtons.find((button) => button.classList.contains("is-active"))?.dataset.tag ||
+      "all";
+
+    const normalize = (value) => value.trim().toLowerCase();
+
+    const filterPosts = () => {
+      const query = normalize(searchInput.value);
+      let visibleCount = 0;
+
+      cards.forEach((card) => {
+        const haystack = [
+          card.dataset.title,
+          card.dataset.description,
+          card.dataset.tags,
+        ].join(" ");
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesTag =
+          activeTag === "all" ||
+          card.dataset.tags.includes(activeTag.toLowerCase());
+        const visible = matchesQuery && matchesTag;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+
+      if (emptyState) emptyState.hidden = visibleCount !== 0;
+    };
+
+    searchInput.addEventListener("input", filterPosts);
+    tagButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        activeTag = button.dataset.tag || "all";
+        tagButtons.forEach((item) => {
+          item.classList.toggle("is-active", item === button);
+        });
+        filterPosts();
+      });
+    });
+
+    filterPosts();
+  }
+
   function initPage() {
     initTheme();
     initBackground();
     initMusic();
     initReadingTools();
+    initPostFilters();
   }
 
   document.addEventListener("DOMContentLoaded", initPage);
