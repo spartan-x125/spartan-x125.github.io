@@ -43,7 +43,7 @@ export const friendLinks = [
 export const backgroundImages = [
   "/backgrounds/105031853_p0.jpg",
   "/backgrounds/114966968_p0.jpg",
-  "/backgrounds/128811036_p0.jpg",
+  //"/backgrounds/128811036_p0.jpg",
   "/backgrounds/135123781_p0.jpg",
   "/backgrounds/137751657_p0.jpg",
   "/backgrounds/142189085_p0.png",
