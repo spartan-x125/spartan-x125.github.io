@@ -243,6 +243,7 @@ p {
   margin-top: 24px;
   border-top: 1px solid var(--line);
   padding-top: 20px;
+  overflow: hidden;
 }
 
 .music-card h2 {
@@ -258,8 +259,15 @@ p {
   line-height: 1.6;
 }
 
-.music-card iframe {
+.music-player {
+  width: 100%;
+}
+
+.music-player iframe {
   display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 86px;
   border: 0;
   border-radius: 8px;
   background: var(--surface-strong);
@@ -674,5 +682,9 @@ code {
   .about-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .music-player iframe {
+    height: 76px;
   }
 }
