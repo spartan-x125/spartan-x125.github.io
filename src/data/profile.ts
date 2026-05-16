@@ -37,27 +37,27 @@ export const musicTracks = [
 export const friendLinks = [
   {
     name: "PhotonYan",
-    description: "PKU",
+    description: "http://www.photonyan.fun/",
     url: "http://www.photonyan.fun/",
   },
   {
     name: "Fanzt",
-    description: "SJTU",
+    description: "https://fanzt.github.io/",
     url: "https://fanzt.github.io/",
   },
   {
     name: "Whitney",
-    description: "SDU",
+    description: "https://www.phymani.me/",
     url: "https://www.phymani.me/",
   },
   {
     name: "for_each",
-    //description: "",
+    description: "https://cwd316.com/",
     url: "https://cwd316.com/",
   },
   {
     name:"ForBloodB",
-    description:"BJUT",
+    description:"https://forbloodb.github.io/",
     url:"https://forbloodb.github.io/",
   }
 ];
