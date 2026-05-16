@@ -389,6 +389,12 @@ p {
   color: #ffffff;
 }
 
+#music-mode.is-active {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
 .music-list {
   grid-column: 1 / -1;
   display: grid;
