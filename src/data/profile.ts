@@ -55,6 +55,11 @@ export const friendLinks = [
     //description: "",
     url: "https://cwd316.com/",
   },
+  {
+    name:"ForBloodB",
+    description:"BJUT",
+    url:"https://forbloodb.github.io/",
+  }
 ];
 
 export const backgroundImages = [
