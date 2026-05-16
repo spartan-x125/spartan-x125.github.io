@@ -1,43 +1,162 @@
 ---
 import "../styles/global.css";
+import { profile, backgroundImages } from "../data/profile";
 
-const profile = {
-  name: "spartan-x125",
-  role: "Personal homepage",
-  intro:
-    "A quiet corner for notes, projects, experiments, and the things I am learning along the way.",
-};
+const postModules = import.meta.glob("../content/posts/*.md");
+const posts = (
+  await Promise.all(
+    Object.entries(postModules).map(async ([path, loader]) => {
+      const post = await loader();
+      const slug = path.split("/").pop()?.replace(".md", "");
+      return {
+        slug,
+        title: post.frontmatter.title,
+        description: post.frontmatter.description,
+        date: post.frontmatter.date,
+        tags: post.frontmatter.tags ?? [],
+        draft: post.frontmatter.draft,
+      };
+    }),
+  )
+)
+  .filter((post) => !post.draft)
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b) =>
+  a.localeCompare(b, "zh-CN"),
+);
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={profile.intro} />
+    <meta name="description" content={profile.bio} />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{profile.name}</title>
   </head>
-  <body>
-    <main class="shell">
-      <section class="hero" aria-labelledby="page-title">
-        <p class="eyebrow">{profile.role}</p>
-        <h1 id="page-title">{profile.name}</h1>
-        <p class="intro">{profile.intro}</p>
-        <div class="actions" aria-label="Primary links">
-          <a href="https://github.com/spartan-x125">GitHub</a>
-          <a href="#projects">Projects</a>
-        </div>
-      </section>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true"></div>
 
-      <section id="projects" class="panel" aria-labelledby="projects-title">
-        <h2 id="projects-title">Projects</h2>
-        <p>
-          This Astro site is ready for posts, project pages, and custom components.
-          Start by editing <code>src/pages/index.astro</code>.
-        </p>
+    <header class="topbar">
+      <a class="brand" href="/">{profile.title}</a>
+      <nav class="topnav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <a href="/studio/">写作台</a>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+      </nav>
+    </header>
+
+    <main class="blog-layout">
+      <aside class="profile-card" aria-label="个人资料">
+        <img class="avatar" src={profile.avatar} alt={`${profile.name} 的头像`} />
+        <h1>{profile.name}</h1>
+        <p class="signature">{profile.signature}</p>
+        <p class="bio">{profile.bio}</p>
+        <div class="profile-links">
+          <a class="app-link github-link" href={profile.github} aria-label="GitHub 主页">
+            <span class="app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M12 2C6.48 2 2 6.58 2 12.24c0 4.52 2.87 8.35 6.84 9.7.5.1.68-.22.68-.5v-1.74c-2.78.62-3.37-1.38-3.37-1.38-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.63.07-.63 1 .08 1.53 1.06 1.53 1.06.9 1.57 2.35 1.12 2.92.85.09-.67.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.05 0-1.12.39-2.03 1.03-2.74-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.04A9.36 9.36 0 0 1 12 6.94c.85 0 1.7.12 2.5.34 1.9-1.32 2.74-1.04 2.74-1.04.55 1.4.2 2.44.1 2.7.64.71 1.03 1.62 1.03 2.74 0 3.92-2.34 4.78-4.57 5.04.36.32.68.95.68 1.92v2.85c0 .28.18.6.69.5A10.2 10.2 0 0 0 22 12.24C22 6.58 17.52 2 12 2Z" />
+              </svg>
+            </span>
+            <span>GitHub</span>
+          </a>
+          <a class="app-link email-link" href={profile.email} aria-label="发送邮件">
+            <span class="app-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" role="img">
+                <path d="M4.8 5h14.4A2.8 2.8 0 0 1 22 7.8v8.4a2.8 2.8 0 0 1-2.8 2.8H4.8A2.8 2.8 0 0 1 2 16.2V7.8A2.8 2.8 0 0 1 4.8 5Zm.1 2.1 6.52 5.18c.34.27.82.27 1.16 0L19.1 7.1H4.9Zm15 2.05-6.2 4.92a2.72 2.72 0 0 1-3.4 0L4.1 9.15v6.94c0 .45.35.81.78.81h14.24c.43 0 .78-.36.78-.81V9.15Z" />
+              </svg>
+            </span>
+            <span>Email</span>
+          </a>
+        </div>
+      </aside>
+
+      <section class="feed" aria-labelledby="feed-title">
+        <div class="feed-header">
+          <div>
+            <p class="eyebrow">Latest Notes</p>
+            <h2 id="feed-title">博客推文</h2>
+          </div>
+          <label class="search-box">
+            <span>搜索</span>
+            <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
+          </label>
+        </div>
+
+        <div class="tag-filter" aria-label="文章标签筛选">
+          <button class="tag-button is-active" type="button" data-tag="all">全部</button>
+          {tags.map((tag) => <button class="tag-button" type="button" data-tag={tag}>{tag}</button>)}
+        </div>
+
+        <div class="post-list" id="post-list">
+          {
+            posts.map((post) => (
+              <article
+                class="post-card"
+                data-title={post.title.toLowerCase()}
+                data-description={post.description.toLowerCase()}
+                data-tags={post.tags.join(" ").toLowerCase()}
+              >
+                <a href={`/posts/${post.slug}/`}>
+                  <time datetime={post.date}>{post.date}</time>
+                  <h3>{post.title}</h3>
+                  <p>{post.description}</p>
+                  <div class="tag-row">
+                    {post.tags.map((tag) => <span class="tag">{tag}</span>)}
+                  </div>
+                </a>
+              </article>
+            ))
+          }
+        </div>
+        <p class="empty-state" id="empty-state" hidden>没有找到匹配的推文。</p>
       </section>
     </main>
+
+    <script is:inline src="/site.js"></script>
+    <script>
+      const searchInput = document.getElementById("post-search");
+      const tagButtons = Array.from(document.querySelectorAll(".tag-button"));
+      const cards = Array.from(document.querySelectorAll(".post-card"));
+      const emptyState = document.getElementById("empty-state");
+      let activeTag = "all";
+
+      function normalize(value) {
+        return value.trim().toLowerCase();
+      }
+
+      function filterPosts() {
+        const query = normalize(searchInput.value);
+        let visibleCount = 0;
+
+        cards.forEach((card) => {
+          const haystack = [
+            card.dataset.title,
+            card.dataset.description,
+            card.dataset.tags,
+          ].join(" ");
+          const matchesQuery = !query || haystack.includes(query);
+          const matchesTag = activeTag === "all" || card.dataset.tags.includes(activeTag.toLowerCase());
+          const visible = matchesQuery && matchesTag;
+          card.hidden = !visible;
+          if (visible) visibleCount += 1;
+        });
+
+        emptyState.hidden = visibleCount !== 0;
+      }
+
+      searchInput.addEventListener("input", filterPosts);
+      tagButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          activeTag = button.dataset.tag;
+          tagButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+          filterPosts();
+        });
+      });
+    </script>
   </body>
 </html>

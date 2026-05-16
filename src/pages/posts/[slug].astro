@@ -1,0 +1,60 @@
+---
+import "../../styles/global.css";
+import { profile, backgroundImages } from "../../data/profile";
+
+export async function getStaticPaths() {
+  const postModules = import.meta.glob("../../content/posts/*.md");
+  const posts = await Promise.all(
+    Object.entries(postModules).map(async ([path, loader]) => {
+      const post = await loader();
+      const slug = path.split("/").pop()?.replace(".md", "");
+      return { slug, post };
+    }),
+  );
+
+  return posts
+    .filter(({ post }) => !post.frontmatter.draft)
+    .map(({ slug, post }) => ({
+      params: { slug },
+      props: { post },
+    }));
+}
+
+const { post } = Astro.props;
+const Content = post.Content ?? post.default;
+const title = `${post.frontmatter.title} | ${profile.name}`;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={post.frontmatter.description} />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="/">{profile.name}</a>
+      <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+    </header>
+    <main class="article-shell">
+      <article class="article-page">
+        <a class="back-link" href="/">← 返回首页</a>
+        <p class="post-date">{post.frontmatter.date}</p>
+        <h1>{post.frontmatter.title}</h1>
+        <p class="article-description">{post.frontmatter.description}</p>
+        <div class="tag-row">
+          {post.frontmatter.tags?.map((tag) => <span class="tag">{tag}</span>)}
+        </div>
+        <div class="article-content">
+          <Content />
+        </div>
+      </article>
+    </main>
+    <script is:inline src="/site.js"></script>
+  </body>
+</html>

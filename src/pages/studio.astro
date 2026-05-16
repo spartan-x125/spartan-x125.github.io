@@ -1,0 +1,187 @@
+---
+import "../styles/global.css";
+import { profile, backgroundImages } from "../data/profile";
+
+const postModules = import.meta.glob("../content/posts/*.md");
+const posts = (
+  await Promise.all(
+    Object.entries(postModules).map(async ([path, loader]) => {
+      const post = await loader();
+      return {
+        file: path.split("/").pop(),
+        title: post.frontmatter.title,
+        description: post.frontmatter.description,
+        date: post.frontmatter.date,
+        tags: post.frontmatter.tags ?? [],
+        draft: post.frontmatter.draft,
+      };
+    }),
+  )
+).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>写作台 | {profile.name}</title>
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="/">{profile.title}</a>
+      <nav class="topnav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+      </nav>
+    </header>
+
+    <main class="studio-shell">
+      <section class="studio-intro">
+        <p class="eyebrow">Private Studio</p>
+        <h1>写作台</h1>
+        <p>
+          这里用于本地撰写、导入和导出 Markdown。GitHub Pages 是静态网站，网页无法直接写入仓库；
+          下载生成的 Markdown 后，把它放进 <code>src/content/posts/</code> 再构建发布。
+        </p>
+      </section>
+
+      <section class="studio-grid">
+        <form class="editor-panel" id="post-form">
+          <label>
+            <span>标题</span>
+            <input id="post-title" name="title" type="text" value="新的博客推文" />
+          </label>
+          <label>
+            <span>摘要</span>
+            <input id="post-description" name="description" type="text" value="这里写一句文章摘要。" />
+          </label>
+          <div class="form-row">
+            <label>
+              <span>日期</span>
+              <input id="post-date" name="date" type="date" />
+            </label>
+            <label>
+              <span>标签</span>
+              <input id="post-tags" name="tags" type="text" value="随笔, 博客" />
+            </label>
+          </div>
+          <label class="check-line">
+            <input id="post-draft" name="draft" type="checkbox" />
+            <span>保存为草稿，不在公开站点显示</span>
+          </label>
+          <label>
+            <span>Markdown 内容</span>
+            <textarea id="post-body" name="body" rows="16">从这里开始写正文。</textarea>
+          </label>
+          <div class="studio-actions">
+            <label class="file-button">
+              导入 Markdown
+              <input id="markdown-file" type="file" accept=".md,.markdown,text/markdown,text/plain" />
+            </label>
+            <button type="button" id="download-post">下载 Markdown</button>
+            <button type="button" id="copy-post">复制全文</button>
+          </div>
+        </form>
+
+        <aside class="manager-panel">
+          <h2>已有推文</h2>
+          <div class="managed-list">
+            {
+              posts.map((post) => (
+                <article class="managed-post">
+                  <div>
+                    <p>{post.date}</p>
+                    <h3>{post.title}</h3>
+                    <span>{post.file}</span>
+                  </div>
+                  <strong>{post.draft ? "草稿" : "公开"}</strong>
+                </article>
+              ))
+            }
+          </div>
+          <div class="help-box">
+            <h2>发布步骤</h2>
+            <p>下载 Markdown 后放入 <code>src/content/posts/</code>，再运行：</p>
+            <pre><code>npm.cmd run build
+git add .
+git commit -m "Update blog"
+git push origin main</code></pre>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script is:inline src="/site.js"></script>
+    <script>
+      const today = new Date().toISOString().slice(0, 10);
+      const titleInput = document.getElementById("post-title");
+      const descriptionInput = document.getElementById("post-description");
+      const dateInput = document.getElementById("post-date");
+      const tagsInput = document.getElementById("post-tags");
+      const draftInput = document.getElementById("post-draft");
+      const bodyInput = document.getElementById("post-body");
+      const fileInput = document.getElementById("markdown-file");
+      dateInput.value = today;
+
+      function slugify(value) {
+        return value
+          .trim()
+          .toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+          .replace(/^-+|-+$/g, "") || "new-post";
+      }
+
+      function buildMarkdown() {
+        const tags = tagsInput.value
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+        return `---\ntitle: "${titleInput.value.replaceAll('"', '\\"')}"\ndescription: "${descriptionInput.value.replaceAll('"', '\\"')}"\ndate: "${dateInput.value || today}"\ntags: ${JSON.stringify(tags)}\ndraft: ${draftInput.checked}\n---\n\n${bodyInput.value.trim()}\n`;
+      }
+
+      function parseFrontmatter(content) {
+        const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+        if (!match) {
+          bodyInput.value = content;
+          return;
+        }
+        const frontmatter = match[1];
+        bodyInput.value = match[2].trim();
+        const read = (key) => frontmatter.match(new RegExp(`^${key}:\\s*"?([^"\\n]+)"?`, "m"))?.[1] || "";
+        titleInput.value = read("title") || titleInput.value;
+        descriptionInput.value = read("description") || descriptionInput.value;
+        dateInput.value = read("date") || today;
+        draftInput.checked = read("draft") === "true";
+        const tagMatch = frontmatter.match(/^tags:\s*(.+)$/m);
+        if (tagMatch) {
+          tagsInput.value = tagMatch[1].replace(/[\[\]"]/g, "").split(",").map((tag) => tag.trim()).join(", ");
+        }
+      }
+
+      document.getElementById("download-post").addEventListener("click", () => {
+        const markdown = buildMarkdown();
+        const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${slugify(titleInput.value)}.md`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      });
+
+      document.getElementById("copy-post").addEventListener("click", async () => {
+        await navigator.clipboard.writeText(buildMarkdown());
+      });
+
+      fileInput.addEventListener("change", async () => {
+        const [file] = fileInput.files;
+        if (!file) return;
+        parseFrontmatter(await file.text());
+      });
+    </script>
+  </body>
+</html>
