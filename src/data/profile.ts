@@ -18,7 +18,7 @@ export const profile = {
     //title: "网易云音乐",
     //description: "放一首歌，让博客有一点自己的节奏。",
     embedUrl:
-      "https://music.163.com/outchain/player?type=2&id=2714380979&auto=0&height=66",
+      "music.163.com/outchain/player?type=2&id=2714380979&auto=1&height=66",
   },
 };
 
