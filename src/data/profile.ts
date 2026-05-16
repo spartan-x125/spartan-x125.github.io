@@ -25,8 +25,14 @@ export const musicTracks = [
   {
     title: "終着",
     artist: "ヰ世界情緒",
-    src: "/music/track.mp3",
-    cover: "/avatar/avatar.jpg",
+    src: "/music/song1.mp3",
+    cover: "/music/song1.jpg",
+  },
+  {
+    title: "僕らの記憶を掠わないで",
+    artist: "ヰ世界情緒",
+    src: "/music/song2.mp3",
+    cover: "/music/song2.jpg",
   },
 ];
 
