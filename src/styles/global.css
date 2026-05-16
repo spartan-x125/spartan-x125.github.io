@@ -363,16 +363,17 @@ p {
 }
 
 .music-controls {
-  display: grid;
-  grid-template-columns: repeat(5, 32px);
-  gap: 7px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 9px;
 }
 
 .music-controls button {
   display: grid;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -850,11 +851,12 @@ code {
   }
 
   .music-controls {
-    grid-template-columns: repeat(5, 30px);
+    gap: 7px;
   }
 
   .music-controls button {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
   }
 }

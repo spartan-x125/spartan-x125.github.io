@@ -1,6 +1,6 @@
 export const profile = {
   name: "Spartan_x",
-  title: "Just a Simple Blog",
+  title: "探求者",
   signature: "我们生而眺望。",
   //bio: "大概是一个博客，不一定什么时候会维护，总之先整一个。",
   avatar: "/avatar/avatar.jpg",
