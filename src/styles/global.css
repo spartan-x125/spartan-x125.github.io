@@ -785,6 +785,21 @@ code {
   margin-top: 22px;
 }
 
+.site-footer {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  border-top: 1px solid var(--line);
+  padding: 22px 0 34px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.site-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 @media (max-width: 860px) {
   .blog-layout,
   .studio-grid {

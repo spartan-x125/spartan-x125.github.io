@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
+import SiteFooter from "../components/SiteFooter.astro";
 import { profile, backgroundImages, friendLinks } from "../data/profile";
 
 const postModules = import.meta.glob("../content/posts/*.md");
@@ -110,6 +111,7 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
         </section>
       </section>
     </main>
+    <SiteFooter />
 
     <script is:inline src="/site.js"></script>
     <script>

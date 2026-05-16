@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
+import SiteFooter from "../components/SiteFooter.astro";
 import { profile, backgroundImages, friendLinks } from "../data/profile";
 ---
 
@@ -59,6 +60,7 @@ import { profile, backgroundImages, friendLinks } from "../data/profile";
         </section>
       </article>
     </main>
+    <SiteFooter />
     <script is:inline src="/site.js"></script>
   </body>
 </html>
