@@ -248,6 +248,64 @@ p {
   overflow: hidden;
 }
 
+.side-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 22px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.side-panel h2 {
+  margin-bottom: 0;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.side-panel p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 520;
+  line-height: 1.65;
+}
+
+.reading-meter {
+  height: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-strong);
+}
+
+.reading-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+}
+
+.reading-toc {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.reading-toc a,
+.reading-toc span {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.reading-toc .toc-child {
+  padding-left: 12px;
+  font-size: 0.82rem;
+}
+
 .music-player {
   display: grid;
   grid-template-columns: 76px minmax(0, 1fr);
@@ -615,6 +673,7 @@ textarea {
 
 .article-page,
 .studio-intro {
+  min-width: 0;
   padding: clamp(24px, 5vw, 46px);
 }
 

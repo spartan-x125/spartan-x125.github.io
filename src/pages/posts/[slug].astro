@@ -1,5 +1,7 @@
 ---
 import "../../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import ProfileSidebar from "../../components/ProfileSidebar.astro";
 import { profile, backgroundImages } from "../../data/profile";
 
 export async function getStaticPaths() {
@@ -34,14 +36,23 @@ const title = `${post.frontmatter.title} | ${profile.name}`;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true"></div>
     <header class="topbar">
-      <a class="brand" href="/">{profile.name}</a>
-      <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+      <a class="brand" href="/">{profile.title}</a>
+      <nav class="topnav" aria-label="站点导航">
+        <a href="/">首页</a>
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
+      </nav>
     </header>
-    <main class="article-shell">
+    <main class="blog-layout">
+      <ProfileSidebar
+        mode="article"
+        title={post.frontmatter.title}
+        description={post.frontmatter.description}
+      />
       <article class="article-page">
         <a class="back-link" href="/">← 返回首页</a>
         <p class="post-date">{post.frontmatter.date}</p>

@@ -1,18 +1,22 @@
 (function () {
-  const root = document.documentElement;
-  const savedTheme = localStorage.getItem("blog-theme");
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  root.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
+  function initTheme() {
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem("blog-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
 
-  document.getElementById("theme-toggle")?.addEventListener("click", () => {
-    const next = root.dataset.theme === "dark" ? "light" : "dark";
-    root.dataset.theme = next;
-    localStorage.setItem("blog-theme", next);
-  });
+    document.getElementById("theme-toggle")?.addEventListener("click", () => {
+      const next = root.dataset.theme === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      localStorage.setItem("blog-theme", next);
+    });
+  }
 
-  const layer = document.querySelector(".background-layer");
-  const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
-  if (layer && backgrounds.length > 0) {
+  function initBackground() {
+    const layer = document.querySelector(".background-layer");
+    const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
+    if (!layer || backgrounds.length === 0) return;
+
     const thirtyMinutes = 30 * 60 * 1000;
     const storageKey = "blog-background-state";
     const setBackground = () => {
@@ -23,6 +27,7 @@
       );
       layer.style.backgroundImage = `url("${backgrounds[index]}")`;
     };
+
     const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
     if (
       saved &&
@@ -34,11 +39,16 @@
     } else {
       setBackground();
     }
-    window.setInterval(setBackground, thirtyMinutes);
+
+    window.clearInterval(window.__blogBackgroundTimer);
+    window.__blogBackgroundTimer = window.setInterval(setBackground, thirtyMinutes);
   }
 
-  const musicCard = document.querySelector(".music-card");
-  if (musicCard) {
+  function initMusic() {
+    const musicCard = document.querySelector(".music-card");
+    if (!musicCard || musicCard.dataset.ready === "true") return;
+    musicCard.dataset.ready = "true";
+
     const tracks = JSON.parse(musicCard.dataset.tracks || "[]");
     const audio = document.getElementById("music-audio");
     const cover = document.getElementById("music-cover");
@@ -53,8 +63,8 @@
     const listToggle = document.getElementById("music-list-toggle");
     const list = document.getElementById("music-list");
     const listButtons = Array.from(document.querySelectorAll("[data-track-index]"));
-    let currentIndex = 0;
-    let shuffle = false;
+    let currentIndex = Number(localStorage.getItem("music-track-index") || 0);
+    let shuffle = localStorage.getItem("music-shuffle") === "true";
 
     const formatTime = (seconds) => {
       if (!Number.isFinite(seconds)) return "--:--";
@@ -64,8 +74,9 @@
     };
 
     const renderTrack = () => {
+      if (tracks.length === 0) return;
+      if (!tracks[currentIndex]) currentIndex = 0;
       const track = tracks[currentIndex];
-      if (!track) return;
       audio.src = track.src;
       cover.src = track.cover;
       title.textContent = track.title;
@@ -73,6 +84,7 @@
       progress.value = 0;
       current.textContent = "0:00";
       duration.textContent = "--:--";
+      localStorage.setItem("music-track-index", String(currentIndex));
       listButtons.forEach((button) => {
         button.classList.toggle(
           "is-active",
@@ -116,8 +128,10 @@
 
     nextButton?.addEventListener("click", nextTrack);
 
+    shuffleButton?.classList.toggle("is-active", shuffle);
     shuffleButton?.addEventListener("click", () => {
       shuffle = !shuffle;
+      localStorage.setItem("music-shuffle", String(shuffle));
       shuffleButton.classList.toggle("is-active", shuffle);
     });
 
@@ -153,4 +167,48 @@
     audio?.addEventListener("ended", nextTrack);
     renderTrack();
   }
+
+  function initReadingTools() {
+    const article = document.querySelector(".article-content");
+    const progressBar = document.getElementById("reading-progress-bar");
+    const toc = document.getElementById("reading-toc");
+    if (!article || !progressBar || !toc) return;
+
+    const headings = Array.from(article.querySelectorAll("h2, h3"));
+    toc.innerHTML = "";
+    headings.forEach((heading, index) => {
+      if (!heading.id) heading.id = `section-${index + 1}`;
+      const link = document.createElement("a");
+      link.href = `#${heading.id}`;
+      link.textContent = heading.textContent;
+      link.className = heading.tagName === "H3" ? "toc-child" : "";
+      toc.append(link);
+    });
+
+    if (headings.length === 0) {
+      toc.innerHTML = "<span>暂无目录</span>";
+    }
+
+    const updateProgress = () => {
+      const rect = article.getBoundingClientRect();
+      const total = Math.max(article.scrollHeight - window.innerHeight, 1);
+      const read = Math.min(Math.max(-rect.top, 0), total);
+      progressBar.style.width = `${(read / total) * 100}%`;
+    };
+
+    window.removeEventListener("scroll", window.__readingProgressHandler);
+    window.__readingProgressHandler = updateProgress;
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  function initPage() {
+    initTheme();
+    initBackground();
+    initMusic();
+    initReadingTools();
+  }
+
+  document.addEventListener("DOMContentLoaded", initPage);
+  document.addEventListener("astro:page-load", initPage);
 })();

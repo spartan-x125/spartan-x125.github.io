@@ -14,11 +14,6 @@ export const profile = {
       "这个站点基于 Astro 构建，内容以 Markdown 维护，并通过 GitHub Pages 发布。",
     ],
   },
-  music: {
-    title: "終着",
-    artist: "ヰ世界情緒",
-    src: "/music/track.mp3",
-  },
 };
 
 export const musicTracks = [

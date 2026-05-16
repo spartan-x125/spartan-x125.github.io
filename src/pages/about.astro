@@ -1,5 +1,7 @@
 ---
 import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import ProfileSidebar from "../components/ProfileSidebar.astro";
 import { profile, backgroundImages, friendLinks } from "../data/profile";
 ---
 
@@ -12,6 +14,7 @@ import { profile, backgroundImages, friendLinks } from "../data/profile";
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{profile.about.heading} | {profile.name}</title>
+    <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true"></div>
@@ -23,7 +26,8 @@ import { profile, backgroundImages, friendLinks } from "../data/profile";
       </nav>
     </header>
 
-    <main class="article-shell">
+    <main class="blog-layout">
+      <ProfileSidebar mode="about" />
       <article class="article-page about-page">
         <a class="back-link" href="/">← 返回首页</a>
         <div class="about-hero">
