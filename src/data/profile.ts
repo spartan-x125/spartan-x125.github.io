@@ -32,6 +32,48 @@ export const musicTracks = [
     src: "/music/song2.mp3",
     cover: "/music/song2.jpg",
   },
+  {
+    title: "ARCADIA",
+    artist: "ヰ世界情緒",
+    src: "/music/song3.mp3",
+    cover: "/music/song3.jpg",
+  },
+  {
+    title: "シリウスの心臓",
+    artist: "ヰ世界情緒",
+    src: "/music/song4.mp3",
+    cover: "/music/song4.jpg",
+  },
+  {
+    title: "ヰ世界の宝石譚",
+    artist: "ヰ世界情緒",
+    src: "/music/song5.mp3",
+    cover: "/music/song5.jpg",
+  },
+  {
+    title: "永久に枯れぬ花",
+    artist: "ヰ世界情緒",
+    src: "/music/song6.mp3",
+    cover: "/music/song6.jpg", 
+  },
+  {
+    title: "Eclipse",
+    artist: "Aimer;塞壬唱片-MSR",
+    src:"/music/song7.mp3",
+    cover:"/music/song7.jpg",
+  },
+  {
+    title: "春弦",
+    artist: "横山克;塞壬唱片-MSR",
+    src:"/music/song8.mp3",
+    cover:"/music/song8.jpg",
+  },
+  {
+    title: "uzumakinoharu",
+    artist: "sasakure.UK",
+    src:"/music/song9.mp3",
+    cover:"/music/song9.jpg",
+  },
 ];
 
 export const friendLinks = [
@@ -41,12 +83,12 @@ export const friendLinks = [
     url: "http://www.photonyan.fun/",
   },
   {
-    name: "Fanzt",
+    name: "Fanzt|Fromuly",
     description: "https://fanzt.github.io/",
     url: "https://fanzt.github.io/",
   },
   {
-    name: "Whitney",
+    name: "Whitney_az",
     description: "https://www.phymani.me/",
     url: "https://www.phymani.me/",
   },
@@ -59,6 +101,11 @@ export const friendLinks = [
     name:"ForBloodB",
     description:"https://forbloodb.github.io/",
     url:"https://forbloodb.github.io/",
+  },
+  {
+    name:"Ray_or|芮和",
+    description:"https://ray-or.com/",
+    url:"https://ray-or.com/",
   }
 ];
 
