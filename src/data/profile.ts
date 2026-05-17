@@ -66,7 +66,7 @@ export const musicTracks = [
     title: "春弦",
     artist: "横山克;塞壬唱片-MSR",
     src:"/music/song8.mp3",
-    cover:"/music/song8.jpg",
+    cover:"/music/song8.png",
   },
   {
     title: "uzumakinoharu",
