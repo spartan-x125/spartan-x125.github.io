@@ -647,6 +647,22 @@ textarea {
   color: var(--text);
   text-decoration: none;
   box-shadow: 0 8px 18px rgba(25, 32, 42, 0.08);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.friend-card:hover,
+.friend-card:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(25, 32, 42, 0.18);
+  outline: none;
+  transform: translateY(-3px);
 }
 
 .friend-card strong {
@@ -658,6 +674,12 @@ textarea {
   font-size: 0.9rem;
   font-weight: 520;
   line-height: 1.55;
+  transition: color 180ms ease;
+}
+
+.friend-card:hover span,
+.friend-card:focus-visible span {
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .about-hero {

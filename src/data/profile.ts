@@ -74,6 +74,12 @@ export const musicTracks = [
     src:"/music/song9.mp3",
     cover:"/music/song9.jpg",
   },
+  {
+    title: "melodiniq",
+    artist: "onoken;owl*tree",
+    src: "/music/song10.mp3",
+    cover: "/music/song10.jpg",
+  },
 ];
 
 export const friendLinks = [
@@ -106,7 +112,12 @@ export const friendLinks = [
     name:"Ray_or|芮和",
     description:"https://ray-or.com/",
     url:"https://ray-or.com/",
-  }
+  },
+  {
+    name:"WELT",
+    description:"https://welt5350.github.io/",
+    url:"https://welt5350.github.io/",
+  },
 ];
 
 export const backgroundImages = [

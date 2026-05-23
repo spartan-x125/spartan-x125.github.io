@@ -14,7 +14,7 @@ const posts = (
       return {
         slug,
         title: post.frontmatter.title,
-        description: post.frontmatter.description,
+        description: post.frontmatter.description ?? "",
         date: post.frontmatter.date,
         tags: post.frontmatter.tags ?? [],
         draft: post.frontmatter.draft,
@@ -77,8 +77,8 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
             posts.map((post) => (
               <article
                 class="post-card"
-                data-title={post.title.toLowerCase()}
-                data-description={post.description.toLowerCase()}
+                data-title={(post.title ?? "").toLowerCase()}
+                data-description={(post.description ?? "").toLowerCase()}
                 data-tags={post.tags.join(" ").toLowerCase()}
               >
                 <a href={`/posts/${post.slug}/`}>
