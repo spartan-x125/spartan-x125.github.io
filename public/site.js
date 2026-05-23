@@ -263,9 +263,9 @@
     if (searchInput.dataset.ready === "true") return;
     searchInput.dataset.ready = "true";
 
-    let activeTag =
-      tagButtons.find((button) => button.classList.contains("is-active"))?.dataset.tag ||
-      "all";
+    const params = new URLSearchParams(window.location.search);
+    const tagFromUrl = params.get("tag");
+    let activeTag = tagFromUrl || "all";
 
     const normalize = (value) => value.trim().toLowerCase();
 
@@ -293,14 +293,27 @@
 
     searchInput.addEventListener("input", filterPosts);
     tagButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.tag === activeTag);
       button.addEventListener("click", () => {
         activeTag = button.dataset.tag || "all";
         tagButtons.forEach((item) => {
           item.classList.toggle("is-active", item === button);
         });
+        const url = new URL(window.location.href);
+        if (activeTag === "all") {
+          url.searchParams.delete("tag");
+        } else {
+          url.searchParams.set("tag", activeTag);
+        }
+        window.history.replaceState({}, "", url);
         filterPosts();
       });
     });
+
+    if (!tagButtons.some((button) => button.classList.contains("is-active"))) {
+      activeTag = "all";
+      tagButtons[0]?.classList.add("is-active");
+    }
 
     filterPosts();
   }

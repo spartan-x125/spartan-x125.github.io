@@ -581,6 +581,40 @@ textarea {
   color: #ffffff;
 }
 
+.tag {
+  text-decoration: none;
+}
+
+.post-tag-link {
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.post-tag-link:hover,
+.post-tag-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  outline: none;
+}
+
+.article-tag-link {
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.article-tag-link:hover,
+.article-tag-link:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 8px 18px rgba(25, 32, 42, 0.14);
+  outline: none;
+  transform: translateY(-1px);
+}
+
 .post-list {
   display: grid;
   gap: 14px;
@@ -596,10 +630,14 @@ textarea {
   display: none;
 }
 
-.post-card a {
+.post-link {
   display: block;
   padding: 20px;
   text-decoration: none;
+}
+
+.post-card-tags {
+  padding: 0 20px 20px;
 }
 
 .post-card time,

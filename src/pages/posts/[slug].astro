@@ -59,8 +59,14 @@ const title = `${post.frontmatter.title} | ${profile.name}`;
         <p class="post-date">{post.frontmatter.date}</p>
         <h1>{post.frontmatter.title}</h1>
         <p class="article-description">{post.frontmatter.description}</p>
-        <div class="tag-row">
-          {post.frontmatter.tags?.map((tag) => <span class="tag">{tag}</span>)}
+        <div class="tag-row article-tags" aria-label="文章标签">
+          {
+            post.frontmatter.tags?.map((tag) => (
+              <a class="tag article-tag-link" href={`/?tag=${encodeURIComponent(tag)}`}>
+                {tag}
+              </a>
+            ))
+          }
         </div>
         <div class="article-content">
           <Content />

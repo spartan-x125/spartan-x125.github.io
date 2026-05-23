@@ -81,14 +81,20 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
                 data-description={(post.description ?? "").toLowerCase()}
                 data-tags={post.tags.join(" ").toLowerCase()}
               >
-                <a href={`/posts/${post.slug}/`}>
+                <a class="post-link" href={`/posts/${post.slug}/`}>
                   <time datetime={post.date}>{post.date}</time>
                   <h3>{post.title}</h3>
                   <p>{post.description}</p>
-                  <div class="tag-row">
-                    {post.tags.map((tag) => <span class="tag">{tag}</span>)}
-                  </div>
                 </a>
+                <div class="tag-row post-card-tags" aria-label={`${post.title} 的标签`}>
+                  {
+                    post.tags.map((tag) => (
+                      <a class="tag post-tag-link" href={`/?tag=${encodeURIComponent(tag)}`}>
+                        {tag}
+                      </a>
+                    ))
+                  }
+                </div>
               </article>
             ))
           }
