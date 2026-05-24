@@ -68,6 +68,9 @@
     const prevButton = document.getElementById("music-prev");
     const nextButton = document.getElementById("music-next");
     const modeButton = document.getElementById("music-mode");
+    const volume = document.getElementById("music-volume");
+    const volumeIcon = document.getElementById("music-volume-icon");
+    const volumeValue = document.getElementById("music-volume-value");
     const listToggle = document.getElementById("music-list-toggle");
     const list = document.getElementById("music-list");
     const listButtons = Array.from(document.querySelectorAll("[data-track-index]"));
@@ -75,6 +78,9 @@
     const modes = ["list", "shuffle", "repeat"];
     let mode = localStorage.getItem("music-mode") || "list";
     if (!modes.includes(mode)) mode = "list";
+    let savedVolume = Number(localStorage.getItem("music-volume") || 80);
+    if (!Number.isFinite(savedVolume)) savedVolume = 80;
+    savedVolume = Math.min(Math.max(savedVolume, 0), 100);
 
     const formatTime = (seconds) => {
       if (!Number.isFinite(seconds)) return "--:--";
@@ -118,6 +124,13 @@
       modeButton.title = titles[mode];
       modeButton.setAttribute("aria-label", `当前模式：${titles[mode]}，点击切换`);
       modeButton.classList.toggle("is-active", mode !== "list");
+    };
+
+    const renderVolume = () => {
+      audio.volume = savedVolume / 100;
+      volume.value = String(savedVolume);
+      volumeValue.textContent = `${Math.round(savedVolume)}%`;
+      volumeIcon.textContent = savedVolume === 0 ? "×" : savedVolume < 45 ? "♪" : "♫";
     };
 
     const playCurrent = async () => {
@@ -209,6 +222,12 @@
       }
     });
 
+    volume?.addEventListener("input", () => {
+      savedVolume = Number(volume.value);
+      localStorage.setItem("music-volume", String(savedVolume));
+      renderVolume();
+    });
+
     audio?.addEventListener("ended", () => {
       if (mode === "repeat") {
         audio.currentTime = 0;
@@ -217,6 +236,7 @@
         nextTrack();
       }
     });
+    renderVolume();
     renderTrack();
   }
 

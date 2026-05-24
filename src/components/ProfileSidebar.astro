@@ -98,6 +98,20 @@ const {
           <button id="music-mode" type="button" aria-label="切换播放模式">↻</button>
           <button id="music-list-toggle" type="button" aria-label="查看播放列表">☰</button>
         </div>
+        <div class="music-volume-row">
+          <span id="music-volume-icon" aria-hidden="true">♪</span>
+          <input
+            class="music-volume"
+            id="music-volume"
+            type="range"
+            min="0"
+            max="100"
+            value="80"
+            step="1"
+            aria-label="播放音量"
+          />
+          <span id="music-volume-value">80%</span>
+        </div>
       </div>
       <audio id="music-audio" preload="metadata" src={musicTracks[0]?.src}></audio>
       <div class="music-list" id="music-list" hidden>

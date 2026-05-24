@@ -395,6 +395,38 @@ p {
   color: var(--text);
 }
 
+.music-volume-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 42px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.music-volume-row span {
+  line-height: 1;
+}
+
+.music-volume-row span:first-child {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.music-volume {
+  height: 18px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
 .music-list {
   grid-column: 1 / -1;
   display: grid;
