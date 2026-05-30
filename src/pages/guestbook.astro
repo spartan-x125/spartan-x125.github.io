@@ -1,0 +1,38 @@
+---
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import GiscusComments from "../components/GiscusComments.astro";
+import ProfileSidebar from "../components/ProfileSidebar.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { profile } from "../data/profile";
+import { backgroundImages } from "../data/backgroundImages";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="留言板" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>留言 | {profile.name}</title>
+    <ClientRouter />
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true" transition:persist></div>
+    <SiteHeader />
+    <main class="blog-layout">
+      <ProfileSidebar mode="about" />
+      <section class="feed" aria-labelledby="guestbook-title">
+        <p class="eyebrow">Guestbook</p>
+        <h1 id="guestbook-title">留言</h1>
+        <p class="page-description">欢迎在这里留下想说的话。评论系统使用 GitHub 账号登录。</p>
+        <GiscusComments title="留言区" term="guestbook" />
+      </section>
+    </main>
+    <SiteFooter />
+    <script is:inline src="/site.js"></script>
+  </body>
+</html>

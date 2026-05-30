@@ -279,6 +279,9 @@
     const tagButtons = Array.from(document.querySelectorAll(".tag-button"));
     const cards = Array.from(document.querySelectorAll(".post-card"));
     const emptyState = document.getElementById("empty-state");
+    const pagination = document.getElementById("post-pagination");
+    const sortToggle = document.getElementById("sort-toggle");
+    const pageSize = Number(document.getElementById("post-list")?.dataset.pageSize || 0);
     if (!searchInput || tagButtons.length === 0 || cards.length === 0) return;
     if (searchInput.dataset.ready === "true") return;
     searchInput.dataset.ready = "true";
@@ -286,14 +289,41 @@
     const params = new URLSearchParams(window.location.search);
     const tagFromUrl = params.get("tag");
     let activeTag = tagFromUrl || "all";
+    let currentPage = 1;
+    let sortOrder = sortToggle?.dataset.order || "desc";
 
     const normalize = (value) => value.trim().toLowerCase();
 
+    const renderPagination = (visibleCards) => {
+      if (!pagination || pageSize <= 0) return;
+      const pageCount = Math.max(Math.ceil(visibleCards.length / pageSize), 1);
+      currentPage = Math.min(currentPage, pageCount);
+      pagination.innerHTML = "";
+      if (pageCount <= 1) return;
+      for (let page = 1; page <= pageCount; page += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = String(page);
+        button.classList.toggle("is-active", page === currentPage);
+        button.addEventListener("click", () => {
+          currentPage = page;
+          filterPosts();
+        });
+        pagination.append(button);
+      }
+    };
+
     const filterPosts = () => {
       const query = normalize(searchInput.value);
-      let visibleCount = 0;
+      const visibleCards = [];
 
-      cards.forEach((card) => {
+      const sortedCards = [...cards].sort((a, b) => {
+        const diff = new Date(a.dataset.date).getTime() - new Date(b.dataset.date).getTime();
+        return sortOrder === "asc" ? diff : -diff;
+      });
+      sortedCards.forEach((card) => card.parentElement.append(card));
+
+      sortedCards.forEach((card) => {
         const haystack = [
           card.dataset.title,
           card.dataset.description,
@@ -304,18 +334,29 @@
           activeTag === "all" ||
           card.dataset.tags.includes(activeTag.toLowerCase());
         const visible = matchesQuery && matchesTag;
-        card.hidden = !visible;
-        if (visible) visibleCount += 1;
+        if (visible) visibleCards.push(card);
+        card.hidden = true;
       });
 
-      if (emptyState) emptyState.hidden = visibleCount !== 0;
+      const start = pageSize > 0 ? (currentPage - 1) * pageSize : 0;
+      const end = pageSize > 0 ? start + pageSize : visibleCards.length;
+      visibleCards.slice(start, end).forEach((card) => {
+        card.hidden = false;
+      });
+
+      renderPagination(visibleCards);
+      if (emptyState) emptyState.hidden = visibleCards.length !== 0;
     };
 
-    searchInput.addEventListener("input", filterPosts);
+    searchInput.addEventListener("input", () => {
+      currentPage = 1;
+      filterPosts();
+    });
     tagButtons.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.tag === activeTag);
       button.addEventListener("click", () => {
         activeTag = button.dataset.tag || "all";
+        currentPage = 1;
         tagButtons.forEach((item) => {
           item.classList.toggle("is-active", item === button);
         });
@@ -330,6 +371,14 @@
       });
     });
 
+    sortToggle?.addEventListener("click", () => {
+      sortOrder = sortOrder === "desc" ? "asc" : "desc";
+      sortToggle.dataset.order = sortOrder;
+      sortToggle.textContent = sortOrder === "desc" ? "新 → 旧" : "旧 → 新";
+      currentPage = 1;
+      filterPosts();
+    });
+
     if (!tagButtons.some((button) => button.classList.contains("is-active"))) {
       activeTag = "all";
       tagButtons[0]?.classList.add("is-active");
@@ -338,12 +387,41 @@
     filterPosts();
   }
 
+  function initLikes() {
+    document.querySelectorAll(".like-button").forEach((button) => {
+      if (button.dataset.ready === "true") return;
+      button.dataset.ready = "true";
+      const key = button.dataset.likeKey;
+      const countKey = `${key}-count`;
+      const likedKey = `${key}-liked`;
+      const count = button.querySelector("strong");
+
+      const render = () => {
+        const liked = localStorage.getItem(likedKey) === "true";
+        const value = Number(localStorage.getItem(countKey) || 0);
+        button.classList.toggle("is-liked", liked);
+        count.textContent = String(Math.max(value, 0));
+      };
+
+      button.addEventListener("click", () => {
+        const liked = localStorage.getItem(likedKey) === "true";
+        const value = Number(localStorage.getItem(countKey) || 0);
+        localStorage.setItem(likedKey, String(!liked));
+        localStorage.setItem(countKey, String(Math.max(value + (liked ? -1 : 1), 0)));
+        render();
+      });
+
+      render();
+    });
+  }
+
   function initPage() {
     initTheme();
     initBackground();
     initMusic();
     initReadingTools();
     initPostFilters();
+    initLikes();
   }
 
   document.addEventListener("DOMContentLoaded", initPage);

@@ -1,68 +1,58 @@
 ---
 import "../../styles/global.css";
 import { ClientRouter } from "astro:transitions";
+import GiscusComments from "../../components/GiscusComments.astro";
 import ProfileSidebar from "../../components/ProfileSidebar.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
-import { profile, backgroundImages } from "../../data/profile";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { profile } from "../../data/profile";
+import { backgroundImages } from "../../data/backgroundImages";
+import { getAllPosts } from "../../utils/posts";
 
 export async function getStaticPaths() {
-  const postModules = import.meta.glob("../../content/posts/*.md");
-  const posts = await Promise.all(
-    Object.entries(postModules).map(async ([path, loader]) => {
-      const post = await loader();
-      const slug = path.split("/").pop()?.replace(".md", "");
-      return { slug, post };
-    }),
-  );
+  const posts = await getAllPosts();
 
-  return posts
-    .filter(({ post }) => !post.frontmatter.draft)
-    .map(({ slug, post }) => ({
-      params: { slug },
-      props: { post },
-    }));
+  return posts.map((item, index) => ({
+    params: { slug: item.slug },
+    props: {
+      item,
+      previous: posts[index + 1] ?? null,
+      next: posts[index - 1] ?? null,
+    },
+  }));
 }
 
-const { post } = Astro.props;
+const { item, previous, next } = Astro.props;
+const { post } = item;
 const Content = post.Content ?? post.default;
-const title = `${post.frontmatter.title} | ${profile.name}`;
+const title = `${item.title} | ${profile.name}`;
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={post.frontmatter.description} />
+    <meta name="description" content={item.description} />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
-    <header class="topbar">
-      <a class="brand" href="/">{profile.title}</a>
-      <nav class="topnav" aria-label="站点导航">
-        <a href="/">首页</a>
-        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
-      </nav>
-    </header>
+    <SiteHeader />
     <main class="blog-layout">
-      <ProfileSidebar
-        mode="article"
-        title={post.frontmatter.title}
-        description={post.frontmatter.description}
-      />
+      <ProfileSidebar mode="article" title={item.title} description={item.description} />
       <article class="article-page">
-        <a class="back-link" href="/">← 返回首页</a>
-        <p class="post-date">{post.frontmatter.date}</p>
-        <h1>{post.frontmatter.title}</h1>
-        <p class="article-description">{post.frontmatter.description}</p>
+        <a class="back-link" href="/posts/">← 返回文章列表</a>
+        <p class="post-date">{item.date}</p>
+        <h1>{item.title}</h1>
+        <p class="article-description">{item.description}</p>
         <div class="tag-row article-tags" aria-label="文章标签">
           {
-            post.frontmatter.tags?.map((tag) => (
-              <a class="tag article-tag-link" href={`/?tag=${encodeURIComponent(tag)}`}>
+            item.tags?.map((tag) => (
+              <a class="tag article-tag-link" href={`/posts/?tag=${encodeURIComponent(tag)}`}>
                 {tag}
               </a>
             ))
@@ -71,6 +61,39 @@ const title = `${post.frontmatter.title} | ${profile.name}`;
         <div class="article-content">
           <Content />
         </div>
+
+        <nav class="article-actions" aria-label="文章操作">
+          <div class="article-action-left">
+            {
+              previous ? (
+                <a class="text-button" href={`/posts/${previous.slug}/`}>上一篇文章</a>
+              ) : (
+                <span class="text-button is-disabled">上一篇文章</span>
+              )
+            }
+            <a class="text-button" href="/posts/">返回文章列表</a>
+          </div>
+          <button
+            class="like-button"
+            type="button"
+            data-like-key={`post-like-${item.slug}`}
+            aria-label="点赞文章"
+          >
+            <span aria-hidden="true">♥</span>
+            <strong>0</strong>
+          </button>
+          <div class="article-action-right">
+            {
+              next ? (
+                <a class="text-button" href={`/posts/${next.slug}/`}>下一篇文章</a>
+              ) : (
+                <span class="text-button is-disabled">下一篇文章</span>
+              )
+            }
+          </div>
+        </nav>
+
+        <GiscusComments title="文章评论" term={`post-${item.slug}`} />
       </article>
     </main>
     <SiteFooter />

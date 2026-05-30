@@ -1,0 +1,46 @@
+---
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import ProfileSidebar from "../components/ProfileSidebar.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
+import { profile } from "../data/profile";
+import { backgroundImages } from "../data/backgroundImages";
+import { friendLinks } from "../data/friendLinks";
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="友情链接" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>友链 | {profile.name}</title>
+    <ClientRouter />
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true" transition:persist></div>
+    <SiteHeader />
+    <main class="blog-layout">
+      <ProfileSidebar mode="home" />
+      <section class="feed" aria-labelledby="friends-page-title">
+        <p class="eyebrow">Friends</p>
+        <h1 id="friends-page-title">友链</h1>
+        <div class="friend-list friend-list-wide">
+          {
+            friendLinks.map((friend) => (
+              <a class="friend-card" href={friend.url}>
+                <strong>{friend.name}</strong>
+                <span>{friend.description}</span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+    </main>
+    <SiteFooter />
+    <script is:inline src="/site.js"></script>
+  </body>
+</html>

@@ -3,7 +3,10 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
-import { profile, backgroundImages, friendLinks } from "../data/profile";
+import SiteHeader from "../components/SiteHeader.astro";
+import { profile } from "../data/profile";
+import { backgroundImages } from "../data/backgroundImages";
+import { friendLinks } from "../data/friendLinks";
 ---
 
 <!doctype html>
@@ -12,20 +15,14 @@ import { profile, backgroundImages, friendLinks } from "../data/profile";
     <meta charset="UTF-8" />
     <meta name="description" content={profile.bio} />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>{profile.about.heading} | {profile.name}</title>
     <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
-    <header class="topbar">
-      <a class="brand" href="/">{profile.title}</a>
-      <nav class="topnav" aria-label="站点导航">
-        <a href="/">首页</a>
-        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
-      </nav>
-    </header>
+    <SiteHeader />
 
     <main class="blog-layout">
       <ProfileSidebar mode="about" />

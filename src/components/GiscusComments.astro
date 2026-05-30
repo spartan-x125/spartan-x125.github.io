@@ -1,0 +1,48 @@
+---
+const {
+  term = "guestbook",
+  title = "评论",
+} = Astro.props;
+
+const giscus = {
+  repo: "spartan-x125/spartan-x125.github.io",
+  repoId: "",
+  category: "General",
+  categoryId: "",
+};
+const isConfigured = Boolean(giscus.repoId && giscus.categoryId);
+---
+
+<section class="comments-section" aria-labelledby="comments-title">
+  <div class="section-heading">
+    <p class="eyebrow">GitHub Comments</p>
+    <h2 id="comments-title">{title}</h2>
+  </div>
+  {
+    isConfigured ? (
+      <script
+        src="https://giscus.app/client.js"
+        data-repo={giscus.repo}
+        data-repo-id={giscus.repoId}
+        data-category={giscus.category}
+        data-category-id={giscus.categoryId}
+        data-mapping="specific"
+        data-term={term}
+        data-strict="0"
+        data-reactions-enabled="1"
+        data-emit-metadata="0"
+        data-input-position="top"
+        data-theme="preferred_color_scheme"
+        data-lang="zh-CN"
+        crossorigin="anonymous"
+        async
+      />
+    ) : (
+      <div class="comment-note">
+        <p>
+          评论区尚未启用。请先在 GitHub 仓库开启 Discussions，再配置 Giscus。
+        </p>
+      </div>
+    )
+  }
+</section>

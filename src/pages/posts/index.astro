@@ -1,0 +1,90 @@
+---
+import "../../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+import ProfileSidebar from "../../components/ProfileSidebar.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { profile } from "../../data/profile";
+import { backgroundImages } from "../../data/backgroundImages";
+import { getAllPosts, getPostTags } from "../../utils/posts";
+
+const posts = await getAllPosts();
+const tags = getPostTags(posts);
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="文章列表" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>文章 | {profile.name}</title>
+    <ClientRouter />
+  </head>
+  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+    <div class="background-layer" aria-hidden="true" transition:persist></div>
+    <SiteHeader />
+
+    <main class="blog-layout">
+      <ProfileSidebar mode="home" />
+
+      <section class="feed" aria-labelledby="posts-title">
+        <div class="feed-header">
+          <div>
+            <p class="eyebrow">Archive</p>
+            <h1 id="posts-title">文章</h1>
+          </div>
+          <div class="archive-tools">
+            <label class="search-box">
+              <span>搜索</span>
+              <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
+            </label>
+            <button class="text-button sort-toggle" id="sort-toggle" type="button" data-order="desc">
+              新 → 旧
+            </button>
+          </div>
+        </div>
+
+        <div class="tag-filter" aria-label="文章标签筛选">
+          <button class="tag-button is-active" type="button" data-tag="all">全部</button>
+          {tags.map((tag) => <button class="tag-button" type="button" data-tag={tag}>{tag}</button>)}
+        </div>
+
+        <div class="post-list" id="post-list" data-page-size="15">
+          {
+            posts.map((post) => (
+              <article
+                class="post-card"
+                data-title={(post.title ?? "").toLowerCase()}
+                data-description={(post.description ?? "").toLowerCase()}
+                data-tags={post.tags.join(" ").toLowerCase()}
+                data-date={post.date}
+              >
+                <a class="post-link" href={`/posts/${post.slug}/`}>
+                  <time datetime={post.date}>{post.date}</time>
+                  <h3>{post.title}</h3>
+                  <p>{post.description}</p>
+                </a>
+                <div class="tag-row post-card-tags" aria-label={`${post.title} 的标签`}>
+                  {
+                    post.tags.map((tag) => (
+                      <a class="tag post-tag-link" href={`/posts/?tag=${encodeURIComponent(tag)}`}>
+                        {tag}
+                      </a>
+                    ))
+                  }
+                </div>
+              </article>
+            ))
+          }
+        </div>
+        <p class="empty-state" id="empty-state" hidden>没有找到匹配的文章。</p>
+        <nav class="pagination" id="post-pagination" aria-label="文章分页"></nav>
+      </section>
+    </main>
+    <SiteFooter />
+    <script is:inline src="/site.js"></script>
+  </body>
+</html>

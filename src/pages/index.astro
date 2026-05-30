@@ -3,31 +3,13 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
-import { profile, backgroundImages, friendLinks } from "../data/profile";
+import SiteHeader from "../components/SiteHeader.astro";
+import { profile } from "../data/profile";
+import { backgroundImages } from "../data/backgroundImages";
+import { friendLinks } from "../data/friendLinks";
+import { getAllPosts } from "../utils/posts";
 
-const postModules = import.meta.glob("../content/posts/*.md");
-const posts = (
-  await Promise.all(
-    Object.entries(postModules).map(async ([path, loader]) => {
-      const post = await loader();
-      const slug = path.split("/").pop()?.replace(".md", "");
-      return {
-        slug,
-        title: post.frontmatter.title,
-        description: post.frontmatter.description ?? "",
-        date: post.frontmatter.date,
-        tags: post.frontmatter.tags ?? [],
-        draft: post.frontmatter.draft,
-      };
-    }),
-  )
-)
-  .filter((post) => !post.draft)
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b) =>
-  a.localeCompare(b, "zh-CN"),
-);
+const posts = (await getAllPosts()).slice(0, 10);
 ---
 
 <!doctype html>
@@ -36,7 +18,7 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
     <meta charset="UTF-8" />
     <meta name="description" content={profile.bio} />
     <meta name="viewport" content="width=device-width" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>{profile.name}</title>
     <ClientRouter />
@@ -44,13 +26,7 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
 
-    <header class="topbar">
-      <a class="brand" href="/">{profile.title}</a>
-      <nav class="topnav" aria-label="站点导航">
-        <a href="/">首页</a>
-        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换明暗模式">◐</button>
-      </nav>
-    </header>
+    <SiteHeader />
 
     <main class="blog-layout">
       <ProfileSidebar mode="home" />
@@ -61,26 +37,12 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
             <p class="eyebrow">Latest Notes</p>
             <h2 id="feed-title">最新文章</h2>
           </div>
-          <label class="search-box">
-            <span>搜索</span>
-            <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
-          </label>
         </div>
 
-        <div class="tag-filter" aria-label="文章标签筛选">
-          <button class="tag-button is-active" type="button" data-tag="all">全部</button>
-          {tags.map((tag) => <button class="tag-button" type="button" data-tag={tag}>{tag}</button>)}
-        </div>
-
-        <div class="post-list" id="post-list">
+        <div class="post-list">
           {
             posts.map((post) => (
-              <article
-                class="post-card"
-                data-title={(post.title ?? "").toLowerCase()}
-                data-description={(post.description ?? "").toLowerCase()}
-                data-tags={post.tags.join(" ").toLowerCase()}
-              >
+              <article class="post-card">
                 <a class="post-link" href={`/posts/${post.slug}/`}>
                   <time datetime={post.date}>{post.date}</time>
                   <h3>{post.title}</h3>
@@ -89,7 +51,7 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
                 <div class="tag-row post-card-tags" aria-label={`${post.title} 的标签`}>
                   {
                     post.tags.map((tag) => (
-                      <a class="tag post-tag-link" href={`/?tag=${encodeURIComponent(tag)}`}>
+                      <a class="tag post-tag-link" href={`/posts/?tag=${encodeURIComponent(tag)}`}>
                         {tag}
                       </a>
                     ))
@@ -99,7 +61,9 @@ const tags = Array.from(new Set(posts.flatMap((post) => post.tags))).sort((a, b)
             ))
           }
         </div>
-        <p class="empty-state" id="empty-state" hidden>没有找到匹配的推文。</p>
+        <div class="section-actions">
+          <a class="text-button" href="/posts/">全部文章</a>
+        </div>
 
         <section class="friends-section" aria-labelledby="friends-title">
           <p class="eyebrow">Friends</p>
