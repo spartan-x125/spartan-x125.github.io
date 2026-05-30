@@ -1,8 +1,8 @@
 ---
-title: "基于RVV的FFT运算加速"
+title: "使用RVV对音频信号频谱图绘制进行加速"
 description: "一点关于自己小项目的记录以及相关的一些学习笔记"
 date: "2026-05-17"
-tags: ["RVV", "嵌入式Linux", "risc-v", "FFT", "音频处理", "笔记"]
+tags: ["RVV","嵌入式Linux","risc-v","FFT","STFT","音频处理", "笔记"]
 draft: true
 ---
 
@@ -12,7 +12,9 @@ draft: true
 
 快速傅里叶变换时至今日依然在音频处理领域拥有重要地位，其时间复杂度为$O(nlogn)$，可以相对快速的得到音频信号频谱图象和数据，进而便于之后的信号分析和处理。但当需要对相对较大量的数据进行高速度要求的处理时，依然会捉襟见肘。实际上FFT拥有多种改进算法，但因为我菜的一批一个不会。此外，另一种提升性能的思路是在硬件层面上优化运算速度，比如使用向量处理器，也就是SIMD进行优化，比如x86架构的MMX，SSE，AVX指令集，或者RISC-V架构的RVV。本文的主要讨论使用RVV技术在RISC-V平台上进行加速。
 
-## 前置芝士之FFT
+## 开始之前，一些前置芝士
+
+### 前置芝士之FFT
 
 鉴于我比较懒，再加上我忘的差不多了，关于傅里叶变换以及DFT相关的芝士不在这里详细介绍，可以去看这个[知乎专栏](https://zhuanlan.zhihu.com/p/407885496)，这个[知乎回答](https://www.zhihu.com/question/20456490/answer/25440654)，或者直接上b站搜个数字信号处理的网课或者找本数字信号处理的教材，能把傅里叶级数，傅里叶变换，DTFT,DFS,DFT,FFT都讲一遍。下文主要写FFT是如何优化DFT的。
 
@@ -25,252 +27,65 @@ W_{N}^{nk}=W_{N}^{(N+n)k}=W_{N}^{(N+k)n}
 $$
 这两个性质一个叫对称性一个叫周期性。
 
-
-
-## 前置芝士之RVV
+### 前置芝士之RVV
 
 关于RVV，[这位大佬](https://www.cnblogs.com/sureZ-learning/category/2453794.html)的RVV系列非常的清晰明确，推荐大家去看。我这里就按我自己的理解大概掰扯一下，如有错误还烦请指正了，毕竟就是个学习笔记（
+
+#### SISD和SIMD
 
 在介绍RVV之前，我们需要了解SIMD的概念。SIMD是Single Instructions Mutiple Data的缩写，简单来说就是它执行一次加法能处理多个数据。与之对应的是传统的SISD，Single Instructions Single Data，一次加法一个数据。SIMD和SISD的区别是SIMD可以直接进行向量加法，而SIMD不行。比如我现在有两个向量$A[1,2,3,4]^{T}$和$B[5,6,7,8]^{T}$,我想对这两个向量进行相加。如果是SISD就需要进行$a_{11}+b_{11},a_{12}+b_{12},a_{13}+b_{13},a_{14}+b_{14}$四次加法，然后得到向量$C[6,8,10,12]^{T}$；但在SIMD中，我们可以直接$A+B=C$，直接一次加法得到向量$C$，节省了三次加法运算的时间，因而SIMD非常适合进行大量的简单计算。
 
 RVV，即RISC-V的向量扩展，是为RISC-V架构提供SIMD能力的一个指令集。与其它大部分的SIMD指令集有区别的是，RVV指令集支持动态向量长度——这得益于其可变向量长度寄存器。因此，我们可以直接控制其每次运算时处理的数据元素数量，提高效率的同时增强可移植性。
 
-## 一个实例:使用RVV加速对音频信号的FFT处理
+#### RVV的
+
+### RVV加速FFT
+
+知道了FFT和RVV的基本知识之后，如何用RVV加速FFT运算就很明显了，
+
+## 从FFT到STFT
+
+我们经过FFT后，可以将我们的音频信号从时域转换到频域，便于进行频率特征的分析。但如果我们想要知道这段音频信号中的某一部分的频率特征，或者对一个实时输入的音频信号进行一个实时的处理，我们便不能使用只能表示信号全局的频率特性的FFT了。但我们可以通过对原来的信号进行切分，然后对切分出来的每一小段进行FFT，就可以知道这一小段时间内信号的频率特性，将这些小段加起来我们就可以知道信号的频率特征和时间的关系。
+
+那么如何切分呢？只需要增加一个窗函数。我们设这个窗函数为$w(t)$，我们要提取出原始信号的一部分进行傅里叶变换，就是让这个信号乘上窗函数，再进行傅里叶变换。如果要知道整个信号频率随时间的变化，只需要让这个窗函数随着时间移动即可。我们知道傅里叶变换的公式是$\int_{-\infty}^{\infty}x(\tau)\cdot e^{-j\omega\tau}d\tau$，要得到STFT的公式只需要将按时间变化的窗函数放进去：
+$$
+STFT(t,\omega)=\int_{-\infty}^{\infty}x(\tau)w(t-\tau)\cdot e^{-j\omega\tau}d\tau
+$$
+在处理离散信号时，我们将STFT进行离散化，离散STFT的公式如下：
+$$
+STFT_{x}(n,k)=\sum_{m=0}^{N-1}x(n+m)w(m)\cdot e^{-j2\pi\frac{nk}{N}}
+$$
+至于代码实现，我们只需要对输入信号乘上一个窗函数，然后每帧计算FFT就可以了。
+
+## STFT的RVV加速
+
+在知道了STFT的原理和流程之后，我们就可以用RVV指令集加速STFT的计算了。但是，STFT在FFT的基础上，加入了时间的影响，因此，除了常规的对每帧做一个完整的RVV加速的FFT之外，我们还有另一种加速的思路：
+
+### 帧内向量化与多帧向量化
 
 
 
-```c++
-#include "fft.h"
+既然帧内向量化和多帧向量化各有优劣，那么小孩子才做选择，我们选择全都要。
 
-#include <algorithm>
-#include <cmath>
-#include <stdexcept>
+### 我全都要——自适应选择帧内向量化和多帧向量化
 
-#if defined(__riscv) && defined(__riscv_vector)
-#include <riscv_vector.h>
+为了实现代码自适应的选择优化方式，我们需要写一个用于判决的代码
 
-#if defined(__riscv_v_intrinsic)
-#define RVV_VSETVL_E64M1 __riscv_vsetvl_e64m1
-#define RVV_VLE64_V_F64M1 __riscv_vle64_v_f64m1
-#define RVV_VLSE64_V_F64M1 __riscv_vlse64_v_f64m1
-#define RVV_VFMUL_VV_F64M1 __riscv_vfmul_vv_f64m1
-#define RVV_VFADD_VV_F64M1 __riscv_vfadd_vv_f64m1
-#define RVV_VFSUB_VV_F64M1 __riscv_vfsub_vv_f64m1
-#define RVV_VSE64_V_F64M1 __riscv_vse64_v_f64m1
-#else
-#define RVV_VSETVL_E64M1 vsetvl_e64m1
-#define RVV_VLE64_V_F64M1 vle64_v_f64m1
-#define RVV_VLSE64_V_F64M1 vlse64_v_f64m1
-#define RVV_VFMUL_VV_F64M1 vfmul_vv_f64m1
-#define RVV_VFADD_VV_F64M1 vfadd_vv_f64m1
-#define RVV_VFSUB_VV_F64M1 vfsub_vv_f64m1
-#define RVV_VSE64_V_F64M1 vse64_v_f64m1
-#endif
-#endif
+## 频谱图绘制的RVV加速
 
-namespace fft {
-namespace {
-
-constexpr double kPi = 3.141592653589793238462643383279502884;
-
-bool IsPowerOfTwo(std::size_t value) {
-    return value != 0 && (value & (value - 1)) == 0;
-}
-
-void BitReversePermute(std::vector<Complex>& data) {
-    const std::size_t n = data.size();
-    std::size_t j = 0;
-    for (std::size_t i = 1; i < n; ++i) {
-        std::size_t bit = n >> 1;
-        while ((j & bit) != 0) {
-            j ^= bit;
-            bit >>= 1;
-        }
-        j ^= bit;
-        if (i < j) {
-            std::swap(data[i], data[j]);
-        }
-    }
-}
-
-void BitReversePermute(std::vector<double>& real, std::vector<double>& imag) {
-    const std::size_t n = real.size();
-    std::size_t j = 0;
-    for (std::size_t i = 1; i < n; ++i) {
-        std::size_t bit = n >> 1;
-        while ((j & bit) != 0) {
-            j ^= bit;
-            bit >>= 1;
-        }
-        j ^= bit;
-        if (i < j) {
-            std::swap(real[i], real[j]);
-            std::swap(imag[i], imag[j]);
-        }
-    }
-}
-
-void ScalarFftInPlace(std::vector<Complex>& data) {
-    const std::size_t n = data.size();
-    if (!IsPowerOfTwo(n)) {
-        throw std::invalid_argument("FFT input size must be a power of two");
-    }
-
-    BitReversePermute(data);
-
-    for (std::size_t len = 2; len <= n; len <<= 1) {
-        const double angle = -2.0 * kPi / static_cast<double>(len);
-        const Complex w_len(std::cos(angle), std::sin(angle));
-
-        for (std::size_t i = 0; i < n; i += len) {
-            Complex w(1.0, 0.0);
-            for (std::size_t j = 0; j < len / 2; ++j) {
-                const Complex u = data[i + j];
-                const Complex v = data[i + j + len / 2] * w;
-                data[i + j] = u + v;
-                data[i + j + len / 2] = u - v;
-                w *= w_len;
-            }
-        }
-    }
-}
-
-#if defined(__riscv) && defined(__riscv_vector)
-std::vector<Complex> RvvFft(const std::vector<double>& samples) {
-    const std::size_t n = NextPowerOfTwo(samples.size());
-    std::vector<double> real(n, 0.0);
-    std::vector<double> imag(n, 0.0);
-    std::copy(samples.begin(), samples.end(), real.begin());
-
-    BitReversePermute(real, imag);
-
-    std::vector<double> twiddle_real(n / 2);
-    std::vector<double> twiddle_imag(n / 2);
-    for (std::size_t k = 0; k < n / 2; ++k) {
-        const double angle = -2.0 * kPi * static_cast<double>(k) / static_cast<double>(n);
-        twiddle_real[k] = std::cos(angle);
-        twiddle_imag[k] = std::sin(angle);
-    }
-
-    for (std::size_t len = 2; len <= n; len <<= 1) {
-        const std::size_t half = len / 2;
-        const std::size_t step = n / len;
-        const ptrdiff_t twiddle_stride = static_cast<ptrdiff_t>(step * sizeof(double));
-
-        for (std::size_t i = 0; i < n; i += len) {
-            for (std::size_t j = 0; j < half;) {
-                const std::size_t vl = RVV_VSETVL_E64M1(half - j);
-
-                vfloat64m1_t upper_real = RVV_VLE64_V_F64M1(real.data() + i + j, vl);
-                vfloat64m1_t upper_imag = RVV_VLE64_V_F64M1(imag.data() + i + j, vl);
-                vfloat64m1_t lower_real = RVV_VLE64_V_F64M1(real.data() + i + j + half, vl);
-                vfloat64m1_t lower_imag = RVV_VLE64_V_F64M1(imag.data() + i + j + half, vl);
-                vfloat64m1_t wr = RVV_VLSE64_V_F64M1(twiddle_real.data() + j * step, twiddle_stride, vl);
-                vfloat64m1_t wi = RVV_VLSE64_V_F64M1(twiddle_imag.data() + j * step, twiddle_stride, vl);
-
-                vfloat64m1_t temp_real = RVV_VFSUB_VV_F64M1(
-                    RVV_VFMUL_VV_F64M1(lower_real, wr, vl),
-                    RVV_VFMUL_VV_F64M1(lower_imag, wi, vl),
-                    vl);
-                vfloat64m1_t temp_imag = RVV_VFADD_VV_F64M1(
-                    RVV_VFMUL_VV_F64M1(lower_real, wi, vl),
-                    RVV_VFMUL_VV_F64M1(lower_imag, wr, vl),
-                    vl);
-
-                RVV_VSE64_V_F64M1(real.data() + i + j, RVV_VFADD_VV_F64M1(upper_real, temp_real, vl), vl);
-                RVV_VSE64_V_F64M1(imag.data() + i + j, RVV_VFADD_VV_F64M1(upper_imag, temp_imag, vl), vl);
-                RVV_VSE64_V_F64M1(real.data() + i + j + half, RVV_VFSUB_VV_F64M1(upper_real, temp_real, vl), vl);
-                RVV_VSE64_V_F64M1(imag.data() + i + j + half, RVV_VFSUB_VV_F64M1(upper_imag, temp_imag, vl), vl);
-
-                j += vl;
-            }
-        }
-    }
-
-    std::vector<Complex> spectrum(n);
-    for (std::size_t i = 0; i < n; ++i) {
-        spectrum[i] = Complex(real[i], imag[i]);
-    }
-    return spectrum;
-}
-#endif
-
-}  // namespace
-
-bool IsRiscVTarget() {
-#if defined(__riscv)
-    return true;
-#else
-    return false;
-#endif
-}
-
-std::size_t NextPowerOfTwo(std::size_t value) {
-    if (value <= 1) {
-        return 1;
-    }
-    --value;
-    for (std::size_t shift = 1; shift < sizeof(std::size_t) * 8; shift <<= 1) {
-        value |= value >> shift;
-    }
-    return value + 1;
-}
-
-std::vector<Complex> ComputeFft(const std::vector<double>& samples) {
-    if (samples.empty()) {
-        throw std::invalid_argument("Cannot compute FFT for empty audio");
-    }
-
-#if defined(__riscv) && defined(__riscv_vector)
-    return RvvFft(samples);
-#else
-    std::vector<Complex> data(NextPowerOfTwo(samples.size()), Complex(0.0, 0.0));
-    for (std::size_t i = 0; i < samples.size(); ++i) {
-        data[i] = Complex(samples[i], 0.0);
-    }
-
-    ScalarFftInPlace(data);
-
-    return data;
-#endif
-}
-
-double MagnitudeAtFrequency(const std::vector<Complex>& spectrum,
-                            double sample_rate,
-                            double target_frequency,
-                            std::size_t* selected_bin,
-                            double* selected_frequency) {
-    if (spectrum.empty() || sample_rate <= 0.0 || target_frequency < 0.0) {
-        throw std::invalid_argument("Invalid spectrum or frequency parameters");
-    }
-
-    const std::size_t n = spectrum.size();
-    const std::size_t nyquist_bin = n / 2;
-    std::size_t bin = static_cast<std::size_t>(
-        std::llround(target_frequency * static_cast<double>(n) / sample_rate));
-    bin = std::min(bin, nyquist_bin);
-
-    if (selected_bin != nullptr) {
-        *selected_bin = bin;
-    }
-    if (selected_frequency != nullptr) {
-        *selected_frequency = static_cast<double>(bin) * sample_rate / static_cast<double>(n);
-    }
-
-    return std::abs(spectrum[bin]);
-}
-
-}  // namespace fft
-```
-
-## 进一步优化
-在实际测试中，对于一个采样点数量为5467224的一个音频文件，我在平台上对其进行了8388608点的基2-FFT，实际完成计算，结果生成和频谱图绘制的速度大约是28s。
-
+最后一部分是图像的绘制。
 
 ---
 参考资料：
 
 https://zhuanlan.zhihu.com/p/407885496
+
 https://www.zhihu.com/question/20456490/answer/25440654
+
 https://www.cnblogs.com/sureZ-learning/category/2453794.html
+
 https://zhuanlan.zhihu.com/p/1923673207967285839
+
+https://zhuanlan.zhihu.com/p/670085962
+
+https://zhuanlan.zhihu.com/p/1926657654450794920
