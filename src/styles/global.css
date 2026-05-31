@@ -432,8 +432,13 @@ p {
   grid-column: 1 / -1;
   display: grid;
   gap: 6px;
+  max-height: min(320px, 46vh);
+  overflow-y: auto;
   border-top: 1px solid var(--line);
   padding-top: 10px;
+  padding-right: 4px;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
 }
 
 .music-list[hidden] {
@@ -460,6 +465,15 @@ p {
 .music-list small {
   color: var(--muted);
   font-weight: 700;
+}
+
+.music-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.music-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .app-link {
@@ -538,6 +552,14 @@ p {
   margin-bottom: 18px;
 }
 
+.archive-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 .eyebrow {
   margin-bottom: 8px;
   color: var(--accent-strong);
@@ -567,18 +589,26 @@ p {
   width: min(320px, 100%);
 }
 
-.archive-search {
-  margin-bottom: 16px;
-}
-
 .sort-toggle {
-  align-self: start;
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 6px;
   border: 0;
-  padding: 2px 0;
+  padding: 0;
   background: transparent;
   color: var(--accent-strong);
   cursor: pointer;
   font-weight: 800;
+}
+
+.sort-toggle span {
+  font-size: 0.84rem;
+}
+
+.sort-toggle strong {
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .sort-toggle:hover,
@@ -1093,6 +1123,10 @@ code {
   .feed-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .archive-tools {
+    justify-content: stretch;
   }
 
   .search-box {

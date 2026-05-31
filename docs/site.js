@@ -429,7 +429,11 @@
     sortToggle?.addEventListener("click", () => {
       sortOrder = sortOrder === "desc" ? "asc" : "desc";
       sortToggle.dataset.order = sortOrder;
-      sortToggle.textContent = sortOrder === "desc" ? "新 → 旧" : "旧 → 新";
+      sortToggle.querySelector("strong").textContent = sortOrder === "desc" ? "↓" : "↑";
+      sortToggle.setAttribute(
+        "aria-label",
+        sortOrder === "desc" ? "时间排序：从新到旧" : "时间排序：从旧到新",
+      );
       currentPage = 1;
       filterPosts();
     });
