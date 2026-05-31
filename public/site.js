@@ -5,7 +5,10 @@
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     root.dataset.theme = savedTheme || (prefersDark ? "dark" : "light");
 
-    document.getElementById("theme-toggle")?.addEventListener("click", () => {
+    const toggle = document.getElementById("theme-toggle");
+    if (!toggle || toggle.dataset.ready === "true") return;
+    toggle.dataset.ready = "true";
+    toggle.addEventListener("click", () => {
       const next = root.dataset.theme === "dark" ? "light" : "dark";
       root.dataset.theme = next;
       localStorage.setItem("blog-theme", next);
@@ -16,7 +19,7 @@
   function updateGiscusTheme() {
     const theme =
       document.documentElement.dataset.theme === "dark"
-        ? "transparent_dark"
+        ? "dark_dimmed"
         : "noborder_light";
     document.querySelector(".giscus-frame")?.contentWindow?.postMessage(
       { giscus: { setConfig: { theme } } },
@@ -25,16 +28,26 @@
   }
 
   function initGiscusTheme() {
+    if (!document.querySelector(".comments-section")) return;
     updateGiscusTheme();
-    window.clearInterval(window.__giscusThemeTimer);
-    let attempts = 0;
-    window.__giscusThemeTimer = window.setInterval(() => {
-      attempts += 1;
-      updateGiscusTheme();
-      if (document.querySelector(".giscus-frame") || attempts >= 20) {
-        window.clearInterval(window.__giscusThemeTimer);
+    window.__giscusThemeObserver?.disconnect();
+    window.clearTimeout(window.__giscusThemeTimeout);
+    if (document.querySelector(".giscus-frame")) return;
+
+    window.__giscusThemeObserver = new MutationObserver(() => {
+      if (document.querySelector(".giscus-frame")) {
+        updateGiscusTheme();
+        window.__giscusThemeObserver.disconnect();
       }
-    }, 250);
+    });
+    window.__giscusThemeObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+    window.__giscusThemeTimeout = window.setTimeout(
+      () => window.__giscusThemeObserver?.disconnect(),
+      5000,
+    );
   }
 
   function initBackground() {

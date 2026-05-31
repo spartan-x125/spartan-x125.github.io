@@ -937,7 +937,16 @@ textarea {
 }
 
 .giscus {
+  overflow: hidden;
   margin-top: 16px;
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--surface-strong);
+  box-shadow: 0 8px 18px rgba(25, 32, 42, 0.08);
+}
+
+:root[data-theme="dark"] .giscus {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 .comment-note {
