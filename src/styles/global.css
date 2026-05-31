@@ -864,6 +864,10 @@ textarea {
   text-decoration: none;
 }
 
+.back-link.is-disabled {
+  opacity: 0.45;
+}
+
 .article-content {
   margin-top: 32px;
   border-top: 1px solid var(--line);
@@ -1134,7 +1138,6 @@ code {
     justify-content: stretch;
   }
 
-  .article-actions .text-button,
   .like-button {
     width: 100%;
   }

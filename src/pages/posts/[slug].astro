@@ -66,12 +66,11 @@ const title = `${item.title} | ${profile.name}`;
           <div class="article-action-left">
             {
               previous ? (
-                <a class="text-button" href={`/posts/${previous.slug}/`}>上一篇文章</a>
+                <a class="back-link" href={`/posts/${previous.slug}/`}>← 上一篇文章</a>
               ) : (
-                <span class="text-button is-disabled">上一篇文章</span>
+                <span class="back-link is-disabled">← 上一篇文章</span>
               )
             }
-            <a class="text-button" href="/posts/">返回文章列表</a>
           </div>
           <button
             class="like-button"
@@ -85,9 +84,9 @@ const title = `${item.title} | ${profile.name}`;
           <div class="article-action-right">
             {
               next ? (
-                <a class="text-button" href={`/posts/${next.slug}/`}>下一篇文章</a>
+                <a class="back-link" href={`/posts/${next.slug}/`}>下一篇文章 →</a>
               ) : (
-                <span class="text-button is-disabled">下一篇文章</span>
+                <span class="back-link is-disabled">下一篇文章 →</span>
               )
             }
           </div>
