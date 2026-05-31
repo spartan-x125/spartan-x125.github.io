@@ -36,16 +36,15 @@ const tags = getPostTags(posts);
             <p class="eyebrow">Archive</p>
             <h1 id="posts-title">文章</h1>
           </div>
-          <div class="archive-tools">
-            <label class="search-box">
-              <span>搜索</span>
-              <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
-            </label>
-            <button class="text-button sort-toggle" id="sort-toggle" type="button" data-order="desc">
-              新 → 旧
-            </button>
-          </div>
+          <button class="sort-toggle" id="sort-toggle" type="button" data-order="desc">
+            新 → 旧
+          </button>
         </div>
+
+        <label class="search-box archive-search">
+          <span>搜索</span>
+          <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
+        </label>
 
         <div class="tag-filter" aria-label="文章标签筛选">
           <button class="tag-button is-active" type="button" data-tag="all">全部</button>

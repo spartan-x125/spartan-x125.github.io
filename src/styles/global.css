@@ -538,14 +538,6 @@ p {
   margin-bottom: 18px;
 }
 
-.archive-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
 .eyebrow {
   margin-bottom: 8px;
   color: var(--accent-strong);
@@ -573,6 +565,27 @@ p {
 
 .search-box {
   width: min(320px, 100%);
+}
+
+.archive-search {
+  margin-bottom: 16px;
+}
+
+.sort-toggle {
+  align-self: start;
+  border: 0;
+  padding: 2px 0;
+  background: transparent;
+  color: var(--accent-strong);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.sort-toggle:hover,
+.sort-toggle:focus-visible {
+  color: var(--accent);
+  outline: none;
+  text-decoration: underline;
 }
 
 input,
@@ -1080,10 +1093,6 @@ code {
   .feed-header {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .archive-tools {
-    justify-content: stretch;
   }
 
   .search-box {
