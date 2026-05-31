@@ -7,6 +7,7 @@ import SiteFooter from "../../components/SiteFooter.astro";
 import SiteHeader from "../../components/SiteHeader.astro";
 import { profile } from "../../data/profile";
 import { backgroundImages } from "../../data/backgroundImages";
+import { likeService } from "../../data/likeService";
 import { getAllPosts } from "../../utils/posts";
 
 export async function getStaticPaths() {
@@ -76,6 +77,8 @@ const title = `${item.title} | ${profile.name}`;
             class="like-button"
             type="button"
             data-like-key={`post-like-${item.slug}`}
+            data-supabase-url={likeService.supabaseUrl}
+            data-supabase-key={likeService.supabaseKey}
             aria-label="点赞文章"
           >
             <span aria-hidden="true">♥</span>
@@ -96,6 +99,7 @@ const title = `${item.title} | ${profile.name}`;
       </article>
     </main>
     <SiteFooter />
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script is:inline src="/site.js"></script>
   </body>
 </html>

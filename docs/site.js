@@ -388,30 +388,82 @@
   }
 
   function initLikes() {
+    const createClient = window.supabase?.createClient;
     document.querySelectorAll(".like-button").forEach((button) => {
       if (button.dataset.ready === "true") return;
       button.dataset.ready = "true";
       const key = button.dataset.likeKey;
-      const countKey = `${key}-count`;
-      const likedKey = `${key}-liked`;
+      const supabaseUrl = button.dataset.supabaseUrl;
+      const supabaseKey = button.dataset.supabaseKey;
       const count = button.querySelector("strong");
+      const visitorStorageKey = "blog-like-visitor-id";
+      let visitorId = localStorage.getItem(visitorStorageKey);
 
-      const render = () => {
-        const liked = localStorage.getItem(likedKey) === "true";
-        const value = Number(localStorage.getItem(countKey) || 0);
+      if (!createClient || !supabaseUrl || !supabaseKey) {
+        button.disabled = true;
+        button.title = "实时点赞服务尚未配置";
+        return;
+      }
+
+      if (!visitorId) {
+        visitorId = crypto.randomUUID();
+        localStorage.setItem(visitorStorageKey, visitorId);
+      }
+
+      const client = createClient(supabaseUrl, supabaseKey);
+      const render = (value, liked) => {
         button.classList.toggle("is-liked", liked);
-        count.textContent = String(Math.max(value, 0));
+        count.textContent = String(Math.max(Number(value) || 0, 0));
       };
 
-      button.addEventListener("click", () => {
-        const liked = localStorage.getItem(likedKey) === "true";
-        const value = Number(localStorage.getItem(countKey) || 0);
-        localStorage.setItem(likedKey, String(!liked));
-        localStorage.setItem(countKey, String(Math.max(value + (liked ? -1 : 1), 0)));
-        render();
+      const loadLike = async () => {
+        const { data, error } = await client.rpc("get_article_like", {
+          target_post_key: key,
+          target_visitor_id: visitorId,
+        });
+        if (error) {
+          button.title = "暂时无法读取点赞数";
+          return;
+        }
+        render(data[0]?.like_count, data[0]?.liked);
+      };
+
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        const { data, error } = await client.rpc("toggle_article_like", {
+          target_post_key: key,
+          target_visitor_id: visitorId,
+        });
+        button.disabled = false;
+        if (error) {
+          button.title = "点赞失败，请稍后重试";
+          return;
+        }
+        render(data[0]?.like_count, data[0]?.liked);
       });
 
-      render();
+      const channel = client
+        .channel(`article-likes-${key}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "article_like_counts",
+            filter: `post_key=eq.${key}`,
+          },
+          (payload) => {
+            render(payload.new.like_count, button.classList.contains("is-liked"));
+          },
+        )
+        .subscribe();
+
+      document.addEventListener(
+        "astro:before-preparation",
+        () => client.removeChannel(channel),
+        { once: true },
+      );
+      loadLike();
     });
   }
 

@@ -925,6 +925,11 @@ textarea {
   color: #ffffff;
 }
 
+.like-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .comments-section {
   border-top: 1px solid var(--line);
   margin-top: 28px;
