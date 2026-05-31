@@ -108,7 +108,23 @@
 
   function initMusic() {
     const musicCard = document.querySelector(".music-card");
-    if (!musicCard || musicCard.dataset.ready === "true") return;
+    if (!musicCard) return;
+
+    const list = document.getElementById("music-list");
+    const updateListHeight = () => {
+      if (!list || list.hidden) return;
+      const listTop = list.getBoundingClientRect().top;
+      const availableHeight = window.innerHeight - listTop - 20;
+      const responsiveLimit = window.innerHeight * (window.innerWidth <= 560 ? 0.38 : 0.46);
+      list.style.maxHeight = `${Math.max(96, Math.min(320, responsiveLimit, availableHeight))}px`;
+    };
+
+    window.removeEventListener("resize", window.__musicListResizeHandler);
+    window.__musicListResizeHandler = updateListHeight;
+    window.addEventListener("resize", updateListHeight, { passive: true });
+    updateListHeight();
+
+    if (musicCard.dataset.ready === "true") return;
     musicCard.dataset.ready = "true";
 
     const tracks = JSON.parse(musicCard.dataset.tracks || "[]");
@@ -127,7 +143,6 @@
     const volumeIcon = document.getElementById("music-volume-icon");
     const volumeValue = document.getElementById("music-volume-value");
     const listToggle = document.getElementById("music-list-toggle");
-    const list = document.getElementById("music-list");
     const listButtons = Array.from(document.querySelectorAll("[data-track-index]"));
     let currentIndex = Number(localStorage.getItem("music-track-index") || 0);
     const modes = ["list", "shuffle", "repeat"];
@@ -250,6 +265,12 @@
 
     listToggle?.addEventListener("click", () => {
       list.hidden = !list.hidden;
+      if (!list.hidden) {
+        window.requestAnimationFrame(() => {
+          updateListHeight();
+          list.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        });
+      }
     });
 
     listButtons.forEach((button) => {

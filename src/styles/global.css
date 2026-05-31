@@ -434,10 +434,12 @@ p {
   gap: 6px;
   max-height: min(320px, 46vh);
   overflow-y: auto;
+  overscroll-behavior: contain;
   border-top: 1px solid var(--line);
   padding-top: 10px;
   padding-right: 4px;
   scrollbar-color: var(--accent) transparent;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 
@@ -469,6 +471,10 @@ p {
 
 .music-list::-webkit-scrollbar {
   width: 6px;
+}
+
+.music-list::-webkit-scrollbar-track {
+  background: rgba(127, 127, 127, 0.12);
 }
 
 .music-list::-webkit-scrollbar-thumb {
@@ -1188,6 +1194,10 @@ code {
     width: 32px;
     height: 32px;
     flex-basis: 32px;
+  }
+
+  .music-list {
+    max-height: min(240px, 38vh);
   }
 
   .article-actions {
