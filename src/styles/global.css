@@ -936,6 +936,10 @@ textarea {
   padding-top: 24px;
 }
 
+.giscus {
+  margin-top: 16px;
+}
+
 .comment-note {
   border: 1px solid var(--line);
   border-radius: 8px;

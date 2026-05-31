@@ -9,7 +9,32 @@
       const next = root.dataset.theme === "dark" ? "light" : "dark";
       root.dataset.theme = next;
       localStorage.setItem("blog-theme", next);
+      updateGiscusTheme();
     });
+  }
+
+  function updateGiscusTheme() {
+    const theme =
+      document.documentElement.dataset.theme === "dark"
+        ? "transparent_dark"
+        : "noborder_light";
+    document.querySelector(".giscus-frame")?.contentWindow?.postMessage(
+      { giscus: { setConfig: { theme } } },
+      "https://giscus.app",
+    );
+  }
+
+  function initGiscusTheme() {
+    updateGiscusTheme();
+    window.clearInterval(window.__giscusThemeTimer);
+    let attempts = 0;
+    window.__giscusThemeTimer = window.setInterval(() => {
+      attempts += 1;
+      updateGiscusTheme();
+      if (document.querySelector(".giscus-frame") || attempts >= 20) {
+        window.clearInterval(window.__giscusThemeTimer);
+      }
+    }, 250);
   }
 
   function initBackground() {
@@ -398,15 +423,42 @@
       const count = button.querySelector("strong");
       const visitorStorageKey = "blog-like-visitor-id";
       let visitorId = localStorage.getItem(visitorStorageKey);
+      const createVisitorId = () => {
+        const browserCrypto = window.crypto;
+        if (browserCrypto?.randomUUID) return browserCrypto.randomUUID();
+        const bytes = new Uint8Array(16);
+        if (browserCrypto?.getRandomValues) {
+          browserCrypto.getRandomValues(bytes);
+        } else {
+          for (let index = 0; index < bytes.length; index += 1) {
+            bytes[index] = Math.floor(Math.random() * 256);
+          }
+        }
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"));
+        return [
+          hex.slice(0, 4).join(""),
+          hex.slice(4, 6).join(""),
+          hex.slice(6, 8).join(""),
+          hex.slice(8, 10).join(""),
+          hex.slice(10, 16).join(""),
+        ].join("-");
+      };
+      const showError = (message) => {
+        count.textContent = "!";
+        button.title = message;
+        button.setAttribute("aria-label", message);
+      };
 
       if (!createClient || !supabaseUrl || !supabaseKey) {
         button.disabled = true;
-        button.title = "实时点赞服务尚未配置";
+        showError("实时点赞服务加载失败");
         return;
       }
 
       if (!visitorId) {
-        visitorId = crypto.randomUUID();
+        visitorId = createVisitorId();
         localStorage.setItem(visitorStorageKey, visitorId);
       }
 
@@ -414,15 +466,18 @@
       const render = (value, liked) => {
         button.classList.toggle("is-liked", liked);
         count.textContent = String(Math.max(Number(value) || 0, 0));
+        button.title = liked ? "取消点赞" : "点赞文章";
+        button.setAttribute("aria-label", button.title);
       };
 
       const loadLike = async () => {
+        count.textContent = "…";
         const { data, error } = await client.rpc("get_article_like", {
           target_post_key: key,
           target_visitor_id: visitorId,
         });
         if (error) {
-          button.title = "暂时无法读取点赞数";
+          showError("暂时无法读取点赞数，请确认 Supabase SQL 已执行");
           return;
         }
         render(data[0]?.like_count, data[0]?.liked);
@@ -436,7 +491,7 @@
         });
         button.disabled = false;
         if (error) {
-          button.title = "点赞失败，请稍后重试";
+          showError("点赞失败，请稍后重试");
           return;
         }
         render(data[0]?.like_count, data[0]?.liked);
@@ -469,6 +524,7 @@
 
   function initPage() {
     initTheme();
+    initGiscusTheme();
     initBackground();
     initMusic();
     initReadingTools();

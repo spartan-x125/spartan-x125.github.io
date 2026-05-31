@@ -40,9 +40,9 @@ begin
     delete from public.article_like_votes
     where post_key = target_post_key and visitor_id = target_visitor_id;
 
-    update public.article_like_counts
-    set like_count = greatest(like_count - 1, 0), updated_at = now()
-    where post_key = target_post_key;
+    update public.article_like_counts as counts
+    set like_count = greatest(counts.like_count - 1, 0), updated_at = now()
+    where counts.post_key = target_post_key;
 
     return query
     select counts.like_count, false
@@ -52,9 +52,9 @@ begin
     insert into public.article_like_votes (post_key, visitor_id)
     values (target_post_key, target_visitor_id);
 
-    update public.article_like_counts
-    set like_count = like_count + 1, updated_at = now()
-    where post_key = target_post_key;
+    update public.article_like_counts as counts
+    set like_count = counts.like_count + 1, updated_at = now()
+    where counts.post_key = target_post_key;
 
     return query
     select counts.like_count, true
