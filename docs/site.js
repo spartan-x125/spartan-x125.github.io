@@ -72,7 +72,7 @@
     const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
     if (!layer || backgrounds.length === 0) return;
 
-    const thirtyMinutes = 30 * 60 * 1000;
+    const tenMinutes = 10 * 60 * 1000;
     const storageKey = "blog-background-state";
     const applyBackground = (index) => {
       layer.style.backgroundImage = `url("${backgrounds[index]}")`;
@@ -95,7 +95,7 @@
       saved &&
       Number.isInteger(saved.index) &&
       backgrounds[saved.index] &&
-      Date.now() - saved.changedAt < thirtyMinutes
+      Date.now() - saved.changedAt < tenMinutes
     ) {
       applyBackground(saved.index);
     } else {
@@ -103,7 +103,7 @@
     }
 
     window.clearInterval(window.__blogBackgroundTimer);
-    window.__blogBackgroundTimer = window.setInterval(setBackground, thirtyMinutes);
+    window.__blogBackgroundTimer = window.setInterval(setBackground, tenMinutes);
   }
 
   function initMusic() {
