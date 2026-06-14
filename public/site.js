@@ -399,11 +399,19 @@
     const button = document.getElementById("back-to-top");
     if (!button) return;
 
+    const isDockedButton = Boolean(button.closest(".sidebar-action-dock"));
     const updateVisibility = () => {
       const isVisible = window.scrollY > 260;
       button.classList.toggle("is-visible", isVisible);
-      button.tabIndex = isVisible ? 0 : -1;
-      button.setAttribute("aria-hidden", String(!isVisible));
+      button.classList.toggle("is-at-top", !isVisible);
+
+      if (isDockedButton) {
+        button.tabIndex = 0;
+        button.setAttribute("aria-hidden", "false");
+      } else {
+        button.tabIndex = isVisible ? 0 : -1;
+        button.setAttribute("aria-hidden", String(!isVisible));
+      }
     };
 
     window.__backToTopHandler = updateVisibility;

@@ -9,22 +9,23 @@ const {
 } = Astro.props;
 ---
 
-<aside class="profile-card" aria-label="侧边栏">
-  <button
-    class="sidebar-position-toggle"
-    type="button"
-    data-sidebar-position-toggle
-    aria-label="切换侧边栏位置"
-    title="切换侧边栏位置"
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4 5.5h16" />
-      <path d="M4 18.5h16" />
-      <path d="M7 8.5v7" />
-      <path d="M12 9l-3.5 3 3.5 3" />
-      <path d="M15 8.5h2.5a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H15" />
-    </svg>
-  </button>
+<div class="sidebar-column">
+  <aside class="profile-card" aria-label="侧边栏">
+    <button
+      class="sidebar-position-toggle"
+      type="button"
+      data-sidebar-position-toggle
+      aria-label="切换侧边栏位置"
+      title="切换侧边栏位置"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5.5h16" />
+        <path d="M4 18.5h16" />
+        <path d="M7 8.5v7" />
+        <path d="M12 9l-3.5 3 3.5 3" />
+        <path d="M15 8.5h2.5a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H15" />
+      </svg>
+    </button>
 
   <div class="profile-summary">
     <img class="avatar" src={profile.avatar} alt={`${profile.name} 的头像`} />
@@ -141,4 +142,21 @@ const {
       </div>
     </div>
   </section>
-</aside>
+  </aside>
+
+  {
+    mode === "article" && (
+      <div class="sidebar-action-dock" aria-label="文章快捷操作">
+        <button
+          class="floating-action-button sidebar-back-to-top back-to-top-button"
+          id="back-to-top"
+          type="button"
+          aria-label="回到顶部"
+          title="回到顶部"
+        >
+          <span aria-hidden="true">↑</span>
+        </button>
+      </div>
+    )
+  }
+</div>
