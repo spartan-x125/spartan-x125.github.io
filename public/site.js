@@ -106,6 +106,46 @@
     window.__blogBackgroundTimer = window.setInterval(setBackground, tenMinutes);
   }
 
+  function initSidebarLayout() {
+    const layouts = Array.from(document.querySelectorAll(".blog-layout"));
+    if (layouts.length === 0) return;
+
+    const storageKey = "blog-sidebar-position";
+    const toggle = document.querySelector("[data-sidebar-position-toggle]");
+    const getSavedPosition = () =>
+      localStorage.getItem(storageKey) === "right" ? "right" : "left";
+    const applyPosition = (position) => {
+      const isRight = position === "right";
+      layouts.forEach((layout) => {
+        layout.classList.toggle("is-sidebar-right", isRight);
+      });
+      document.documentElement.dataset.sidebarPosition = isRight ? "right" : "left";
+
+      if (!toggle) return;
+      toggle.classList.toggle("is-right", isRight);
+      const label = isRight
+        ? "侧边栏在右侧，点击移到左侧"
+        : "侧边栏在左侧，点击移到右侧";
+      toggle.title = label;
+      toggle.setAttribute("aria-label", label);
+    };
+
+    applyPosition(getSavedPosition());
+
+    if (!toggle || toggle.dataset.ready === "true") return;
+    toggle.dataset.ready = "true";
+    toggle.addEventListener("click", () => {
+      const current = layouts.some((layout) =>
+        layout.classList.contains("is-sidebar-right"),
+      )
+        ? "right"
+        : "left";
+      const next = current === "right" ? "left" : "right";
+      localStorage.setItem(storageKey, next);
+      applyPosition(next);
+    });
+  }
+
   function initMusic() {
     const musicCard = document.querySelector(".music-card");
     if (!musicCard) return;
@@ -350,6 +390,42 @@
     updateProgress();
   }
 
+  function initBackToTop() {
+    if (window.__backToTopHandler) {
+      window.removeEventListener("scroll", window.__backToTopHandler);
+      window.__backToTopHandler = null;
+    }
+
+    const button = document.getElementById("back-to-top");
+    if (!button) return;
+
+    const updateVisibility = () => {
+      const isVisible = window.scrollY > 260;
+      button.classList.toggle("is-visible", isVisible);
+      button.tabIndex = isVisible ? 0 : -1;
+      button.setAttribute("aria-hidden", String(!isVisible));
+    };
+
+    window.__backToTopHandler = updateVisibility;
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    updateVisibility();
+
+    if (button.dataset.ready === "true") return;
+    button.dataset.ready = "true";
+    button.addEventListener("click", () => {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      button.classList.add("is-lifting");
+      window.clearTimeout(window.__backToTopAnimationTimer);
+      window.__backToTopAnimationTimer = window.setTimeout(() => {
+        button.classList.remove("is-lifting");
+      }, 560);
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? "auto" : "smooth",
+      });
+    });
+  }
+
   function initPostFilters() {
     const searchInput = document.getElementById("post-search");
     const tagButtons = Array.from(document.querySelectorAll(".tag-button"));
@@ -581,8 +657,10 @@
     initTheme();
     initGiscus();
     initBackground();
+    initSidebarLayout();
     initMusic();
     initReadingTools();
+    initBackToTop();
     initPostFilters();
     initLikes();
   }

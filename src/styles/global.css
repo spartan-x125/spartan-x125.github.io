@@ -141,6 +141,24 @@ textarea {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
   padding: 40px 0 56px;
+  transition: grid-template-columns 220ms ease;
+}
+
+.blog-layout > :not(.profile-card) {
+  min-width: 0;
+}
+
+.blog-layout.is-sidebar-right {
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.blog-layout.is-sidebar-right .profile-card {
+  grid-column: 2;
+}
+
+.blog-layout.is-sidebar-right > :not(.profile-card) {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .profile-card,
@@ -160,7 +178,82 @@ textarea {
   position: sticky;
   top: 86px;
   align-self: start;
+  isolation: isolate;
   padding: 26px;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.profile-summary {
+  padding-right: 48px;
+}
+
+.sidebar-position-toggle,
+.floating-action-button {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-strong);
+  box-shadow: 0 10px 24px rgba(25, 32, 42, 0.14);
+  color: var(--text);
+  cursor: pointer;
+  backdrop-filter: blur(2px) saturate(1.04);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.sidebar-position-toggle {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+}
+
+.sidebar-position-toggle svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transition: transform 220ms ease;
+}
+
+.sidebar-position-toggle.is-right svg,
+.blog-layout.is-sidebar-right .sidebar-position-toggle svg {
+  transform: scaleX(-1);
+}
+
+.sidebar-position-toggle:hover,
+.sidebar-position-toggle:focus-visible,
+.floating-action-button.is-visible:hover,
+.floating-action-button:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 14px 30px rgba(25, 32, 42, 0.2);
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.sidebar-position-toggle:active,
+.floating-action-button:active {
+  transform: translateY(0) scale(0.96);
+}
+
+:root[data-theme="dark"] .sidebar-position-toggle,
+:root[data-theme="dark"] .floating-action-button {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
 }
 
 .avatar {
@@ -979,6 +1072,57 @@ textarea {
   opacity: 0.62;
 }
 
+.article-floating-tools {
+  position: fixed;
+  right: max(18px, calc((100vw - 1180px) / 2));
+  bottom: 28px;
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+:root[data-sidebar-position="right"] .article-floating-tools {
+  right: auto;
+  left: max(18px, calc((100vw - 1180px) / 2));
+}
+
+.floating-action-button {
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px) scale(0.92);
+}
+
+.floating-action-button.is-visible {
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.floating-action-button span {
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.back-to-top-button.is-lifting span {
+  animation: back-to-top-lift 520ms ease;
+}
+
+@keyframes back-to-top-lift {
+  0% {
+    transform: translateY(0);
+  }
+
+  45% {
+    transform: translateY(-5px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
 .comments-section {
   border-top: 1px solid var(--line);
   margin-top: 28px;
@@ -1117,13 +1261,38 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .blog-layout.is-sidebar-right {
+    grid-template-columns: 1fr;
+  }
+
+  .blog-layout.is-sidebar-right .profile-card,
+  .blog-layout.is-sidebar-right > :not(.profile-card) {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
   .profile-card {
     position: static;
+  }
+
+  .profile-summary {
+    padding-right: 0;
+  }
+
+  .sidebar-position-toggle {
+    display: none;
   }
 
   .music-card {
     display: grid;
     width: 100%;
+  }
+
+  .article-floating-tools,
+  :root[data-sidebar-position="right"] .article-floating-tools {
+    right: 16px;
+    bottom: 18px;
+    left: auto;
   }
 
   .feed-header {
@@ -1200,6 +1369,11 @@ code {
     max-height: min(240px, 38vh);
   }
 
+  .floating-action-button {
+    width: 40px;
+    height: 40px;
+  }
+
   .article-actions {
     grid-template-columns: 1fr;
   }
@@ -1211,5 +1385,22 @@ code {
 
   .like-button {
     width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .blog-layout,
+  .sidebar-position-toggle,
+  .sidebar-position-toggle svg,
+  .floating-action-button {
+    transition: none;
+  }
+
+  .back-to-top-button.is-lifting span {
+    animation: none;
   }
 }
