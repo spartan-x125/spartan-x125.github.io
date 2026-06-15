@@ -161,9 +161,49 @@ textarea {
   grid-row: 1;
 }
 
+.article-layout {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 820px) minmax(220px, 280px);
+  gap: 24px;
+  align-items: start;
+  width: min(1440px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 56px;
+}
+
+.article-layout > .sidebar-column {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.article-layout > .article-page {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.article-layout > .article-reading-card {
+  grid-column: 3;
+  min-width: 0;
+}
+
+.article-layout.is-sidebar-right > .sidebar-column {
+  grid-column: 3;
+}
+
+.article-layout.is-sidebar-right > .article-reading-card {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.article-layout.is-sidebar-right > .article-page {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .profile-card,
 .feed,
 .article-page,
+.article-reading-card,
 .studio-intro,
 .editor-panel,
 .manager-panel {
@@ -237,7 +277,8 @@ textarea {
 }
 
 .sidebar-position-toggle.is-right svg,
-.blog-layout.is-sidebar-right .sidebar-position-toggle svg {
+.blog-layout.is-sidebar-right .sidebar-position-toggle svg,
+.article-layout.is-sidebar-right .sidebar-position-toggle svg {
   transform: scaleX(-1);
 }
 
@@ -341,13 +382,17 @@ p {
 
 .music-card {
   display: grid;
-  gap: 10px;
-  margin-top: 24px;
+  gap: 8px;
+  margin-top: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 14px;
+  padding: 13px;
   background: var(--surface-strong);
   overflow: hidden;
+}
+
+.music-heading .eyebrow {
+  margin-bottom: 0;
 }
 
 .side-panel {
@@ -408,51 +453,119 @@ p {
   font-size: 0.82rem;
 }
 
+.article-reading-card {
+  position: sticky;
+  top: 86px;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 14px;
+  max-height: calc(100vh - 112px);
+  overflow: hidden;
+  padding: 22px;
+}
+
+.article-reading-heading {
+  min-width: 0;
+}
+
+.article-reading-heading h2,
+.article-reading-heading p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+}
+
+.article-reading-heading h2 {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+  line-height: 1.38;
+  -webkit-line-clamp: 4;
+}
+
+.article-reading-heading p {
+  margin-bottom: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 520;
+  line-height: 1.55;
+  -webkit-line-clamp: 4;
+}
+
+.article-reading-card .reading-toc {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+.article-reading-card .reading-toc::-webkit-scrollbar {
+  width: 6px;
+}
+
+.article-reading-card .reading-toc::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
 .music-player {
   display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: 60px minmax(0, 1fr);
+  grid-template-areas:
+    "cover info"
+    "progress progress"
+    "controls controls"
+    "volume volume"
+    "list list";
+  gap: 10px 12px;
   width: 100%;
   min-width: 0;
   align-items: center;
 }
 
 .music-cover {
+  grid-area: cover;
   display: block;
-  width: 76px;
-  height: 76px;
+  width: 60px;
+  height: 60px;
   border: 1px solid var(--line);
   border-radius: 8px;
   object-fit: cover;
 }
 
 .music-info {
+  grid-area: info;
   min-width: 0;
 }
 
 .music-info h2 {
+  display: -webkit-box;
   overflow: hidden;
-  margin-bottom: 4px;
-  font-size: 1.05rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin-bottom: 5px;
+  font-size: 1rem;
+  line-height: 1.24;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .music-info p {
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 620;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .music-progress-row {
+  grid-area: progress;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: 34px minmax(0, 1fr) 40px;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 700;
@@ -465,17 +578,19 @@ p {
 }
 
 .music-controls {
-  display: flex;
-  flex-wrap: wrap;
+  grid-area: controls;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 8px;
-  margin-top: 9px;
+  align-items: center;
 }
 
 .music-controls button {
   display: grid;
-  width: 34px;
+  width: 100%;
+  max-width: 36px;
   height: 34px;
-  flex: 0 0 34px;
+  justify-self: center;
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -483,6 +598,22 @@ p {
   color: var(--text);
   cursor: pointer;
   font-weight: 800;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease,
+    transform 160ms ease;
+}
+
+.music-controls button:hover,
+.music-controls button:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+#music-play {
+  max-width: 38px;
+  height: 38px;
 }
 
 .music-controls button.is-active {
@@ -498,11 +629,11 @@ p {
 }
 
 .music-volume-row {
+  grid-area: volume;
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) 42px;
   align-items: center;
   gap: 8px;
-  margin-top: 9px;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
@@ -530,18 +661,22 @@ p {
 }
 
 .music-list {
-  grid-column: 1 / -1;
+  grid-area: list;
   display: grid;
   gap: 6px;
-  max-height: min(320px, 46vh);
+  max-height: min(240px, 34vh);
   overflow-y: auto;
   overscroll-behavior: contain;
   border-top: 1px solid var(--line);
-  padding-top: 10px;
+  padding-top: 8px;
   padding-right: 4px;
   scrollbar-color: var(--accent) transparent;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+
+.music-player audio {
+  display: none;
 }
 
 .music-list[hidden] {
@@ -1023,6 +1158,43 @@ textarea {
   border-top: 1px solid var(--line);
   padding-top: 26px;
   line-height: 1.85;
+  overflow-wrap: break-word;
+}
+
+.article-content table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border-collapse: collapse;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
+}
+
+.article-content table::-webkit-scrollbar {
+  height: 7px;
+}
+
+.article-content table::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+.article-content th,
+.article-content td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  vertical-align: top;
+}
+
+.article-content th {
+  background: var(--surface-strong);
+  color: var(--accent-strong);
+}
+
+.article-content td {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .article-actions {
@@ -1086,6 +1258,21 @@ textarea {
   transform: translateY(10px) scale(0.92);
 }
 
+.article-floating-back-to-top {
+  position: fixed;
+  left: max(22px, calc((100vw - 820px) / 2 - 86px));
+  bottom: 28px;
+  z-index: 20;
+  width: 52px;
+  height: 52px;
+  box-shadow: 0 14px 30px rgba(25, 32, 42, 0.18);
+}
+
+:root[data-sidebar-position="right"] .article-floating-back-to-top {
+  right: max(22px, calc((100vw - 820px) / 2 - 86px));
+  left: auto;
+}
+
 .sidebar-action-dock {
   display: grid;
   grid-template-columns: minmax(44px, 1fr) auto;
@@ -1101,18 +1288,21 @@ textarea {
   content: "";
 }
 
-.blog-layout.is-sidebar-right .sidebar-action-dock {
+.blog-layout.is-sidebar-right .sidebar-action-dock,
+.article-layout.is-sidebar-right .sidebar-action-dock {
   grid-template-columns: auto minmax(44px, 1fr);
   padding: 0 28px 0 8px;
 }
 
-.blog-layout.is-sidebar-right .sidebar-action-dock::before {
+.blog-layout.is-sidebar-right .sidebar-action-dock::before,
+.article-layout.is-sidebar-right .sidebar-action-dock::before {
   grid-column: 2;
   grid-row: 1;
   background: linear-gradient(90deg, var(--line), transparent);
 }
 
-.blog-layout.is-sidebar-right .sidebar-action-dock .floating-action-button {
+.blog-layout.is-sidebar-right .sidebar-action-dock .floating-action-button,
+.article-layout.is-sidebar-right .sidebar-action-dock .floating-action-button {
   grid-column: 1;
   grid-row: 1;
 }
@@ -1301,6 +1491,45 @@ code {
   font-weight: 700;
 }
 
+@media (max-width: 1180px) {
+  .article-layout,
+  .article-layout.is-sidebar-right {
+    grid-template-columns: 1fr;
+    width: min(100% - 32px, 860px);
+  }
+
+  .article-layout > .article-page,
+  .article-layout > .article-reading-card,
+  .article-layout > .sidebar-column,
+  .article-layout.is-sidebar-right > .article-page,
+  .article-layout.is-sidebar-right > .article-reading-card,
+  .article-layout.is-sidebar-right > .sidebar-column {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .article-layout > .article-page {
+    order: 1;
+  }
+
+  .article-layout > .article-reading-card {
+    order: 2;
+  }
+
+  .article-layout > .sidebar-column {
+    order: 3;
+  }
+
+  .article-reading-card {
+    position: static;
+    max-height: none;
+  }
+
+  .article-reading-card .reading-toc {
+    max-height: 280px;
+  }
+}
+
 @media (max-width: 860px) {
   .blog-layout,
   .studio-grid {
@@ -1354,6 +1583,15 @@ code {
     border-radius: 50%;
   }
 
+  .article-floating-back-to-top,
+  :root[data-sidebar-position="right"] .article-floating-back-to-top {
+    right: 16px;
+    bottom: 18px;
+    left: auto;
+    width: 42px;
+    height: 42px;
+  }
+
   .feed-header {
     align-items: stretch;
     flex-direction: column;
@@ -1380,6 +1618,7 @@ code {
   }
 
   .blog-layout,
+  .article-layout,
   .article-shell,
   .studio-shell {
     width: min(100% - 20px, 980px);
@@ -1389,6 +1628,7 @@ code {
   .feed,
   .profile-card,
   .article-page,
+  .article-reading-card,
   .studio-intro,
   .editor-panel,
   .manager-panel {
@@ -1405,27 +1645,31 @@ code {
   }
 
   .music-player {
-    grid-template-columns: 64px minmax(0, 1fr);
-    gap: 10px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 9px 10px;
   }
 
   .music-cover {
-    width: 64px;
-    height: 64px;
+    width: 56px;
+    height: 56px;
   }
 
   .music-controls {
-    gap: 7px;
+    gap: 6px;
   }
 
   .music-controls button {
     width: 32px;
     height: 32px;
-    flex-basis: 32px;
+  }
+
+  #music-play {
+    width: 36px;
+    height: 36px;
   }
 
   .music-list {
-    max-height: min(240px, 38vh);
+    max-height: min(220px, 34vh);
   }
 
   .floating-action-button {

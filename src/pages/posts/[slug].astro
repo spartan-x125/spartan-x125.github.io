@@ -43,8 +43,8 @@ const title = `${item.title} | ${profile.name}`;
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
-    <main class="blog-layout">
-      <ProfileSidebar mode="article" title={item.title} description={item.description} />
+    <main class="article-layout">
+      <ProfileSidebar mode="article" />
       <article class="article-page">
         <a class="back-link" href="/posts/">← 返回文章列表</a>
         <p class="post-date">{item.date}</p>
@@ -97,9 +97,29 @@ const title = `${item.title} | ${profile.name}`;
 
         <GiscusComments title="文章评论" term={`post-${item.slug}`} />
       </article>
+      <aside class="article-reading-card" aria-labelledby="reading-title">
+        <div class="article-reading-heading">
+          <p class="eyebrow">Reading</p>
+          <h2 id="reading-title">{item.title}</h2>
+          <p>{item.description}</p>
+        </div>
+        <div class="reading-meter" aria-label="阅读进度">
+          <span id="reading-progress-bar"></span>
+        </div>
+        <nav class="reading-toc" id="reading-toc" aria-label="文章目录"></nav>
+      </aside>
     </main>
+    <button
+      class="floating-action-button article-floating-back-to-top back-to-top-button"
+      id="back-to-top"
+      type="button"
+      aria-label="回到顶部"
+      title="回到顶部"
+    >
+      <span aria-hidden="true">↑</span>
+    </button>
     <SiteFooter />
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script is:inline src="/site.js?v=20260614-2"></script>
+    <script is:inline src="/site.js?v=20260615-2"></script>
   </body>
 </html>

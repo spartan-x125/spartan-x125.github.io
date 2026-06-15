@@ -107,7 +107,7 @@
   }
 
   function initSidebarLayout() {
-    const layouts = Array.from(document.querySelectorAll(".blog-layout"));
+    const layouts = Array.from(document.querySelectorAll(".blog-layout, .article-layout"));
     if (layouts.length === 0) return;
 
     const storageKey = "blog-sidebar-position";

@@ -2,7 +2,7 @@
 title: "通信感知一体化（ISAC）前沿技术综述：波形设计、智能超表面与网络演进"
 description: "A Survey of Frontier Technologies in Integrated Sensing and Communication: Waveform Design, Reconfigurable Intelligent Surfaces, and Network Evolution"
 date: "2026-05-17"
-tags: ["移动通信","通信感知一体化","AI辅助写作"]
+tags: ["移动通信","通信感知一体化","ISAC","AI辅助写作"]
 draft: false
 ---
 
