@@ -1936,9 +1936,39 @@ code {
 
 @media (max-width: 560px) {
   .topbar {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    flex-direction: row;
+    gap: 8px;
+    min-height: 50px;
+    padding: 8px 10px;
+  }
+
+  .brand {
+    min-width: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
+    font-size: 0.95rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topnav {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 6px;
+    font-size: 0.82rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .topnav a {
+    padding: 8px 1px;
+  }
+
+  .icon-button {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
   }
 
   .blog-layout,
