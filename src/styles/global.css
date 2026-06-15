@@ -1595,8 +1595,7 @@ code {
   }
 
   .sidebar-column {
-    position: relative;
-    z-index: 70;
+    position: static;
   }
 
   .profile-summary {
@@ -1730,7 +1729,8 @@ code {
   .mobile-music-panel,
   .mobile-toc-panel {
     position: fixed;
-    right: 16px;
+    left: 50%;
+    right: auto;
     z-index: 88;
     width: min(340px, calc(100vw - 32px));
     margin: 0;
@@ -1753,7 +1753,7 @@ code {
     max-height: min(68vh, 460px);
     overflow: hidden;
     padding: 14px;
-    transform: translateY(-8px) scale(0.98);
+    transform: translate(-50%, -8px) scale(0.98);
   }
 
   .mobile-music-panel.is-list-open {
@@ -1763,11 +1763,13 @@ code {
   }
 
   .mobile-music-panel.is-list-open .music-player {
+    height: 100%;
     min-height: 0;
     grid-template-rows: 60px auto auto auto minmax(0, 1fr);
   }
 
   .mobile-music-panel.is-list-open .music-list {
+    align-self: stretch;
     min-height: 0;
     max-height: none;
     padding-bottom: 10px;
@@ -1781,7 +1783,7 @@ code {
     max-height: min(58vh, 380px);
     overflow: hidden;
     padding: 16px;
-    transform: translateY(8px) scale(0.98);
+    transform: translate(-50%, 8px) scale(0.98);
   }
 
   .mobile-music-panel.is-open,
@@ -1789,7 +1791,7 @@ code {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: translateY(0) scale(1);
+    transform: translate(-50%, 0) scale(1);
   }
 
   .mobile-panel-heading h2 {
@@ -1968,7 +1970,8 @@ code {
 
   .mobile-music-panel {
     top: 162px;
-    right: 10px;
+    left: 50%;
+    right: auto;
     width: min(330px, calc(100vw - 20px));
     max-height: min(62vh, 420px);
   }
@@ -1983,7 +1986,8 @@ code {
   }
 
   .mobile-toc-panel {
-    right: 10px;
+    left: 50%;
+    right: auto;
     bottom: 122px;
     width: min(330px, calc(100vw - 20px));
     max-height: min(54vh, 360px);
@@ -2049,6 +2053,11 @@ code {
   .floating-action-button {
     width: 42px;
     height: 42px;
+  }
+
+  .article-floating-back-to-top,
+  :root[data-sidebar-position="right"] .article-floating-back-to-top {
+    right: 12px;
   }
 
   .sidebar-action-dock .floating-action-button {
