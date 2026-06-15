@@ -1154,29 +1154,50 @@ textarea {
 }
 
 .article-content {
+  max-width: 100%;
+  min-width: 0;
   margin-top: 32px;
   border-top: 1px solid var(--line);
   padding-top: 26px;
   line-height: 1.85;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
-.article-content table {
+.article-table-scroll,
+.article-content > table {
   display: block;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   overscroll-behavior-inline: contain;
-  border-collapse: collapse;
+  -webkit-overflow-scrolling: touch;
   scrollbar-color: var(--accent) transparent;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
 
-.article-content table::-webkit-scrollbar {
+.article-table-scroll {
+  margin: 1.2em 0;
+}
+
+.article-table-scroll table {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+
+.article-content > table {
+  border-collapse: collapse;
+}
+
+.article-table-scroll::-webkit-scrollbar,
+.article-content > table::-webkit-scrollbar {
   height: 7px;
 }
 
-.article-content table::-webkit-scrollbar-thumb {
+.article-table-scroll::-webkit-scrollbar-thumb,
+.article-content > table::-webkit-scrollbar-thumb {
   border-radius: 999px;
   background: var(--accent);
 }
@@ -1186,6 +1207,8 @@ textarea {
   border: 1px solid var(--line);
   padding: 8px 10px;
   vertical-align: top;
+  min-width: 8.5rem;
+  overflow-wrap: anywhere;
 }
 
 .article-content th {
@@ -1360,18 +1383,38 @@ textarea {
 }
 
 .comments-section {
+  min-width: 0;
   border-top: 1px solid var(--line);
   margin-top: 28px;
   padding-top: 24px;
 }
 
+.giscus-host {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 320px;
+}
+
+.giscus-host[aria-busy="true"] {
+  opacity: 0.72;
+}
+
 .giscus {
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   margin-top: 16px;
   border-radius: 8px;
   padding: 12px;
   background: var(--surface-strong);
   box-shadow: 0 8px 18px rgba(25, 32, 42, 0.08);
+}
+
+.giscus-frame {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
 }
 
 :root[data-theme="dark"] .giscus {
@@ -1563,6 +1606,10 @@ code {
     width: 100%;
   }
 
+  .article-reading-card {
+    display: none;
+  }
+
   .sidebar-action-dock {
     position: fixed;
     right: 16px;
@@ -1670,6 +1717,12 @@ code {
 
   .music-list {
     max-height: min(220px, 34vh);
+  }
+
+  .article-content th,
+  .article-content td {
+    min-width: 7.5rem;
+    padding: 7px 8px;
   }
 
   .floating-action-button {

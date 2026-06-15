@@ -18,10 +18,12 @@
 
   function updateGiscusTheme() {
     const theme = getGiscusTheme();
-    document.querySelector(".giscus-frame")?.contentWindow?.postMessage(
-      { giscus: { setConfig: { theme } } },
-      "https://giscus.app",
-    );
+    document.querySelectorAll(".giscus-frame").forEach((frame) => {
+      frame.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme } } },
+        "https://giscus.app",
+      );
+    });
   }
 
   function getGiscusTheme() {
@@ -33,13 +35,44 @@
   function initGiscus() {
     const section = document.querySelector(".comments-section");
     const host = section?.querySelector(".giscus-host");
+    window.clearTimeout(window.__giscusLoadTimer);
+    window.clearTimeout(window.__giscusReloadTimer);
     window.__giscusThemeObserver?.disconnect();
-    if (!section || !host || host.dataset.ready === "true") return;
-    host.dataset.ready = "true";
+    window.__giscusWidthObserver?.disconnect();
+    if (!section || !host) return;
 
+    const hasFrame = Boolean(host.querySelector(".giscus-frame"));
+    if (host.dataset.ready === "true" && hasFrame) {
+      setupGiscusWidthGuard(section, host);
+      return;
+    }
+
+    host.dataset.ready = "pending";
+    host.setAttribute("aria-busy", "true");
+
+    const mount = (width) => {
+      mountGiscus(section, host, width);
+    };
+
+    waitForStableWidth(host, mount);
+  }
+
+  function mountGiscus(section, host, width) {
+    if (!host.isConnected) return;
+    window.__giscusThemeObserver?.disconnect();
+    observeGiscusFrame(host);
+    host.dataset.ready = "true";
+    host.dataset.loadWidth = String(Math.round(width));
+    host.setAttribute("aria-busy", "true");
+    host.replaceChildren(createGiscusScript(section));
+    setupGiscusWidthGuard(section, host);
+  }
+
+  function observeGiscusFrame(host) {
     window.__giscusThemeObserver = new MutationObserver(() => {
       if (host.querySelector(".giscus-frame")) {
         updateGiscusTheme();
+        host.removeAttribute("aria-busy");
         window.__giscusThemeObserver.disconnect();
       }
     });
@@ -47,7 +80,57 @@
       childList: true,
       subtree: true,
     });
+  }
 
+  function waitForStableWidth(element, callback) {
+    let lastWidth = 0;
+    let stableFrames = 0;
+    let attempts = 0;
+    const maxAttempts = 24;
+
+    const tick = () => {
+      const width = Math.round(element.getBoundingClientRect().width);
+      if (width > 0 && Math.abs(width - lastWidth) <= 1) {
+        stableFrames += 1;
+      } else {
+        stableFrames = 0;
+      }
+      lastWidth = width;
+      attempts += 1;
+
+      if ((width > 240 && stableFrames >= 2) || attempts >= maxAttempts) {
+        window.__giscusLoadTimer = window.setTimeout(() => callback(width), 80);
+        return;
+      }
+
+      window.requestAnimationFrame(tick);
+    };
+
+    window.requestAnimationFrame(() => window.requestAnimationFrame(tick));
+  }
+
+  function setupGiscusWidthGuard(section, host) {
+    if (!("ResizeObserver" in window)) return;
+
+    window.__giscusWidthObserver?.disconnect();
+    window.__giscusWidthObserver = new ResizeObserver(([entry]) => {
+      const width = Math.round(entry.contentRect.width);
+      const loadWidth = Number(host.dataset.loadWidth || 0);
+      const frame = host.querySelector(".giscus-frame");
+      if (!frame || !loadWidth) return;
+
+      if (loadWidth < 520 && width - loadWidth > 160) {
+        window.clearTimeout(window.__giscusReloadTimer);
+        window.__giscusReloadTimer = window.setTimeout(() => {
+          mountGiscus(section, host, width);
+        }, 180);
+      }
+    });
+
+    window.__giscusWidthObserver.observe(host);
+  }
+
+  function createGiscusScript(section) {
     const script = document.createElement("script");
     script.src = "https://giscus.app/client.js";
     script.async = true;
@@ -64,7 +147,7 @@
     script.dataset.inputPosition = "top";
     script.dataset.theme = getGiscusTheme();
     script.dataset.lang = "zh-CN";
-    host.append(script);
+    return script;
   }
 
   function initBackground() {
@@ -357,11 +440,26 @@
   }
 
   function initReadingTools() {
+    if (window.__readingProgressHandler) {
+      window.removeEventListener("scroll", window.__readingProgressHandler);
+      window.__readingProgressHandler = null;
+    }
+
     const article = document.querySelector(".article-content");
     const progressBar = document.getElementById("reading-progress-bar");
     const toc = document.getElementById("reading-toc");
     if (!article || !progressBar || !toc) return;
 
+    const readingCard = toc.closest(".article-reading-card");
+    const isCompact = window.matchMedia("(max-width: 860px)").matches;
+    if (isCompact) {
+      toc.innerHTML = "";
+      progressBar.style.width = "0";
+      readingCard?.setAttribute("aria-hidden", "true");
+      return;
+    }
+
+    readingCard?.removeAttribute("aria-hidden");
     const headings = Array.from(article.querySelectorAll("h2, h3"));
     toc.innerHTML = "";
     headings.forEach((heading, index) => {
@@ -384,10 +482,27 @@
       progressBar.style.width = `${(read / total) * 100}%`;
     };
 
-    window.removeEventListener("scroll", window.__readingProgressHandler);
     window.__readingProgressHandler = updateProgress;
     window.addEventListener("scroll", updateProgress, { passive: true });
     updateProgress();
+  }
+
+  function initArticleTables() {
+    const article = document.querySelector(".article-content");
+    if (!article) return;
+
+    article.querySelectorAll("table").forEach((table, index) => {
+      if (table.closest(".article-table-scroll")) return;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "article-table-scroll";
+      wrapper.setAttribute("role", "region");
+      wrapper.setAttribute("aria-label", `可横向滚动的表格 ${index + 1}`);
+      wrapper.tabIndex = 0;
+
+      table.parentNode.insertBefore(wrapper, table);
+      wrapper.append(table);
+    });
   }
 
   function initBackToTop() {
@@ -663,14 +778,15 @@
 
   function initPage() {
     initTheme();
-    initGiscus();
     initBackground();
     initSidebarLayout();
     initMusic();
+    initArticleTables();
     initReadingTools();
     initBackToTop();
     initPostFilters();
     initLikes();
+    initGiscus();
   }
 
   if (!window.__blogLifecycleReady) {
