@@ -1650,11 +1650,7 @@ code {
     overflow: hidden;
     border: 0;
     padding: 3px;
-    background: conic-gradient(
-      from -90deg,
-      var(--accent) var(--back-to-top-progress, 0%),
-      rgba(127, 127, 127, 0.2) 0
-    );
+    background: var(--surface-strong);
     box-shadow: 0 12px 26px rgba(25, 32, 42, 0.18);
     color: var(--text);
     isolation: isolate;
@@ -1662,7 +1658,22 @@ code {
 
   .article-floating-back-to-top::before {
     position: absolute;
-    inset: 3px;
+    inset: 0;
+    z-index: 0;
+    border-radius: 50%;
+    background: conic-gradient(
+      from -90deg,
+      var(--accent) var(--back-to-top-progress, 0%),
+      rgba(127, 127, 127, 0.2) 0
+    );
+    content: "";
+    mask: radial-gradient(circle, transparent 0 18px, #000 19px 100%);
+    -webkit-mask: radial-gradient(circle, transparent 0 18px, #000 19px 100%);
+  }
+
+  .article-floating-back-to-top::after {
+    position: absolute;
+    inset: 4px;
     z-index: 0;
     border: 1px solid var(--line);
     border-radius: 50%;
@@ -1673,7 +1684,7 @@ code {
 
   .article-floating-back-to-top span {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: grid;
     width: 100%;
     height: 100%;
@@ -1685,11 +1696,7 @@ code {
   .article-floating-back-to-top.is-visible:hover,
   .article-floating-back-to-top:focus-visible {
     border-color: transparent;
-    background: conic-gradient(
-      from -90deg,
-      var(--accent) var(--back-to-top-progress, 0%),
-      rgba(127, 127, 127, 0.2) 0
-    );
+    background: var(--surface-strong);
     box-shadow: 0 12px 26px rgba(25, 32, 42, 0.18);
     color: var(--text);
     outline: none;
