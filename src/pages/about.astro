@@ -6,7 +6,6 @@ import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { profile } from "../data/profile";
 import { backgroundImages } from "../data/backgroundImages";
-import { friendLinks } from "../data/friendLinks";
 ---
 
 <!doctype html>
@@ -24,7 +23,7 @@ import { friendLinks } from "../data/friendLinks";
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
 
-    <main class="blog-layout">
+    <main class="blog-layout about-layout">
       <ProfileSidebar mode="about" />
       <article class="article-page about-page">
         <a class="back-link" href="/">← 返回首页</a>
@@ -40,21 +39,6 @@ import { friendLinks } from "../data/friendLinks";
         <div class="article-content">
           {profile.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
         </div>
-
-        <section class="friends-section about-friends" aria-labelledby="about-friends-title">
-          <p class="eyebrow">Friends</p>
-          <h2 id="about-friends-title">友情站</h2>
-          <div class="friend-list">
-            {
-              friendLinks.map((friend) => (
-                <a class="friend-card" href={friend.url}>
-                  <strong>{friend.name}</strong>
-                  <span>{friend.description}</span>
-                </a>
-              ))
-            }
-          </div>
-        </section>
       </article>
     </main>
     <SiteFooter />

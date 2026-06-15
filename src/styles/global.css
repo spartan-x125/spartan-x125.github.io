@@ -628,6 +628,17 @@ p {
   color: var(--text);
 }
 
+#music-mode:hover,
+#music-mode:focus-visible,
+#music-mode.is-active:hover,
+#music-mode.is-active:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
 .music-volume-row {
   grid-area: volume;
   display: grid;
@@ -1625,6 +1636,14 @@ code {
     display: none;
   }
 
+  .about-layout > .sidebar-column {
+    display: contents;
+  }
+
+  .about-layout .profile-card {
+    display: none;
+  }
+
   .music-card {
     display: grid;
     width: 100%;
@@ -1678,15 +1697,17 @@ code {
     stroke: none;
   }
 
-  .mobile-floating-toggle:hover,
-  .mobile-floating-toggle:focus-visible,
   .mobile-floating-toggle.is-open {
     border-color: var(--accent);
     background: var(--accent);
     box-shadow: 0 14px 30px rgba(25, 32, 42, 0.2);
     color: #ffffff;
-    outline: none;
     transform: translateY(-2px);
+  }
+
+  .mobile-floating-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
   }
 
   .mobile-floating-toggle:active {
@@ -1716,8 +1737,6 @@ code {
     transform: translateY(0) scale(1);
   }
 
-  .mobile-toc-toggle.is-visible:hover,
-  .mobile-toc-toggle.is-visible:focus-visible,
   .mobile-toc-toggle.is-visible.is-open {
     transform: translateY(-2px);
   }
@@ -1792,6 +1811,45 @@ code {
     visibility: visible;
     pointer-events: auto;
     transform: translate(-50%, 0) scale(1);
+  }
+
+  .mobile-music-panel .music-controls button:hover,
+  .mobile-music-panel #music-mode:hover {
+    border-color: var(--line);
+    background: var(--surface);
+    box-shadow: none;
+    color: var(--text);
+    outline: none;
+    transform: none;
+  }
+
+  .mobile-music-panel .music-controls button.is-active:hover {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #ffffff;
+  }
+
+  .mobile-music-panel #music-mode.is-active:hover {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .mobile-music-panel .music-list button:hover {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+
+  .mobile-music-panel .music-list button.is-active:hover {
+    border-color: var(--accent);
+  }
+
+  .mobile-music-panel .music-progress:hover,
+  .mobile-music-panel .music-volume:hover {
+    accent-color: var(--accent);
+    outline: none;
   }
 
   .mobile-panel-heading h2 {
