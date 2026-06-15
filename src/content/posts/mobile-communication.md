@@ -5,10 +5,10 @@ date: "2026-05-17"
 tags: ["移动通信","通信感知一体化","AI辅助写作"]
 draft: false
 ---
+
 移动通信专业课期末要求的综述论文，本来想自己写的但太多要求太麻烦没时间就拿ai跑了一下，传上blog凑个数，以后说不定会加入人工修正（
 
 因为是拿IEEE格式跑的论文懒得改格式了就这么传。
----
 
 ## 摘要
 
@@ -545,6 +545,3 @@ ISAC正站在从理论走向实践、从链路走向网络、从双功能走向�
 [55] Z. Zhang et al., "Rate-splitting multiple access for multi-antenna joint radar and communications," *IEEE J. Sel. Topics Signal Process.*, vol. 15, no. 6, pp. 1337–1353, Nov. 2021.
 
 ---
-
-## AI使用
-本文使用AI工具用于主要研究方向的整理，论文的获取和分类，以及最终语言和行文逻辑的整体优化，使本文更加符合综述的行文结构。
