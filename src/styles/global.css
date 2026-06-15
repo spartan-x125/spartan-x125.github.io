@@ -1595,7 +1595,8 @@ code {
   }
 
   .sidebar-column {
-    position: static;
+    position: relative;
+    z-index: 70;
   }
 
   .profile-summary {
@@ -1632,60 +1633,35 @@ code {
 
   .mobile-floating-toggle {
     position: fixed;
-    z-index: 38;
+    z-index: 90;
     display: grid;
     width: 46px;
     height: 46px;
     place-items: center;
     overflow: hidden;
-    border: 0;
+    border: 1px solid var(--line);
     border-radius: 50%;
-    padding: 3px;
+    padding: 0;
     background: var(--surface-strong);
-    box-shadow: 0 12px 26px rgba(25, 32, 42, 0.18);
+    box-shadow: 0 14px 30px rgba(25, 32, 42, 0.18);
     color: var(--text);
     cursor: pointer;
-    isolation: isolate;
     backdrop-filter: blur(2px) saturate(1.04);
     transition:
+      opacity 180ms ease,
       transform 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
       box-shadow 180ms ease,
       color 180ms ease;
   }
 
   .mobile-floating-toggle::before,
   .mobile-floating-toggle::after {
-    position: absolute;
-    border-radius: 50%;
-    content: "";
-  }
-
-  .mobile-floating-toggle::before {
-    inset: 0;
-    z-index: 0;
-    background: conic-gradient(
-      from -90deg,
-      var(--accent) 0 72%,
-      rgba(127, 127, 127, 0.2) 72% 100%
-    );
-    opacity: 0.58;
-    mask: radial-gradient(circle, transparent 0 16px, #000 17px 100%);
-    -webkit-mask: radial-gradient(circle, transparent 0 16px, #000 17px 100%);
-    transition:
-      opacity 180ms ease,
-      transform 220ms ease;
-  }
-
-  .mobile-floating-toggle::after {
-    inset: 6px;
-    z-index: 0;
-    border: 1px solid var(--line);
-    background: var(--surface-strong);
+    display: none;
   }
 
   .mobile-floating-toggle svg {
-    position: relative;
-    z-index: 2;
     width: 21px;
     height: 21px;
     fill: none;
@@ -1706,22 +1682,20 @@ code {
   .mobile-floating-toggle:hover,
   .mobile-floating-toggle:focus-visible,
   .mobile-floating-toggle.is-open {
-    color: var(--text);
+    border-color: var(--accent);
+    background: var(--accent);
+    box-shadow: 0 14px 30px rgba(25, 32, 42, 0.2);
+    color: #ffffff;
     outline: none;
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-2px);
   }
 
   .mobile-floating-toggle:active {
     transform: translateY(0) scale(0.95);
   }
 
-  .mobile-floating-toggle.is-open::before {
-    opacity: 0.92;
-    transform: rotate(90deg);
-  }
-
   .mobile-floating-toggle.is-open svg {
-    transform: scale(0.9) rotate(8deg);
+    transform: scale(0.92);
   }
 
   .mobile-music-toggle {
@@ -1732,19 +1706,38 @@ code {
   .mobile-toc-toggle {
     right: 16px;
     bottom: 76px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(10px) scale(0.92);
+  }
+
+  .mobile-toc-toggle.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .mobile-toc-toggle.is-visible:hover,
+  .mobile-toc-toggle.is-visible:focus-visible,
+  .mobile-toc-toggle.is-visible.is-open {
+    transform: translateY(-2px);
+  }
+
+  .mobile-toc-toggle.is-visible:active {
+    transform: translateY(0) scale(0.95);
   }
 
   .mobile-music-panel,
   .mobile-toc-panel {
     position: fixed;
     right: 16px;
-    z-index: 36;
+    z-index: 88;
     width: min(340px, calc(100vw - 32px));
     margin: 0;
     border: 1px solid var(--line);
     border-radius: 8px;
-    background: var(--surface);
-    box-shadow: 0 18px 38px rgba(25, 32, 42, 0.2);
+    background: var(--surface-strong);
+    box-shadow: 0 14px 30px rgba(25, 32, 42, 0.18);
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -1761,6 +1754,23 @@ code {
     overflow: hidden;
     padding: 14px;
     transform: translateY(-8px) scale(0.98);
+  }
+
+  .mobile-music-panel.is-list-open {
+    display: grid;
+    height: min(68vh, 460px);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .mobile-music-panel.is-list-open .music-player {
+    min-height: 0;
+    grid-template-rows: 60px auto auto auto minmax(0, 1fr);
+  }
+
+  .mobile-music-panel.is-list-open .music-list {
+    min-height: 0;
+    max-height: none;
+    padding-bottom: 10px;
   }
 
   .mobile-toc-panel {
@@ -1963,6 +1973,10 @@ code {
     max-height: min(62vh, 420px);
   }
 
+  .mobile-music-panel.is-list-open {
+    height: min(62vh, 420px);
+  }
+
   .mobile-toc-toggle {
     right: 12px;
     bottom: 72px;
@@ -1999,6 +2013,10 @@ code {
     gap: 9px 10px;
   }
 
+  .mobile-music-panel.is-list-open .music-player {
+    grid-template-rows: 56px auto auto auto minmax(0, 1fr);
+  }
+
   .music-cover {
     width: 56px;
     height: 56px;
@@ -2029,13 +2047,13 @@ code {
   }
 
   .floating-action-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
   }
 
   .sidebar-action-dock .floating-action-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
   }
 
   .article-actions {

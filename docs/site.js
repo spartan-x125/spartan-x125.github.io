@@ -234,8 +234,14 @@
     if (!musicCard) return;
 
     const list = document.getElementById("music-list");
+    const compactMusicQuery = window.matchMedia("(max-width: 860px)");
     const updateListHeight = () => {
       if (!list || list.hidden) return;
+      if (compactMusicQuery.matches && musicCard.matches(".mobile-music-panel")) {
+        list.style.maxHeight = "";
+        return;
+      }
+
       const listTop = list.getBoundingClientRect().top;
       const availableHeight = window.innerHeight - listTop - 20;
       const responsiveLimit = window.innerHeight * (window.innerWidth <= 560 ? 0.38 : 0.46);
@@ -388,11 +394,14 @@
 
     listToggle?.addEventListener("click", () => {
       list.hidden = !list.hidden;
+      const isListOpen = !list.hidden;
+      musicCard.classList.toggle("is-list-open", isListOpen);
       if (!list.hidden) {
         window.requestAnimationFrame(() => {
           updateListHeight();
-          list.scrollIntoView({ block: "nearest", behavior: "smooth" });
         });
+      } else {
+        list.style.maxHeight = "";
       }
     });
 
@@ -524,6 +533,23 @@
     if (!button) return;
 
     const isDockedButton = Boolean(button.closest(".sidebar-action-dock"));
+    const syncedTocToggle = document.getElementById("mobile-toc-toggle");
+    const syncedTocPanel = syncedTocToggle
+      ? document.getElementById(syncedTocToggle.getAttribute("aria-controls"))
+      : null;
+    const updateSyncedToc = (isVisible) => {
+      if (!syncedTocToggle) return;
+      syncedTocToggle.classList.toggle("is-visible", isVisible);
+      syncedTocToggle.tabIndex = isVisible ? 0 : -1;
+      syncedTocToggle.setAttribute("aria-hidden", String(!isVisible));
+
+      if (!isVisible && syncedTocPanel) {
+        syncedTocToggle.classList.remove("is-open");
+        syncedTocToggle.setAttribute("aria-expanded", "false");
+        syncedTocPanel.classList.remove("is-open");
+        syncedTocPanel.setAttribute("aria-hidden", "true");
+      }
+    };
     const updateVisibility = () => {
       const isVisible = window.scrollY > 260;
       const scrollMax = Math.max(
@@ -534,6 +560,7 @@
       button.style.setProperty("--back-to-top-progress", `${progress * 100}%`);
       button.classList.toggle("is-visible", isVisible);
       button.classList.toggle("is-at-top", !isVisible);
+      updateSyncedToc(isVisible);
 
       if (isDockedButton) {
         button.tabIndex = 0;

@@ -125,7 +125,9 @@ const title = `${item.title} | ${profile.name}`;
       data-mobile-panel-toggle="toc"
       aria-controls="mobile-toc-panel"
       aria-expanded="false"
+      aria-hidden="true"
       aria-label="打开文章目录"
+      tabindex="-1"
       title="目录"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -150,6 +152,6 @@ const title = `${item.title} | ${profile.name}`;
     </aside>
     <SiteFooter />
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script is:inline src="/site.js?v=20260615-6"></script>
+    <script is:inline src="/site.js?v=20260615-8"></script>
   </body>
 </html>
