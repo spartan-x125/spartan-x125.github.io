@@ -517,6 +517,12 @@
     const isDockedButton = Boolean(button.closest(".sidebar-action-dock"));
     const updateVisibility = () => {
       const isVisible = window.scrollY > 260;
+      const scrollMax = Math.max(
+        document.documentElement.scrollHeight - window.innerHeight,
+        1,
+      );
+      const progress = Math.min(Math.max(window.scrollY / scrollMax, 0), 1);
+      button.style.setProperty("--back-to-top-progress", `${progress * 100}%`);
       button.classList.toggle("is-visible", isVisible);
       button.classList.toggle("is-at-top", !isVisible);
 
