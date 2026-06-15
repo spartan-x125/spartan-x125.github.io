@@ -1667,13 +1667,13 @@ code {
       rgba(127, 127, 127, 0.2) 0
     );
     content: "";
-    mask: radial-gradient(circle, transparent 0 18px, #000 19px 100%);
-    -webkit-mask: radial-gradient(circle, transparent 0 18px, #000 19px 100%);
+    mask: radial-gradient(circle, transparent 0 16px, #000 17px 100%);
+    -webkit-mask: radial-gradient(circle, transparent 0 16px, #000 17px 100%);
   }
 
   .article-floating-back-to-top::after {
     position: absolute;
-    inset: 4px;
+    inset: 6px;
     z-index: 0;
     border: 1px solid var(--line);
     border-radius: 50%;
