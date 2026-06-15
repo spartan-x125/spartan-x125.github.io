@@ -43,7 +43,7 @@ const title = `${item.title} | ${profile.name}`;
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
-    <main class="article-layout">
+    <main class="article-layout mobile-sidebar-collapsed">
       <ProfileSidebar mode="article" />
       <article class="article-page">
         <a class="back-link" href="/posts/">← 返回文章列表</a>
@@ -118,8 +118,38 @@ const title = `${item.title} | ${profile.name}`;
     >
       <span aria-hidden="true">↑</span>
     </button>
+    <button
+      class="mobile-floating-toggle mobile-toc-toggle"
+      id="mobile-toc-toggle"
+      type="button"
+      data-mobile-panel-toggle="toc"
+      aria-controls="mobile-toc-panel"
+      aria-expanded="false"
+      aria-label="打开文章目录"
+      title="目录"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14M5 12h14M5 17h14" />
+      </svg>
+    </button>
+    <aside
+      class="mobile-toc-panel"
+      id="mobile-toc-panel"
+      data-mobile-panel="toc"
+      aria-labelledby="mobile-toc-title"
+      aria-hidden="true"
+    >
+      <div class="mobile-panel-heading">
+        <p class="eyebrow">Contents</p>
+        <h2 id="mobile-toc-title">目录</h2>
+      </div>
+      <div class="reading-meter" aria-label="阅读进度">
+        <span id="mobile-reading-progress-bar"></span>
+      </div>
+      <nav class="reading-toc mobile-reading-toc" id="mobile-reading-toc" aria-label="文章目录"></nav>
+    </aside>
     <SiteFooter />
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script is:inline src="/site.js?v=20260615-5"></script>
+    <script is:inline src="/site.js?v=20260615-6"></script>
   </body>
 </html>

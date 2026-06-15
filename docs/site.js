@@ -446,40 +446,49 @@
     }
 
     const article = document.querySelector(".article-content");
-    const progressBar = document.getElementById("reading-progress-bar");
-    const toc = document.getElementById("reading-toc");
-    if (!article || !progressBar || !toc) return;
+    const progressBars = [
+      document.getElementById("reading-progress-bar"),
+      document.getElementById("mobile-reading-progress-bar"),
+    ].filter(Boolean);
+    const tocTargets = [
+      document.getElementById("reading-toc"),
+      document.getElementById("mobile-reading-toc"),
+    ].filter(Boolean);
+    if (!article || progressBars.length === 0 || tocTargets.length === 0) return;
 
-    const readingCard = toc.closest(".article-reading-card");
+    const readingCard = document.getElementById("reading-toc")?.closest(".article-reading-card");
     const isCompact = window.matchMedia("(max-width: 860px)").matches;
-    if (isCompact) {
-      toc.innerHTML = "";
-      progressBar.style.width = "0";
-      readingCard?.setAttribute("aria-hidden", "true");
-      return;
+    if (readingCard) {
+      readingCard.toggleAttribute("aria-hidden", isCompact);
     }
 
-    readingCard?.removeAttribute("aria-hidden");
     const headings = Array.from(article.querySelectorAll("h2, h3"));
-    toc.innerHTML = "";
-    headings.forEach((heading, index) => {
-      if (!heading.id) heading.id = `section-${index + 1}`;
-      const link = document.createElement("a");
-      link.href = `#${heading.id}`;
-      link.textContent = heading.textContent;
-      link.className = heading.tagName === "H3" ? "toc-child" : "";
-      toc.append(link);
-    });
+    const renderToc = (toc) => {
+      toc.innerHTML = "";
+      headings.forEach((heading, index) => {
+        if (!heading.id) heading.id = `section-${index + 1}`;
+        const link = document.createElement("a");
+        link.href = `#${heading.id}`;
+        link.textContent = heading.textContent;
+        link.className = heading.tagName === "H3" ? "toc-child" : "";
+        toc.append(link);
+      });
 
-    if (headings.length === 0) {
-      toc.innerHTML = "<span>暂无目录</span>";
-    }
+      if (headings.length === 0) {
+        toc.innerHTML = "<span>\u6682\u65e0\u76ee\u5f55</span>";
+      }
+    };
+
+    tocTargets.forEach(renderToc);
 
     const updateProgress = () => {
       const rect = article.getBoundingClientRect();
       const total = Math.max(article.scrollHeight - window.innerHeight, 1);
       const read = Math.min(Math.max(-rect.top, 0), total);
-      progressBar.style.width = `${(read / total) * 100}%`;
+      const width = `${(read / total) * 100}%`;
+      progressBars.forEach((progressBar) => {
+        progressBar.style.width = width;
+      });
     };
 
     window.__readingProgressHandler = updateProgress;
@@ -553,6 +562,97 @@
         behavior: reduceMotion ? "auto" : "smooth",
       });
     });
+  }
+
+  function initMobileFloatingPanels() {
+    const toggles = Array.from(document.querySelectorAll("[data-mobile-panel-toggle]"));
+    if (toggles.length === 0) return;
+
+    const isCompact = () => window.matchMedia("(max-width: 860px)").matches;
+    const getPanel = (toggle) => {
+      const id = toggle.getAttribute("aria-controls");
+      return id ? document.getElementById(id) : null;
+    };
+    const setPanelState = (toggle, panel, open) => {
+      toggle.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      panel.classList.toggle("is-open", open);
+      if (isCompact()) {
+        panel.setAttribute("aria-hidden", String(!open));
+      } else {
+        panel.removeAttribute("aria-hidden");
+      }
+    };
+    const closeAll = (exceptPanel = null) => {
+      toggles.forEach((toggle) => {
+        const panel = getPanel(toggle);
+        if (!panel || panel === exceptPanel) return;
+        setPanelState(toggle, panel, false);
+      });
+    };
+
+    toggles.forEach((toggle) => {
+      const panel = getPanel(toggle);
+      if (!panel) return;
+      setPanelState(toggle, panel, isCompact() && panel.classList.contains("is-open"));
+
+      if (toggle.dataset.mobilePanelReady !== "true") {
+        toggle.dataset.mobilePanelReady = "true";
+        toggle.addEventListener("click", () => {
+          const shouldOpen = !panel.classList.contains("is-open");
+          closeAll(panel);
+          setPanelState(toggle, panel, shouldOpen);
+          if (shouldOpen && panel.matches(".mobile-music-panel")) {
+            window.requestAnimationFrame(() => window.__musicListResizeHandler?.());
+          }
+        });
+      }
+
+      if (panel.dataset.mobilePanelReady !== "true") {
+        panel.dataset.mobilePanelReady = "true";
+        panel.addEventListener("click", (event) => {
+          const target = event.target instanceof Element ? event.target : null;
+          if (target?.closest(".reading-toc a")) {
+            setPanelState(toggle, panel, false);
+          }
+        });
+      }
+    });
+
+    if (window.__mobilePanelOutsideHandler) {
+      document.removeEventListener("click", window.__mobilePanelOutsideHandler);
+    }
+    window.__mobilePanelOutsideHandler = (event) => {
+      if (!isCompact()) return;
+      toggles.forEach((toggle) => {
+        const panel = getPanel(toggle);
+        if (!panel || !panel.classList.contains("is-open")) return;
+        if (toggle.contains(event.target) || panel.contains(event.target)) return;
+        setPanelState(toggle, panel, false);
+      });
+    };
+    document.addEventListener("click", window.__mobilePanelOutsideHandler);
+
+    if (window.__mobilePanelKeyHandler) {
+      document.removeEventListener("keydown", window.__mobilePanelKeyHandler);
+    }
+    window.__mobilePanelKeyHandler = (event) => {
+      if (event.key !== "Escape") return;
+      closeAll();
+    };
+    document.addEventListener("keydown", window.__mobilePanelKeyHandler);
+
+    if (window.__mobilePanelResizeHandler) {
+      window.removeEventListener("resize", window.__mobilePanelResizeHandler);
+    }
+    window.__mobilePanelResizeHandler = () => {
+      toggles.forEach((toggle) => {
+        const panel = getPanel(toggle);
+        if (!panel) return;
+        setPanelState(toggle, panel, isCompact() && panel.classList.contains("is-open"));
+      });
+    };
+    window.addEventListener("resize", window.__mobilePanelResizeHandler, { passive: true });
   }
 
   function initPostFilters() {
@@ -790,6 +890,7 @@
     initArticleTables();
     initReadingTools();
     initBackToTop();
+    initMobileFloatingPanels();
     initPostFilters();
     initLikes();
     initGiscus();

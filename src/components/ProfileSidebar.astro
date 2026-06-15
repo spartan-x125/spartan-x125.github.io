@@ -6,6 +6,19 @@ const { mode = "home" } = Astro.props;
 ---
 
 <div class="sidebar-column">
+  <button
+    class="mobile-floating-toggle mobile-music-toggle"
+    type="button"
+    data-mobile-panel-toggle="music"
+    aria-controls="mobile-music-panel"
+    aria-expanded="false"
+    aria-label="打开音乐播放器"
+    title="音乐"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
+    </svg>
+  </button>
   <aside class="profile-card" aria-label="侧边栏">
     <button
       class="sidebar-position-toggle"
@@ -64,7 +77,9 @@ const { mode = "home" } = Astro.props;
   }
 
   <section
-    class="music-card"
+    id="mobile-music-panel"
+    class="music-card mobile-music-panel"
+    data-mobile-panel="music"
     aria-labelledby="music-title"
     data-tracks={JSON.stringify(musicTracks)}
     transition:persist
