@@ -273,6 +273,36 @@
     const volumeValue = document.getElementById("music-volume-value");
     const listToggle = document.getElementById("music-list-toggle");
     const listButtons = Array.from(document.querySelectorAll("[data-track-index]"));
+    const musicIcons = {
+      prev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"></path></svg>',
+      play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>',
+      pause:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z"></path></svg>',
+      next:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"></path></svg>',
+      modeList:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>',
+      modeShuffle:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg>',
+      modeRepeat:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3M12 10v5M10.8 10.8 12 10l1.2.8"></path></svg>',
+      playlist:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"></path><path d="M4 6h.01M4 12h.01M4 18h.01"></path></svg>',
+      volumeHigh:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"></path><path d="M16 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 6a8 8 0 0 1 0 12"></path></svg>',
+      volumeLow:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"></path><path d="M16 9a4.5 4.5 0 0 1 0 6"></path></svg>',
+      volumeMute:
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"></path><path d="M17 9l4 4M21 9l-4 4"></path></svg>',
+    };
+    const setMusicIcon = (element, iconName) => {
+      if (!element || !musicIcons[iconName]) return;
+      element.innerHTML = musicIcons[iconName];
+    };
+    setMusicIcon(prevButton, "prev");
+    setMusicIcon(playButton, !audio || audio.paused ? "play" : "pause");
+    setMusicIcon(nextButton, "next");
+    setMusicIcon(listToggle, "playlist");
     let currentIndex = Number(localStorage.getItem("music-track-index") || 0);
     const modes = ["list", "shuffle", "repeat"];
     let mode = localStorage.getItem("music-mode") || "list";
@@ -309,17 +339,17 @@
     };
 
     const renderMode = () => {
-      const labels = {
-        list: "↻",
-        shuffle: "⤨",
-        repeat: "1",
+      const icons = {
+        list: "modeList",
+        shuffle: "modeShuffle",
+        repeat: "modeRepeat",
       };
       const titles = {
         list: "列表播放",
         shuffle: "随机播放",
         repeat: "单曲循环",
       };
-      modeButton.textContent = labels[mode];
+      setMusicIcon(modeButton, icons[mode]);
       modeButton.title = titles[mode];
       modeButton.setAttribute("aria-label", `当前模式：${titles[mode]}，点击切换`);
       modeButton.classList.toggle("is-active", mode !== "list");
@@ -329,15 +359,18 @@
       audio.volume = savedVolume / 100;
       volume.value = String(savedVolume);
       volumeValue.textContent = `${Math.round(savedVolume)}%`;
-      volumeIcon.textContent = savedVolume === 0 ? "×" : savedVolume < 45 ? "♪" : "♫";
+      setMusicIcon(
+        volumeIcon,
+        savedVolume === 0 ? "volumeMute" : savedVolume < 45 ? "volumeLow" : "volumeHigh",
+      );
     };
 
     const playCurrent = async () => {
       try {
         await audio.play();
-        playButton.textContent = "Ⅱ";
+        setMusicIcon(playButton, "pause");
       } catch {
-        playButton.textContent = "▶";
+        setMusicIcon(playButton, "play");
       }
     };
 
@@ -377,7 +410,7 @@
         playCurrent();
       } else {
         audio.pause();
-        playButton.textContent = "▶";
+        setMusicIcon(playButton, "play");
       }
     });
 
@@ -415,6 +448,14 @@
 
     audio?.addEventListener("loadedmetadata", () => {
       duration.textContent = formatTime(audio.duration);
+    });
+
+    audio?.addEventListener("play", () => {
+      setMusicIcon(playButton, "pause");
+    });
+
+    audio?.addEventListener("pause", () => {
+      setMusicIcon(playButton, "play");
     });
 
     audio?.addEventListener("timeupdate", () => {

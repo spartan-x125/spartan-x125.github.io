@@ -28,11 +28,9 @@ const { mode = "home" } = Astro.props;
       title="切换侧边栏位置"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 5.5h16" />
-        <path d="M4 18.5h16" />
-        <path d="M7 8.5v7" />
-        <path d="M12 9l-3.5 3 3.5 3" />
-        <path d="M15 8.5h2.5a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H15" />
+        <path d="M5 5h14v14H5z" />
+        <path d="M10 5v14" />
+        <path d="M15 9l-3 3 3 3" />
       </svg>
     </button>
 
@@ -110,14 +108,41 @@ const { mode = "home" } = Astro.props;
         <span id="music-duration">--:--</span>
       </div>
       <div class="music-controls">
-        <button id="music-prev" type="button" aria-label="上一首">‹</button>
-        <button id="music-play" type="button" aria-label="播放或暂停">▶</button>
-        <button id="music-next" type="button" aria-label="下一首">›</button>
-        <button id="music-mode" type="button" aria-label="切换播放模式">↻</button>
-        <button id="music-list-toggle" type="button" aria-label="查看播放列表">☰</button>
+        <button id="music-prev" type="button" aria-label="上一首">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+          </svg>
+        </button>
+        <button id="music-play" type="button" aria-label="播放或暂停">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+        <button id="music-next" type="button" aria-label="下一首">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+          </svg>
+        </button>
+        <button id="music-mode" type="button" aria-label="切换播放模式">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <button id="music-list-toggle" type="button" aria-label="查看播放列表">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 6h12M8 12h12M8 18h12" />
+            <path d="M4 6h.01M4 12h.01M4 18h.01" />
+          </svg>
+        </button>
       </div>
       <div class="music-volume-row">
-        <span id="music-volume-icon" aria-hidden="true">♪</span>
+        <span id="music-volume-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 9v6h4l5 4V5L8 9H4z" />
+            <path d="M16 8.5a5 5 0 0 1 0 7" />
+            <path d="M18.5 6a8 8 0 0 1 0 12" />
+          </svg>
+        </span>
         <input
           class="music-volume"
           id="music-volume"

@@ -125,13 +125,53 @@ textarea {
 }
 
 .icon-button {
+  display: grid;
   width: 38px;
   height: 38px;
+  place-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
+  padding: 0;
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.icon-button:hover,
+.icon-button:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.icon-button svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
+}
+
+.theme-toggle .theme-icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle .theme-icon-sun {
+  display: block;
 }
 
 .blog-layout {
@@ -594,12 +634,42 @@ p {
   place-items: center;
   border: 1px solid var(--line);
   border-radius: 999px;
+  padding: 0;
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
   font-weight: 800;
+  line-height: 1;
   transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease,
     transform 160ms ease;
+}
+
+.music-controls button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+#music-play svg {
+  width: 18px;
+  height: 18px;
+}
+
+#music-mode svg,
+#music-list-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+#music-mode svg {
+  width: 16px;
+  height: 16px;
 }
 
 .music-controls button:hover,
@@ -663,6 +733,17 @@ p {
   border-radius: 999px;
   background: var(--surface);
   color: var(--text);
+}
+
+.music-volume-row span:first-child svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.9;
 }
 
 .music-volume {
@@ -1373,14 +1454,18 @@ textarea {
   transform: translateY(0) scale(1);
 }
 
-.floating-action-button span {
+.floating-action-button svg {
   display: block;
-  font-size: 1.35rem;
-  font-weight: 900;
-  line-height: 1;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
 }
 
-.back-to-top-button.is-lifting span {
+.back-to-top-button.is-lifting svg {
   animation: back-to-top-lift 520ms ease;
 }
 
@@ -1719,7 +1804,7 @@ code {
   }
 
   .mobile-music-toggle {
-    top: 82px;
+    top: 76px;
     right: 16px;
   }
 
@@ -1768,7 +1853,7 @@ code {
   }
 
   .mobile-music-panel {
-    top: 136px;
+    top: 128px;
     max-height: min(68vh, 460px);
     overflow: hidden;
     padding: 14px;
@@ -1953,14 +2038,13 @@ code {
     content: "";
   }
 
-  .article-floating-back-to-top span {
+  .article-floating-back-to-top svg {
     position: relative;
     z-index: 2;
-    display: grid;
-    width: 100%;
-    height: 100%;
-    place-items: center;
-    font-size: 1.12rem;
+    display: block;
+    width: 19px;
+    height: 19px;
+    margin: auto;
   }
 
   .article-floating-back-to-top:hover,
@@ -2052,12 +2136,12 @@ code {
   }
 
   .mobile-music-toggle {
-    top: 112px;
+    top: 64px;
     right: 12px;
   }
 
   .mobile-music-panel {
-    top: 162px;
+    top: 114px;
     left: 50%;
     right: auto;
     width: min(330px, calc(100vw - 20px));
@@ -2230,7 +2314,7 @@ code {
     transition: none;
   }
 
-  .back-to-top-button.is-lifting span {
+  .back-to-top-button.is-lifting svg {
     animation: none;
   }
 }
