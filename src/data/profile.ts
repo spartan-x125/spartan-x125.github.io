@@ -2,7 +2,7 @@ export const profile = {
   name: "Spartan_x",
   title: "探求者",
   signature: "我们生而眺望。",
-  //bio: "大概是一个博客，不一定什么时候会维护，总之先整一个。",
+  //bio: "一个塞学习笔记、技术记录、随笔和杂文的个人博客。",
   avatar: "/avatar/avatar.jpg",
   github: "https://github.com/spartan-x125",
   email: "mailto:spartan_x@126.com",

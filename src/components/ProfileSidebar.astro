@@ -2,30 +2,17 @@
 import { profile } from "../data/profile";
 import { musicTracks } from "../data/musicTracks";
 
-const { mode = "home" } = Astro.props;
+const { mode = "home", showContactLinks = mode === "home" } = Astro.props;
 ---
 
 <div class="sidebar-column">
-  <button
-    class="mobile-floating-toggle mobile-music-toggle"
-    type="button"
-    data-mobile-panel-toggle="music"
-    aria-controls="mobile-music-panel"
-    aria-expanded="false"
-    aria-label="打开音乐播放器"
-    title="音乐"
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
-    </svg>
-  </button>
   <aside class="profile-card" aria-label="侧边栏">
     <button
       class="sidebar-position-toggle"
       type="button"
       data-sidebar-position-toggle
-      aria-label="切换侧边栏位置"
-      title="切换侧边栏位置"
+      aria-label="交换左右侧栏"
+      title="交换左右侧栏"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 5h14v14H5z" />
@@ -42,7 +29,7 @@ const { mode = "home" } = Astro.props;
     </div>
 
   {
-    mode === "home" && (
+    showContactLinks && (
       <div class="profile-links">
         <a class="app-link github-link" href={profile.github} aria-label="GitHub 主页">
           <span class="app-icon" aria-hidden="true">

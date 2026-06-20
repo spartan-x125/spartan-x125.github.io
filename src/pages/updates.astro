@@ -7,43 +7,48 @@ import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { profile } from "../data/profile";
 import { backgroundImages } from "../data/backgroundImages";
-import { getAllPosts } from "../utils/posts";
+import { getAllPosts, getPostUpdates } from "../utils/posts";
 
 const posts = await getAllPosts();
+const updates = getPostUpdates(posts);
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content={profile.bio} />
+    <meta name="description" content="文章更新历史" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
-    <title>{profile.about.heading} | {profile.name}</title>
+    <title>更新历史 | {profile.name}</title>
     <ClientRouter />
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
 
-    <main class="blog-layout about-layout">
+    <main class="blog-layout mobile-sidebar-collapsed">
       <ProfileSidebar mode="about" showContactLinks />
-      <article class="article-page about-page">
-        <a class="back-link" href="/">← 返回首页</a>
-        <div class="about-hero">
-          <img class="avatar about-avatar" src={profile.avatar} alt={`${profile.name} 的头像`} />
-          <div>
-            <p class="eyebrow">Profile</p>
-            <h1>{profile.name}</h1>
-            <p class="article-description">{profile.signature}</p>
-          </div>
-        </div>
+      <section class="feed" aria-labelledby="updates-page-title">
+        <p class="eyebrow">Changelog</p>
+        <h1 id="updates-page-title">更新历史</h1>
 
-        <div class="article-content">
-          {profile.about.paragraphs.map((paragraph) => <p>{paragraph}</p>)}
+        <div class="timeline-list">
+          {
+            updates.map((post) => (
+              <article class="timeline-item">
+                <time datetime={post.updatedDate}>{post.updatedDate}</time>
+                <div>
+                  <a href={`/posts/${post.slug}/`}>{post.title}</a>
+                  <p>{post.description}</p>
+                  <span>{post.category}</span>
+                </div>
+              </article>
+            ))
+          }
         </div>
-      </article>
+      </section>
       <RightSidebar posts={posts} />
     </main>
     <SiteFooter />

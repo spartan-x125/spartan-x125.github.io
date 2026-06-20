@@ -1,0 +1,156 @@
+---
+const { mode = "site", posts = [] } = Astro.props;
+
+const sortedPosts = [...posts].sort(
+  (a, b) => new Date(b.updatedDate || b.date).getTime() - new Date(a.updatedDate || a.date).getTime(),
+);
+const categories = Array.from(new Set(posts.map((post) => post.category || "未分类"))).sort((a, b) =>
+  a.localeCompare(b, "zh-CN"),
+);
+const tags = Array.from(new Set(posts.flatMap((post) => post.tags ?? []))).sort((a, b) =>
+  a.localeCompare(b, "zh-CN"),
+);
+
+const categoryCounts = new Map();
+const tagCounts = new Map();
+posts.forEach((post) => {
+  const category = post.category || "未分类";
+  categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+  (post.tags ?? []).forEach((tag) => {
+    tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+  });
+});
+
+const today = new Date();
+const year = today.getFullYear();
+const month = today.getMonth();
+const firstDay = new Date(year, month, 1);
+const dayCount = new Date(year, month + 1, 0).getDate();
+const leadingDays = firstDay.getDay();
+const calendarCells = [
+  ...Array.from({ length: leadingDays }, () => null),
+  ...Array.from({ length: dayCount }, (_, index) => index + 1),
+];
+const latestUpdate = sortedPosts[0];
+const firstPost = [...posts].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+const siteStartDate = firstPost?.date ?? "2026-05-16";
+const siteStart = new Date(`${siteStartDate}T00:00:00+08:00`);
+const runDays = Number.isNaN(siteStart.getTime())
+  ? 0
+  : Math.max(1, Math.floor((today.getTime() - siteStart.getTime()) / 86400000) + 1);
+const totalWordCount = posts.reduce((sum, post) => sum + (post.wordCount ?? 0), 0);
+const formattedWordCount =
+  totalWordCount >= 10000 ? `${(totalWordCount / 10000).toFixed(1)} 万` : `${totalWordCount}`;
+---
+
+<aside class="right-sidebar" aria-label="补充信息">
+  {
+    mode === "posts" ? (
+      <>
+        <section class="right-card filter-card" aria-labelledby="category-filter-title">
+          <div class="right-card-heading">
+            <p class="eyebrow">Categories</p>
+            <h2 id="category-filter-title">文章分类</h2>
+          </div>
+          <div class="filter-list" aria-label="文章分类筛选">
+            <button class="category-button is-active" type="button" data-category="all">
+              <span>全部</span>
+              <strong>{posts.length}</strong>
+            </button>
+            {categories.map((category) => (
+              <button class="category-button" type="button" data-category={category}>
+                <span>{category}</span>
+                <strong>{categoryCounts.get(category)}</strong>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section class="right-card filter-card" aria-labelledby="tag-filter-title">
+          <div class="right-card-heading">
+            <p class="eyebrow">Tags</p>
+            <h2 id="tag-filter-title">标签</h2>
+          </div>
+          <div class="tag-cloud" aria-label="文章标签筛选">
+            <button class="tag-button is-active" type="button" data-tag="all">
+              全部
+            </button>
+            {tags.map((tag) => (
+              <button class="tag-button" type="button" data-tag={tag}>
+                {tag}
+                <span>{tagCounts.get(tag)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </>
+    ) : (
+      <>
+        <section class="right-card stats-card" aria-labelledby="site-stats-title">
+          <div class="right-card-heading">
+            <p class="eyebrow">Stats</p>
+            <h2 id="site-stats-title">站点统计</h2>
+          </div>
+          <dl class="stats-grid">
+            <div>
+              <dt>文章</dt>
+              <dd>{posts.length}</dd>
+            </div>
+            <div>
+              <dt>分类</dt>
+              <dd>{categories.length}</dd>
+            </div>
+            <div>
+              <dt>标签</dt>
+              <dd>{tags.length}</dd>
+            </div>
+            <div>
+              <dt>运行时间</dt>
+              <dd id="site-runtime-days" data-site-start={siteStartDate}>{runDays} 天</dd>
+            </div>
+            <div>
+              <dt>更新字数</dt>
+              <dd>{formattedWordCount} 字</dd>
+            </div>
+            <div>
+              <dt>最近更新</dt>
+              <dd>{latestUpdate?.updatedDate ?? "暂无"}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="right-card calendar-card" aria-labelledby="calendar-title">
+          <div class="right-card-heading">
+            <p class="eyebrow">Calendar</p>
+            <h2 id="calendar-title">
+              {year} 年 {month + 1} 月
+            </h2>
+          </div>
+          <div class="calendar-weekdays" aria-hidden="true">
+            <span>日</span>
+            <span>一</span>
+            <span>二</span>
+            <span>三</span>
+            <span>四</span>
+            <span>五</span>
+            <span>六</span>
+          </div>
+          <div class="calendar-grid">
+            {calendarCells.map((day) =>
+              day ? (
+                <time
+                  datetime={`${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`}
+                  class:list={{ "is-today": day === today.getDate() }}
+                >
+                  {day}
+                </time>
+              ) : (
+                <span aria-hidden="true"></span>
+              ),
+            )}
+          </div>
+        </section>
+      </>
+    )
+  }
+</aside>

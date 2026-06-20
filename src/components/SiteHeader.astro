@@ -1,15 +1,91 @@
 ---
 import { profile } from "../data/profile";
+import { getAllPosts } from "../utils/posts";
+
+const searchPosts = await getAllPosts();
+const searchIndex = searchPosts.map((post) => ({
+  title: post.title,
+  description: post.description,
+  category: post.category,
+  tags: post.tags,
+  date: post.date,
+  url: `/posts/${post.slug}/`,
+}));
 ---
 
-<header class="topbar">
+<header class="topbar" id="site-topbar">
   <a class="brand" href="/">{profile.title}</a>
   <nav class="topnav" aria-label="站点导航">
     <a href="/">首页</a>
     <a href="/posts/">文章</a>
+    <a href="/updates/">更新</a>
     <a href="/friends/">友链</a>
     <a href="/guestbook/">留言</a>
-    <button class="icon-button theme-toggle" id="theme-toggle" type="button" aria-label="切换明暗模式">
+  </nav>
+  <div class="topbar-tools">
+    <button
+      class="icon-button topbar-tool search-toggle"
+      type="button"
+      data-mobile-panel-toggle="search"
+      aria-controls="topbar-search-panel"
+      aria-expanded="false"
+      aria-label="打开文章搜索"
+      title="搜索"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="6" />
+        <path d="m16 16 4 4" />
+      </svg>
+    </button>
+    <div
+      class="topbar-search-panel"
+      id="topbar-search-panel"
+      data-mobile-panel="search"
+      data-search-index={JSON.stringify(searchIndex)}
+      aria-label="文章搜索"
+    >
+      <label>
+        <span>搜索</span>
+        <input id="post-search" type="search" placeholder="搜索标题、摘要、分类或标签" autocomplete="off" />
+      </label>
+      <div class="topbar-search-results" id="topbar-search-results" aria-live="polite"></div>
+    </div>
+    <button
+      class="icon-button topbar-tool music-topbar-toggle"
+      type="button"
+      data-mobile-panel-toggle="music"
+      aria-controls="mobile-music-panel"
+      aria-expanded="false"
+      aria-label="打开音乐播放器"
+      title="音乐"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
+      </svg>
+    </button>
+    <button
+      class="icon-button topbar-tool color-toggle"
+      id="color-toggle"
+      type="button"
+      aria-controls="accent-panel"
+      aria-expanded="false"
+      aria-label="调整主题色"
+      title="主题色"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 1.2-3.14 1.7 1.7 0 0 1 1.14-2.96H17a4 4 0 0 0 0-8h-1.2A9 9 0 0 0 12 3Z" />
+        <circle cx="7.8" cy="10" r=".7" />
+        <circle cx="10.4" cy="7.4" r=".7" />
+        <circle cx="14" cy="7.4" r=".7" />
+      </svg>
+    </button>
+    <div class="accent-panel" id="accent-panel" hidden>
+      <label>
+        <span>主题色</span>
+        <input id="accent-hue" type="range" min="0" max="360" value="200" aria-label="调整主题色" />
+      </label>
+    </div>
+    <button class="icon-button theme-toggle topbar-tool" id="theme-toggle" type="button" aria-label="切换明暗模式" title="明暗模式">
       <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M21 14.2A7.7 7.7 0 0 1 9.8 3a8.5 8.5 0 1 0 11.2 11.2Z" />
       </svg>
@@ -18,5 +94,17 @@ import { profile } from "../data/profile";
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
       </svg>
     </button>
-  </nav>
+  </div>
 </header>
+<button
+  class="floating-action-button article-floating-back-to-top back-to-top-button"
+  id="back-to-top"
+  type="button"
+  aria-label="回到顶部"
+  title="回到顶部"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 19V5" />
+    <path d="M6.5 10.5 12 5l5.5 5.5" />
+  </svg>
+</button>

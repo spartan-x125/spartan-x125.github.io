@@ -16,6 +16,153 @@
     });
   }
 
+  function initAccentColor() {
+    const root = document.documentElement;
+    const toggle = document.getElementById("color-toggle");
+    const panel = document.getElementById("accent-panel");
+    const range = document.getElementById("accent-hue");
+    if (!toggle || !panel || !range) return;
+
+    const storageKey = "blog-accent-hue";
+    const applyHue = (hue) => {
+      root.style.setProperty("--accent-hue", String(hue));
+      range.value = String(hue);
+      localStorage.setItem(storageKey, String(hue));
+    };
+
+    const savedHue = Number(localStorage.getItem(storageKey) || 200);
+    applyHue(Number.isFinite(savedHue) ? savedHue : 200);
+
+    if (toggle.dataset.ready === "true") return;
+    toggle.dataset.ready = "true";
+
+    const setOpen = (open) => {
+      panel.hidden = !open;
+      toggle.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      if (open) document.getElementById("site-topbar")?.classList.remove("is-retracted");
+    };
+
+    toggle.addEventListener("click", () => {
+      setOpen(panel.hidden);
+    });
+
+    range.addEventListener("input", () => {
+      applyHue(range.value);
+    });
+
+    document.addEventListener("click", (event) => {
+      if (panel.hidden) return;
+      if (panel.contains(event.target) || toggle.contains(event.target)) return;
+      setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") setOpen(false);
+    });
+  }
+
+  function initTopbar() {
+    const topbar = document.getElementById("site-topbar");
+    if (!topbar) return;
+
+    if (window.__topbarScrollHandler) {
+      window.removeEventListener("scroll", window.__topbarScrollHandler);
+    }
+
+    const update = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY <= 24) {
+        topbar.classList.remove("is-retracted");
+      } else {
+        topbar.classList.add("is-retracted");
+      }
+    };
+
+    window.__topbarScrollHandler = update;
+    window.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
+  function initRuntimeStats() {
+    document.querySelectorAll("[data-site-start]").forEach((target) => {
+      const start = new Date(`${target.dataset.siteStart}T00:00:00+08:00`);
+      if (Number.isNaN(start.getTime())) return;
+      const days = Math.max(1, Math.floor((Date.now() - start.getTime()) / 86400000) + 1);
+      target.textContent = `${days} 天`;
+    });
+  }
+
+  function initGlobalSearch() {
+    const panel = document.getElementById("topbar-search-panel");
+    const input = document.getElementById("post-search");
+    const results = document.getElementById("topbar-search-results");
+    if (!panel || !input || !results) return;
+
+    const index = JSON.parse(panel.dataset.searchIndex || "[]");
+    const normalize = (value) => (value || "").trim().toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const queryFromUrl = params.get("q");
+    if (queryFromUrl && !input.value) input.value = queryFromUrl;
+
+    const renderResults = () => {
+      const query = normalize(input.value);
+      const matches = query
+        ? index
+            .filter((item) =>
+              [
+                item.title,
+                item.description,
+                item.category,
+                ...(item.tags || []),
+              ]
+                .join(" ")
+                .toLowerCase()
+                .includes(query),
+            )
+            .slice(0, 6)
+        : index.slice(0, 5);
+
+      results.innerHTML = "";
+      if (matches.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "search-result-empty";
+        empty.textContent = "没有找到相关文章。";
+        results.append(empty);
+        return;
+      }
+
+      matches.forEach((item) => {
+        const link = document.createElement("a");
+        link.className = "search-result-item";
+        link.href = item.url;
+        link.innerHTML = `<strong></strong><span></span>`;
+        link.querySelector("strong").textContent = item.title;
+        link.querySelector("span").textContent = `${item.date} · ${item.category}`;
+        results.append(link);
+      });
+    };
+
+    renderResults();
+
+    if (input.dataset.searchReady === "true") return;
+    input.dataset.searchReady = "true";
+
+    input.addEventListener("input", renderResults);
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      const query = input.value.trim();
+      if (!query) return;
+      event.preventDefault();
+      const firstResult = results.querySelector("a");
+      if (firstResult) {
+        window.location.href = firstResult.href;
+      } else {
+        window.location.href = `/posts/?q=${encodeURIComponent(query)}`;
+      }
+    });
+  }
+
   function updateGiscusTheme() {
     const theme = getGiscusTheme();
     document.querySelectorAll(".giscus-frame").forEach((frame) => {
@@ -207,10 +354,11 @@
       if (!toggle) return;
       toggle.classList.toggle("is-right", isRight);
       const label = isRight
-        ? "侧边栏在右侧，点击移到左侧"
-        : "侧边栏在左侧，点击移到右侧";
+        ? "左右侧栏已交换，点击恢复"
+        : "点击交换左右侧栏";
       toggle.title = label;
       toggle.setAttribute("aria-label", label);
+      window.requestAnimationFrame(() => window.__musicListResizeHandler?.());
     };
 
     applyPosition(getSavedPosition());
@@ -243,7 +391,12 @@
       }
 
       const listTop = list.getBoundingClientRect().top;
-      const availableHeight = window.innerHeight - listTop - 20;
+      const isMusicOnRight = Boolean(
+        musicCard.closest(".blog-layout.is-sidebar-right, .article-layout.is-sidebar-right"),
+      );
+      const backToTopReserve =
+        !compactMusicQuery.matches && isMusicOnRight ? 96 : 0;
+      const availableHeight = window.innerHeight - listTop - 20 - backToTopReserve;
       const responsiveLimit = window.innerHeight * (window.innerWidth <= 560 ? 0.38 : 0.46);
       list.style.maxHeight = `${Math.max(96, Math.min(320, responsiveLimit, availableHeight))}px`;
     };
@@ -673,6 +826,9 @@
           if (shouldOpen && panel.matches(".mobile-music-panel")) {
             window.requestAnimationFrame(() => window.__musicListResizeHandler?.());
           }
+          if (shouldOpen && panel.matches("#topbar-search-panel")) {
+            window.requestAnimationFrame(() => panel.querySelector("input")?.focus());
+          }
         });
       }
 
@@ -726,22 +882,50 @@
   function initPostFilters() {
     const searchInput = document.getElementById("post-search");
     const tagButtons = Array.from(document.querySelectorAll(".tag-button"));
-    const cards = Array.from(document.querySelectorAll(".post-card"));
+    const categoryButtons = Array.from(document.querySelectorAll(".category-button"));
+    const cards = Array.from(document.querySelectorAll("#post-list .post-card"));
     const emptyState = document.getElementById("empty-state");
     const pagination = document.getElementById("post-pagination");
     const sortToggle = document.getElementById("sort-toggle");
     const pageSize = Number(document.getElementById("post-list")?.dataset.pageSize || 0);
-    if (!searchInput || tagButtons.length === 0 || cards.length === 0) return;
-    if (searchInput.dataset.ready === "true") return;
-    searchInput.dataset.ready = "true";
+    if (!searchInput || cards.length === 0) return;
+    if (searchInput.dataset.filterReady === "true") return;
+    searchInput.dataset.filterReady = "true";
 
     const params = new URLSearchParams(window.location.search);
     const tagFromUrl = params.get("tag");
+    const categoryFromUrl = params.get("category");
+    const queryFromUrl = params.get("q");
     let activeTag = tagFromUrl || "all";
+    let activeCategory = categoryFromUrl || "all";
     let currentPage = 1;
     let sortOrder = sortToggle?.dataset.order || "desc";
+    if (queryFromUrl) searchInput.value = queryFromUrl;
 
     const normalize = (value) => value.trim().toLowerCase();
+    const syncUrl = () => {
+      const url = new URL(window.location.href);
+      const query = searchInput.value.trim();
+      if (query) {
+        url.searchParams.set("q", query);
+      } else {
+        url.searchParams.delete("q");
+      }
+
+      if (activeTag === "all") {
+        url.searchParams.delete("tag");
+      } else {
+        url.searchParams.set("tag", activeTag);
+      }
+
+      if (activeCategory === "all") {
+        url.searchParams.delete("category");
+      } else {
+        url.searchParams.set("category", activeCategory);
+      }
+
+      window.history.replaceState({}, "", url);
+    };
 
     const renderPagination = (visibleCards) => {
       if (!pagination || pageSize <= 0) return;
@@ -776,13 +960,17 @@
         const haystack = [
           card.dataset.title,
           card.dataset.description,
+          card.dataset.category,
           card.dataset.tags,
         ].join(" ");
         const matchesQuery = !query || haystack.includes(query);
         const matchesTag =
           activeTag === "all" ||
           card.dataset.tags.includes(activeTag.toLowerCase());
-        const visible = matchesQuery && matchesTag;
+        const matchesCategory =
+          activeCategory === "all" ||
+          card.dataset.category === activeCategory.toLowerCase();
+        const visible = matchesQuery && matchesTag && matchesCategory;
         if (visible) visibleCards.push(card);
         card.hidden = true;
       });
@@ -799,6 +987,7 @@
 
     searchInput.addEventListener("input", () => {
       currentPage = 1;
+      syncUrl();
       filterPosts();
     });
     tagButtons.forEach((button) => {
@@ -809,13 +998,19 @@
         tagButtons.forEach((item) => {
           item.classList.toggle("is-active", item === button);
         });
-        const url = new URL(window.location.href);
-        if (activeTag === "all") {
-          url.searchParams.delete("tag");
-        } else {
-          url.searchParams.set("tag", activeTag);
-        }
-        window.history.replaceState({}, "", url);
+        syncUrl();
+        filterPosts();
+      });
+    });
+    categoryButtons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.category === activeCategory);
+      button.addEventListener("click", () => {
+        activeCategory = button.dataset.category || "all";
+        currentPage = 1;
+        categoryButtons.forEach((item) => {
+          item.classList.toggle("is-active", item === button);
+        });
+        syncUrl();
         filterPosts();
       });
     });
@@ -835,6 +1030,13 @@
     if (!tagButtons.some((button) => button.classList.contains("is-active"))) {
       activeTag = "all";
       tagButtons[0]?.classList.add("is-active");
+    }
+    if (
+      categoryButtons.length > 0 &&
+      !categoryButtons.some((button) => button.classList.contains("is-active"))
+    ) {
+      activeCategory = "all";
+      categoryButtons[0]?.classList.add("is-active");
     }
 
     filterPosts();
@@ -952,6 +1154,10 @@
 
   function initPage() {
     initTheme();
+    initAccentColor();
+    initTopbar();
+    initRuntimeStats();
+    initGlobalSearch();
     initBackground();
     initSidebarLayout();
     initMusic();

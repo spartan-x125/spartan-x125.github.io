@@ -44,21 +44,15 @@ const title = `${item.title} | ${profile.name}`;
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
     <main class="article-layout mobile-sidebar-collapsed">
-      <ProfileSidebar mode="article" />
+      <ProfileSidebar mode="article" showContactLinks />
       <article class="article-page">
         <a class="back-link" href="/posts/">← 返回文章列表</a>
-        <p class="post-date">{item.date}</p>
+        <div class="article-meta">
+          <time class="post-date" datetime={item.date}>{item.date}</time>
+          <span>{item.category}</span>
+        </div>
         <h1>{item.title}</h1>
         <p class="article-description">{item.description}</p>
-        <div class="tag-row article-tags" aria-label="文章标签">
-          {
-            item.tags?.map((tag) => (
-              <a class="tag article-tag-link" href={`/posts/?tag=${encodeURIComponent(tag)}`}>
-                {tag}
-              </a>
-            ))
-          }
-        </div>
         <div class="article-content">
           <Content />
         </div>
@@ -110,18 +104,6 @@ const title = `${item.title} | ${profile.name}`;
       </aside>
     </main>
     <button
-      class="floating-action-button article-floating-back-to-top back-to-top-button"
-      id="back-to-top"
-      type="button"
-      aria-label="回到顶部"
-      title="回到顶部"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 19V5" />
-        <path d="M6.5 10.5 12 5l5.5 5.5" />
-      </svg>
-    </button>
-    <button
       class="mobile-floating-toggle mobile-toc-toggle"
       id="mobile-toc-toggle"
       type="button"
@@ -155,6 +137,6 @@ const title = `${item.title} | ${profile.name}`;
     </aside>
     <SiteFooter />
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script is:inline src="/site.js?v=20260616-1"></script>
+    <script is:inline src="/site.js?v=20260620-3"></script>
   </body>
 </html>

@@ -2,11 +2,15 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
+import RightSidebar from "../components/RightSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { profile } from "../data/profile";
 import { backgroundImages } from "../data/backgroundImages";
 import { friendLinks } from "../data/friendLinks";
+import { getAllPosts } from "../utils/posts";
+
+const posts = await getAllPosts();
 ---
 
 <!doctype html>
@@ -39,8 +43,9 @@ import { friendLinks } from "../data/friendLinks";
           }
         </div>
       </section>
+      <RightSidebar posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20260616-1"></script>
+    <script is:inline src="/site.js?v=20260620-3"></script>
   </body>
 </html>

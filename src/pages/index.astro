@@ -2,14 +2,16 @@
 import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
+import RightSidebar from "../components/RightSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { profile } from "../data/profile";
 import { backgroundImages } from "../data/backgroundImages";
-import { friendLinks } from "../data/friendLinks";
-import { getAllPosts } from "../utils/posts";
+import { getAllPosts, getPostUpdates } from "../utils/posts";
 
-const posts = (await getAllPosts()).slice(0, 10);
+const allPosts = await getAllPosts();
+const posts = allPosts.slice(0, 10);
+const updates = getPostUpdates(allPosts).slice(0, 5);
 ---
 
 <!doctype html>
@@ -44,7 +46,10 @@ const posts = (await getAllPosts()).slice(0, 10);
             posts.map((post) => (
               <article class="post-card">
                 <a class="post-link" href={`/posts/${post.slug}/`}>
-                  <time datetime={post.date}>{post.date}</time>
+                  <div class="post-meta">
+                    <time datetime={post.date}>{post.date}</time>
+                    <span>{post.category}</span>
+                  </div>
                   <h3>{post.title}</h3>
                   <p>{post.description}</p>
                 </a>
@@ -65,24 +70,32 @@ const posts = (await getAllPosts()).slice(0, 10);
           <a class="text-button" href="/posts/">全部文章</a>
         </div>
 
-        <section class="friends-section" aria-labelledby="friends-title">
-          <p class="eyebrow">Friends</p>
-          <h2 id="friends-title">友情站</h2>
-          <div class="friend-list">
+        <section class="updates-section" aria-labelledby="updates-title">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Changelog</p>
+              <h2 id="updates-title">更新历史</h2>
+            </div>
+            <a class="text-button" href="/updates/">完整历史</a>
+          </div>
+          <div class="update-list">
             {
-              friendLinks.map((friend) => (
-                <a class="friend-card" href={friend.url}>
-                  <strong>{friend.name}</strong>
-                  <span>{friend.description}</span>
+              updates.map((post) => (
+                <a class="update-card" href={`/posts/${post.slug}/`}>
+                  <time datetime={post.updatedDate}>{post.updatedDate}</time>
+                  <strong>{post.title}</strong>
+                  <span>{post.category}</span>
                 </a>
               ))
             }
           </div>
         </section>
       </section>
+
+      <RightSidebar posts={allPosts} />
     </main>
     <SiteFooter />
 
-    <script is:inline src="/site.js?v=20260616-1"></script>
+    <script is:inline src="/site.js?v=20260620-3"></script>
   </body>
 </html>

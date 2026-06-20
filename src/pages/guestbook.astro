@@ -3,10 +3,14 @@ import "../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import GiscusComments from "../components/GiscusComments.astro";
 import ProfileSidebar from "../components/ProfileSidebar.astro";
+import RightSidebar from "../components/RightSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { profile } from "../data/profile";
 import { backgroundImages } from "../data/backgroundImages";
+import { getAllPosts } from "../utils/posts";
+
+const posts = await getAllPosts();
 ---
 
 <!doctype html>
@@ -24,15 +28,16 @@ import { backgroundImages } from "../data/backgroundImages";
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
     <main class="blog-layout mobile-sidebar-collapsed">
-      <ProfileSidebar mode="about" />
+      <ProfileSidebar mode="about" showContactLinks />
       <section class="feed" aria-labelledby="guestbook-title">
         <p class="eyebrow">Guestbook</p>
         <h1 id="guestbook-title">留言</h1>
         <p class="page-description">在这里留下痕迹。</p>
         <GiscusComments title="留言区" term="guestbook" />
       </section>
+      <RightSidebar posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20260616-1"></script>
+    <script is:inline src="/site.js?v=20260620-3"></script>
   </body>
 </html>

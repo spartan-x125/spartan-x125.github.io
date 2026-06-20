@@ -2,14 +2,14 @@
 import "../../styles/global.css";
 import { ClientRouter } from "astro:transitions";
 import ProfileSidebar from "../../components/ProfileSidebar.astro";
+import RightSidebar from "../../components/RightSidebar.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
 import SiteHeader from "../../components/SiteHeader.astro";
 import { profile } from "../../data/profile";
 import { backgroundImages } from "../../data/backgroundImages";
-import { getAllPosts, getPostTags } from "../../utils/posts";
+import { getAllPosts } from "../../utils/posts";
 
 const posts = await getAllPosts();
-const tags = getPostTags(posts);
 ---
 
 <!doctype html>
@@ -37,10 +37,6 @@ const tags = getPostTags(posts);
             <h1 id="posts-title">文章</h1>
           </div>
           <div class="archive-tools">
-            <label class="search-box">
-              <span>搜索</span>
-              <input id="post-search" type="search" placeholder="搜索标题、摘要或标签" autocomplete="off" />
-            </label>
             <button
               class="sort-toggle"
               id="sort-toggle"
@@ -54,11 +50,6 @@ const tags = getPostTags(posts);
           </div>
         </div>
 
-        <div class="tag-filter" aria-label="文章标签筛选">
-          <button class="tag-button is-active" type="button" data-tag="all">全部</button>
-          {tags.map((tag) => <button class="tag-button" type="button" data-tag={tag}>{tag}</button>)}
-        </div>
-
         <div class="post-list" id="post-list" data-page-size="15">
           {
             posts.map((post) => (
@@ -67,10 +58,14 @@ const tags = getPostTags(posts);
                 data-title={(post.title ?? "").toLowerCase()}
                 data-description={(post.description ?? "").toLowerCase()}
                 data-tags={post.tags.join(" ").toLowerCase()}
+                data-category={(post.category ?? "").toLowerCase()}
                 data-date={post.date}
               >
                 <a class="post-link" href={`/posts/${post.slug}/`}>
-                  <time datetime={post.date}>{post.date}</time>
+                  <div class="post-meta">
+                    <time datetime={post.date}>{post.date}</time>
+                    <span>{post.category}</span>
+                  </div>
                   <h3>{post.title}</h3>
                   <p>{post.description}</p>
                 </a>
@@ -90,8 +85,10 @@ const tags = getPostTags(posts);
         <p class="empty-state" id="empty-state" hidden>没有找到匹配的文章。</p>
         <nav class="pagination" id="post-pagination" aria-label="文章分页"></nav>
       </section>
+
+      <RightSidebar mode="posts" posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20260616-1"></script>
+    <script is:inline src="/site.js?v=20260620-3"></script>
   </body>
 </html>

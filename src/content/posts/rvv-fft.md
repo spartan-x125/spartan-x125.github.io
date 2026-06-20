@@ -2,6 +2,7 @@
 title: "使用RVV对音频信号频谱图绘制进行加速"
 description: "一点关于自己小项目的记录以及相关的一些学习笔记"
 date: "2026-05-17"
+category: "技术笔记"
 tags: ["RVV","嵌入式Linux","risc-v","FFT","STFT","音频处理", "笔记"]
 draft: true
 ---

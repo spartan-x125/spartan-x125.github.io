@@ -2,6 +2,7 @@
 title: "Hello World"
 description: "于是也整了个个人的blog"
 date: "2026-05-16"
+category: "随笔"
 tags: ["站点", "Astro", "随笔","vibe coding"]
 draft: false
 ---
