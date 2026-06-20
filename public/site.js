@@ -12,6 +12,11 @@
       const next = root.dataset.theme === "dark" ? "light" : "dark";
       root.dataset.theme = next;
       localStorage.setItem("blog-theme", next);
+      toggle.classList.add("is-toggling");
+      window.clearTimeout(window.__themeToggleTimer);
+      window.__themeToggleTimer = window.setTimeout(() => {
+        toggle.classList.remove("is-toggling");
+      }, 280);
       updateGiscusTheme();
     });
   }

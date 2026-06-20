@@ -190,8 +190,7 @@ textarea {
 }
 
 .search-toggle,
-.topbar .search-toggle,
-.topbar .music-topbar-toggle {
+.topbar .search-toggle {
   display: none;
 }
 
@@ -336,6 +335,12 @@ textarea {
   transform: translateY(-1px);
 }
 
+.icon-button.is-open {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
 .icon-button svg {
   display: block;
   width: 19px;
@@ -349,6 +354,24 @@ textarea {
 
 .theme-toggle .theme-icon-sun {
   display: none;
+}
+
+.theme-toggle.is-toggling svg {
+  animation: theme-toggle-pop 260ms ease;
+}
+
+@keyframes theme-toggle-pop {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  45% {
+    transform: scale(0.86) rotate(-10deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 :root[data-theme="dark"] .theme-toggle .theme-icon-moon {
@@ -2211,9 +2234,39 @@ code {
     grid-row: 1;
   }
 
-  .topbar .search-toggle,
-  .topbar .music-topbar-toggle {
+  .topbar .search-toggle {
     display: grid;
+  }
+
+  .topbar .icon-button:hover,
+  .topbar .icon-button:focus-visible {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transform: none;
+  }
+
+  .topbar .icon-button.is-open,
+  .topbar .icon-button.is-open:hover,
+  .topbar .icon-button.is-open:focus-visible {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .topbar .theme-toggle:hover,
+  .topbar .theme-toggle:focus-visible {
+    border-color: var(--line);
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .topbar .theme-toggle:active {
+    transform: translateY(0) scale(0.94);
   }
 
   .topbar-search-panel {
@@ -2367,6 +2420,11 @@ code {
     stroke: none;
   }
 
+  .mobile-music-toggle {
+    right: 16px;
+    bottom: 76px;
+  }
+
   .mobile-floating-toggle.is-open {
     border-color: var(--accent);
     background: var(--accent);
@@ -2390,7 +2448,7 @@ code {
 
   .mobile-toc-toggle {
     right: 16px;
-    bottom: 76px;
+    bottom: 134px;
     opacity: 0;
     pointer-events: none;
     transform: translateY(10px) scale(0.92);
@@ -2730,9 +2788,14 @@ code {
     height: min(62vh, 420px);
   }
 
-  .mobile-toc-toggle {
+  .mobile-music-toggle {
     right: 12px;
     bottom: 72px;
+  }
+
+  .mobile-toc-toggle {
+    right: 12px;
+    bottom: 126px;
   }
 
   .mobile-toc-panel {

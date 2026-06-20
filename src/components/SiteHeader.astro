@@ -51,19 +51,6 @@ const searchIndex = searchPosts.map((post) => ({
       <div class="topbar-search-results" id="topbar-search-results" aria-live="polite"></div>
     </div>
     <button
-      class="icon-button topbar-tool music-topbar-toggle"
-      type="button"
-      data-mobile-panel-toggle="music"
-      aria-controls="mobile-music-panel"
-      aria-expanded="false"
-      aria-label="打开音乐播放器"
-      title="音乐"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
-      </svg>
-    </button>
-    <button
       class="icon-button topbar-tool color-toggle"
       id="color-toggle"
       type="button"
@@ -106,5 +93,19 @@ const searchIndex = searchPosts.map((post) => ({
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 19V5" />
     <path d="M6.5 10.5 12 5l5.5 5.5" />
+  </svg>
+</button>
+<button
+  class="mobile-floating-toggle mobile-music-toggle"
+  id="mobile-music-toggle"
+  type="button"
+  data-mobile-panel-toggle="music"
+  aria-controls="mobile-music-panel"
+  aria-expanded="false"
+  aria-label="打开音乐播放器"
+  title="音乐"
+>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
   </svg>
 </button>
