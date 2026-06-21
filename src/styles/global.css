@@ -2478,6 +2478,32 @@ code {
     transform: translate(-50%, 0) scale(1);
   }
 
+  .accent-panel {
+    position: fixed;
+    top: 92px;
+    left: 50%;
+    right: auto;
+    z-index: 88;
+    width: min(340px, calc(100vw - 32px));
+    max-height: calc(100vh - 116px);
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translate(-50%, -8px) scale(0.98);
+    transition:
+      opacity 180ms ease,
+      transform 200ms ease,
+      visibility 180ms ease;
+  }
+
+  .accent-panel.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translate(-50%, 0) scale(1);
+  }
+
   .topbar-search-results {
     position: static;
     width: 100%;
@@ -2964,6 +2990,12 @@ code {
   .topbar-search-panel {
     top: 104px;
     width: min(330px, calc(100vw - 20px));
+  }
+
+  .accent-panel {
+    top: 104px;
+    width: min(330px, calc(100vw - 20px));
+    max-height: calc(100vh - 128px);
   }
 
   .mobile-music-panel {

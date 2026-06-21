@@ -126,8 +126,24 @@
     if (toggle.dataset.ready === "true") return;
     toggle.dataset.ready = "true";
 
+    const closeMobilePanels = () => {
+      if (!window.matchMedia("(max-width: 860px)").matches) return;
+      document.querySelectorAll("[data-mobile-panel-toggle]").forEach((panelToggle) => {
+        const panelId = panelToggle.getAttribute("aria-controls");
+        const mobilePanel = panelId ? document.getElementById(panelId) : null;
+        if (!mobilePanel) return;
+        panelToggle.classList.remove("is-open");
+        panelToggle.setAttribute("aria-expanded", "false");
+        mobilePanel.classList.remove("is-open");
+        mobilePanel.setAttribute("aria-hidden", "true");
+      });
+    };
+
     const setOpen = (open) => {
+      if (open) closeMobilePanels();
       panel.hidden = !open;
+      panel.classList.toggle("is-open", open);
+      panel.setAttribute("aria-hidden", String(!open));
       toggle.classList.toggle("is-open", open);
       toggle.setAttribute("aria-expanded", String(open));
       if (open) document.getElementById("site-topbar")?.classList.remove("is-retracted");
@@ -177,6 +193,8 @@
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setOpen(false);
     });
+
+    window.__closeAppearancePanel = () => setOpen(false);
   }
 
   function initTopbar() {
@@ -930,6 +948,7 @@
       }
     };
     const closeAll = (exceptPanel = null) => {
+      window.__closeAppearancePanel?.();
       toggles.forEach((toggle) => {
         const panel = getPanel(toggle);
         if (!panel || panel === exceptPanel) return;
