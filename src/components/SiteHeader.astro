@@ -15,7 +15,7 @@ const searchIndex = searchPosts.map((post) => ({
 
 <header class="topbar" id="site-topbar">
   <a class="brand" href="/">{profile.title}</a>
-  <nav class="topnav" aria-label="站点导航">
+  <nav class="topnav" id="mobile-nav-panel" data-mobile-panel="nav" aria-label="站点导航">
     <a href="/">首页</a>
     <a href="/posts/">文章</a>
     <a href="/updates/">更新</a>
@@ -56,8 +56,8 @@ const searchIndex = searchPosts.map((post) => ({
       type="button"
       aria-controls="accent-panel"
       aria-expanded="false"
-      aria-label="调整主题色"
-      title="主题色"
+      aria-label="打开外观设置"
+      title="外观设置"
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 1.2-3.14 1.7 1.7 0 0 1 1.14-2.96H17a4 4 0 0 0 0-8h-1.2A9 9 0 0 0 12 3Z" />
@@ -66,10 +66,46 @@ const searchIndex = searchPosts.map((post) => ({
         <circle cx="14" cy="7.4" r=".7" />
       </svg>
     </button>
-    <div class="accent-panel" id="accent-panel" hidden>
-      <label>
-        <span>主题色</span>
-        <input id="accent-hue" type="range" min="0" max="360" value="200" aria-label="调整主题色" />
+    <div class="accent-panel appearance-panel" id="accent-panel" hidden>
+      <div class="appearance-heading">
+        <p class="eyebrow">Appearance</p>
+        <strong>外观设置</strong>
+        <button class="appearance-reset" id="appearance-reset" type="button" aria-label="恢复初始设定" title="恢复初始设定">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 6v5h-5" />
+            <path d="M4 18v-5h5" />
+            <path d="M17.6 9A6.5 6.5 0 0 0 6.9 6.7L4 9.4" />
+            <path d="M6.4 15A6.5 6.5 0 0 0 17.1 17.3L20 14.6" />
+          </svg>
+        </button>
+      </div>
+      <label class="appearance-control hue-control">
+        <span>
+          主题色相
+          <output id="accent-hue-value" for="accent-hue">200°</output>
+        </span>
+        <input class="hue-range" id="accent-hue" type="range" min="0" max="360" value="200" aria-label="调整主题色相" />
+      </label>
+      <label class="appearance-control">
+        <span>
+          背景模糊度
+          <output id="background-blur-value" for="background-blur">0px</output>
+        </span>
+        <input id="background-blur" type="range" min="0" max="18" value="0" step="1" aria-label="调整背景模糊度" />
+      </label>
+      <label class="appearance-control">
+        <span>
+          壁纸透明度
+          <output id="background-opacity-value" for="background-opacity">100%</output>
+        </span>
+        <input id="background-opacity" type="range" min="0.2" max="1" value="1" step="0.01" aria-label="调整壁纸透明度" />
+      </label>
+      <label class="appearance-control">
+        <span>
+          卡片透明度
+          <output id="card-opacity-value" for="card-opacity">24%</output>
+        </span>
+        <input id="card-opacity" type="range" min="0.08" max="1" value="0.24" step="0.01" aria-label="调整卡片透明度" />
       </label>
     </div>
     <button class="icon-button theme-toggle topbar-tool" id="theme-toggle" type="button" aria-label="切换明暗模式" title="明暗模式">
@@ -79,6 +115,21 @@ const searchIndex = searchPosts.map((post) => ({
       <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="12" r="4" />
         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+      </svg>
+    </button>
+    <button
+      class="icon-button topbar-tool nav-menu-toggle"
+      type="button"
+      data-mobile-panel-toggle="nav"
+      aria-controls="mobile-nav-panel"
+      aria-expanded="false"
+      aria-label="打开站点导航"
+      title="导航"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14" />
+        <path d="M5 12h14" />
+        <path d="M5 17h14" />
       </svg>
     </button>
   </div>

@@ -25,18 +25,103 @@
     const root = document.documentElement;
     const toggle = document.getElementById("color-toggle");
     const panel = document.getElementById("accent-panel");
-    const range = document.getElementById("accent-hue");
-    if (!toggle || !panel || !range) return;
+    const hueRange = document.getElementById("accent-hue");
+    const blurRange = document.getElementById("background-blur");
+    const backgroundOpacityRange = document.getElementById("background-opacity");
+    const cardOpacityRange = document.getElementById("card-opacity");
+    const reset = document.getElementById("appearance-reset");
+    const hueValue = document.getElementById("accent-hue-value");
+    const blurValue = document.getElementById("background-blur-value");
+    const backgroundOpacityValue = document.getElementById("background-opacity-value");
+    const cardOpacityValue = document.getElementById("card-opacity-value");
+    if (
+      !toggle ||
+      !panel ||
+      !hueRange ||
+      !blurRange ||
+      !backgroundOpacityRange ||
+      !cardOpacityRange ||
+      !reset
+    ) {
+      return;
+    }
 
-    const storageKey = "blog-accent-hue";
-    const applyHue = (hue) => {
-      root.style.setProperty("--accent-hue", String(hue));
-      range.value = String(hue);
-      localStorage.setItem(storageKey, String(hue));
+    const storageKey = "blog-appearance-settings";
+    const legacyHueKey = "blog-accent-hue";
+    const defaults = {
+      hue: 200,
+      backgroundBlur: 0,
+      backgroundOpacity: 1,
+      cardOpacity: 0.24,
+    };
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+    const toNumber = (value, fallback) => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : fallback;
+    };
+    const normalizeSettings = (settings = {}) => ({
+      hue: clamp(toNumber(settings.hue, defaults.hue), 0, 360),
+      backgroundBlur: clamp(
+        toNumber(settings.backgroundBlur, defaults.backgroundBlur),
+        0,
+        18,
+      ),
+      backgroundOpacity: clamp(
+        toNumber(settings.backgroundOpacity, defaults.backgroundOpacity),
+        0.2,
+        1,
+      ),
+      cardOpacity: clamp(toNumber(settings.cardOpacity, defaults.cardOpacity), 0.08, 1),
+    });
+    const readSavedSettings = () => {
+      let saved = null;
+      try {
+        saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+      } catch {
+        localStorage.removeItem(storageKey);
+      }
+      if (saved && typeof saved === "object") return normalizeSettings(saved);
+
+      const legacyHue = localStorage.getItem(legacyHueKey);
+      if (legacyHue !== null) {
+        return normalizeSettings({ ...defaults, hue: legacyHue });
+      }
+
+      return { ...defaults };
+    };
+    const formatPercent = (value) => `${Math.round(value * 100)}%`;
+    const applySettings = (settings, persist = true) => {
+      const next = normalizeSettings(settings);
+      const strongCardOpacity = Math.min(next.cardOpacity + 0.1, 1);
+
+      root.style.setProperty("--accent-hue", String(Math.round(next.hue)));
+      root.style.setProperty("--background-blur", `${Math.round(next.backgroundBlur)}px`);
+      root.style.setProperty("--background-blur-offset", `${-Math.round(next.backgroundBlur)}px`);
+      root.style.setProperty("--background-opacity", next.backgroundOpacity.toFixed(2));
+      root.style.setProperty("--card-opacity", next.cardOpacity.toFixed(2));
+      root.style.setProperty("--card-strong-opacity", strongCardOpacity.toFixed(2));
+
+      hueRange.value = String(Math.round(next.hue));
+      blurRange.value = String(Math.round(next.backgroundBlur));
+      backgroundOpacityRange.value = next.backgroundOpacity.toFixed(2);
+      cardOpacityRange.value = next.cardOpacity.toFixed(2);
+
+      if (hueValue) hueValue.textContent = `${Math.round(next.hue)}°`;
+      if (blurValue) blurValue.textContent = `${Math.round(next.backgroundBlur)}px`;
+      if (backgroundOpacityValue) {
+        backgroundOpacityValue.textContent = formatPercent(next.backgroundOpacity);
+      }
+      if (cardOpacityValue) cardOpacityValue.textContent = formatPercent(next.cardOpacity);
+
+      if (persist) {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+        localStorage.removeItem(legacyHueKey);
+      }
+
+      return next;
     };
 
-    const savedHue = Number(localStorage.getItem(storageKey) || 200);
-    applyHue(Number.isFinite(savedHue) ? savedHue : 200);
+    let currentSettings = applySettings(readSavedSettings());
 
     if (toggle.dataset.ready === "true") return;
     toggle.dataset.ready = "true";
@@ -52,8 +137,35 @@
       setOpen(panel.hidden);
     });
 
-    range.addEventListener("input", () => {
-      applyHue(range.value);
+    hueRange.addEventListener("input", () => {
+      currentSettings = applySettings({ ...currentSettings, hue: hueRange.value });
+    });
+
+    blurRange.addEventListener("input", () => {
+      currentSettings = applySettings({
+        ...currentSettings,
+        backgroundBlur: blurRange.value,
+      });
+    });
+
+    backgroundOpacityRange.addEventListener("input", () => {
+      currentSettings = applySettings({
+        ...currentSettings,
+        backgroundOpacity: backgroundOpacityRange.value,
+      });
+    });
+
+    cardOpacityRange.addEventListener("input", () => {
+      currentSettings = applySettings({
+        ...currentSettings,
+        cardOpacity: cardOpacityRange.value,
+      });
+    });
+
+    reset.addEventListener("click", () => {
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(legacyHueKey);
+      currentSettings = applySettings(defaults, false);
     });
 
     document.addEventListener("click", (event) => {
@@ -732,6 +844,7 @@
     if (!button) return;
 
     const isDockedButton = Boolean(button.closest(".sidebar-action-dock"));
+    const musicToggle = document.getElementById("mobile-music-toggle");
     const syncedTocToggle = document.getElementById("mobile-toc-toggle");
     const syncedTocPanel = syncedTocToggle
       ? document.getElementById(syncedTocToggle.getAttribute("aria-controls"))
@@ -749,6 +862,12 @@
         syncedTocPanel.setAttribute("aria-hidden", "true");
       }
     };
+    const updateFloatingStack = (isVisible) => {
+      if (!musicToggle) return;
+      const hasTocToggle = Boolean(syncedTocToggle);
+      musicToggle.classList.toggle("is-stack-one", isVisible && !hasTocToggle);
+      musicToggle.classList.toggle("is-stack-two", isVisible && hasTocToggle);
+    };
     const updateVisibility = () => {
       const isVisible = window.scrollY > 260;
       const scrollMax = Math.max(
@@ -760,6 +879,7 @@
       button.classList.toggle("is-visible", isVisible);
       button.classList.toggle("is-at-top", !isVisible);
       updateSyncedToc(isVisible);
+      updateFloatingStack(isVisible);
 
       if (isDockedButton) {
         button.tabIndex = 0;
@@ -841,7 +961,7 @@
         panel.dataset.mobilePanelReady = "true";
         panel.addEventListener("click", (event) => {
           const target = event.target instanceof Element ? event.target : null;
-          if (target?.closest(".reading-toc a")) {
+          if (target?.closest(".reading-toc a, .topnav a")) {
             setPanelState(toggle, panel, false);
           }
         });
