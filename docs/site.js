@@ -139,6 +139,7 @@
       });
     };
 
+    const isOpen = () => panel.classList.contains("is-open");
     const setOpen = (open) => {
       if (open) closeMobilePanels();
       panel.hidden = !open;
@@ -150,7 +151,7 @@
     };
 
     toggle.addEventListener("click", () => {
-      setOpen(panel.hidden);
+      setOpen(!isOpen());
     });
 
     hueRange.addEventListener("input", () => {
@@ -184,15 +185,23 @@
       currentSettings = applySettings(defaults, false);
     });
 
-    document.addEventListener("click", (event) => {
+    if (window.__appearanceOutsideHandler) {
+      document.removeEventListener("click", window.__appearanceOutsideHandler);
+    }
+    window.__appearanceOutsideHandler = (event) => {
       if (panel.hidden) return;
       if (panel.contains(event.target) || toggle.contains(event.target)) return;
       setOpen(false);
-    });
+    };
+    document.addEventListener("click", window.__appearanceOutsideHandler);
 
-    document.addEventListener("keydown", (event) => {
+    if (window.__appearanceKeyHandler) {
+      document.removeEventListener("keydown", window.__appearanceKeyHandler);
+    }
+    window.__appearanceKeyHandler = (event) => {
       if (event.key === "Escape") setOpen(false);
-    });
+    };
+    document.addEventListener("keydown", window.__appearanceKeyHandler);
 
     window.__closeAppearancePanel = () => setOpen(false);
   }
@@ -863,6 +872,7 @@
 
     const isDockedButton = Boolean(button.closest(".sidebar-action-dock"));
     const musicToggle = document.getElementById("mobile-music-toggle");
+    const musicPanel = document.getElementById("mobile-music-panel");
     const syncedTocToggle = document.getElementById("mobile-toc-toggle");
     const syncedTocPanel = syncedTocToggle
       ? document.getElementById(syncedTocToggle.getAttribute("aria-controls"))
@@ -885,6 +895,8 @@
       const hasTocToggle = Boolean(syncedTocToggle);
       musicToggle.classList.toggle("is-stack-one", isVisible && !hasTocToggle);
       musicToggle.classList.toggle("is-stack-two", isVisible && hasTocToggle);
+      musicPanel?.classList.toggle("is-stack-one", isVisible && !hasTocToggle);
+      musicPanel?.classList.toggle("is-stack-two", isVisible && hasTocToggle);
     };
     const updateVisibility = () => {
       const isVisible = window.scrollY > 260;
