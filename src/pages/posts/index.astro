@@ -20,7 +20,7 @@ const posts = await getAllPosts();
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
-    <title>文章 | {profile.name}</title>
+    <title>{profile.name}</title>
 
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
@@ -87,6 +87,6 @@ const posts = await getAllPosts();
       <RightSidebar mode="posts" posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20261009-4"></script>
+    <script is:inline src="/site.js?v=20261009-9"></script>
   </body>
 </html>

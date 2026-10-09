@@ -1,5 +1,7 @@
 ---
 import '../styles/desktop.css';
+import '../styles/terminal.css';
+import '../styles/bar.css';
 import Icon from './DesktopIcon.astro';
 import { desktopIconPaths } from '../data/desktopIcons';
 import { profile } from '../data/profile';
@@ -49,15 +51,15 @@ const apps = [
 
 <template id="desktop-icons">{Object.keys(desktopIconPaths).map(name => <Icon name={name} />)}</template>
 <dialog id="shell-launcher" class="shell-dialog launcher-dialog" aria-label="启动器" data-apps={JSON.stringify(apps)} data-profile={JSON.stringify({ name: profile.name, avatar: profile.avatar, github: profile.github, email: profile.email, postCount: posts.length, stats: siteStats })}>
-  <div class="launcher-search"><Icon name="search" /><input id="launcher-query" type="search" aria-label="搜索功能" placeholder="搜索功能…" autocomplete="off" /><button class="launcher-close" data-close-dialog aria-label="关闭启动器"><Icon name="close" size={16} /></button></div>
+  <div class="launcher-search"><Icon name="search" /><input id="launcher-query" type="search" aria-label="搜索功能" placeholder="搜索功能…" autocomplete="off" /></div>
   <div id="launcher-results" class="launcher-results" aria-label="搜索结果"></div>
 </dialog>
 <dialog id="shell-overview" class="shell-dialog overview-dialog" aria-labelledby="overview-title">
-  <div class="shell-dialog-heading"><h2 id="overview-title">窗口总览</h2><button data-close-dialog aria-label="关闭总览"><Icon name="close" size={16} /></button></div>
+  <div class="shell-dialog-heading"><h2 id="overview-title">窗口总览</h2></div>
   <div id="overview-workspaces"></div><button class="shell-text-button" data-shell-action="new-workspace"><Icon name="workspaceAdd" size={16} />新建工作区</button>
 </dialog>
 <dialog id="shell-controls" class="shell-dialog controls-dialog" aria-labelledby="controls-title">
-  <div class="shell-dialog-heading"><h2 id="controls-title">控制中心</h2><button data-close-dialog aria-label="关闭控制中心"><Icon name="close" size={16} /></button></div>
+  <div class="shell-dialog-heading"><h2 id="controls-title">控制中心</h2></div>
   <div class="control-tiles">
     <button id="theme-toggle" aria-pressed="false"><Icon name="moon" /><span>明暗模式</span></button>
     <button data-shell-action="overview"><Icon name="grid" /><span>窗口总览</span></button>
@@ -77,7 +79,7 @@ const apps = [
   </div><button class="shell-text-button" data-shell-action="reset-settings"><Icon name="reset" size={16} />恢复默认外观</button>
 </dialog>
 <dialog id="shell-help" class="shell-dialog help-dialog" aria-labelledby="help-title">
-  <div class="shell-dialog-heading"><h2 id="help-title">操作指南</h2><button data-close-dialog aria-label="关闭操作指南"><Icon name="close" size={16} /></button></div>
+  <div class="shell-dialog-heading"><h2 id="help-title">操作指南</h2></div>
   <div class="shortcut-list">
     <div><span>切换左右列 / 上下窗口</span><kbd>Mod + ← → / ↑ ↓</kbd></div>
     <div><span>切换窗口</span><kbd>Mod + H L / K J</kbd></div>
@@ -85,22 +87,23 @@ const apps = [
     <div><span>关闭当前窗口</span><kbd>Mod + Q</kbd></div>
     <div><span>启动器 / 窗口总览</span><kbd>Mod + Space / O</kbd></div>
     <div><span>控制中心 / 快捷键</span><kbd>Mod + S / Shift + /</kbd></div>
-    <div><span>切换工作区 / 移动当前列到工作区</span><kbd>Mod + 1…9 / Ctrl + 1…9</kbd></div>
-    <div><span>上一个 / 下一个工作区</span><kbd>Mod + I / U</kbd></div>
+    <div data-desktop-only><span>切换工作区 / 移动当前列到工作区</span><kbd>Mod + 1…9 / Ctrl + 1…9</kbd></div>
+    <div data-desktop-only><span>上一个 / 下一个工作区</span><kbd>Mod + I / U</kbd></div>
     <div><span>最大化 / 全屏阅读</span><kbd>Mod + F / Shift + F</kbd></div>
     <div><span>切换列宽 / 居中当前列</span><kbd>Mod + R / C</kbd></div>
     <div><span>堆叠右侧窗口 / 拆出底部窗口</span><kbd>Mod + , / .</kbd></div>
     <div><span>定位第一列 / 最后一列</span><kbd>Mod + Home / End</kbd></div>
     <div><span>循环切换窗口</span><kbd>Alt + Tab</kbd></div>
-    <div><span>关闭面板 / 退出全屏阅读</span><kbd>Esc</kbd></div>
+    <div><span>退出全屏阅读</span><kbd>Esc</kbd></div>
   </div>
 </dialog>
-<dialog id="shell-calendar" class="shell-dialog calendar-dialog" aria-labelledby="shell-calendar-title"><div class="shell-dialog-heading"><h2 id="shell-calendar-title">日历</h2><button data-close-dialog aria-label="关闭日历"><Icon name="close" size={16} /></button></div><div id="shell-calendar-grid"></div></dialog>
-<dialog id="shell-notifications" class="shell-dialog controls-dialog" aria-labelledby="notifications-title"><div class="shell-dialog-heading"><h2 id="notifications-title">站内动态</h2><button data-close-dialog aria-label="关闭站内动态"><Icon name="close" size={16} /></button></div><div class="shell-update-list">{posts.slice(0, 5).map(p => <a href={`/posts/${p.slug}/`}><strong>{p.title}</strong><time>{p.date}</time></a>)}</div></dialog>
-<dialog id="shell-network" class="shell-dialog controls-dialog" aria-labelledby="network-title"><div class="shell-dialog-heading"><h2 id="network-title">网络状态</h2><button data-close-dialog aria-label="关闭网络状态"><Icon name="close" size={16} /></button></div><p id="shell-network-state"></p></dialog>
-<dialog id="shell-audio" class="shell-dialog controls-dialog" aria-labelledby="audio-title"><div class="shell-dialog-heading"><h2 id="audio-title">音乐音量</h2><button data-close-dialog aria-label="关闭音量面板"><Icon name="close" size={16} /></button></div><label class="shell-volume-label"><span class="setting-name"><Icon name="volume" size={16} />音量</span><input aria-label="音乐音量" id="shell-audio-volume" type="range" min="0" max="100" value="80" /></label><button class="shell-text-button" data-shell-action="mute"><Icon name="mute" size={16} />静音 / 恢复</button><button class="shell-text-button" data-shell-action="music"><Icon name="music" size={16} />打开播放器</button></dialog>
-<dialog id="shell-music" class="shell-dialog music-dialog" aria-labelledby="music-panel-title"><div class="shell-dialog-heading"><h2 id="music-panel-title">音乐</h2><button data-close-dialog aria-label="关闭音乐播放器"><Icon name="close" size={16} /></button></div><div id="shell-music-content"></div></dialog>
-<dialog id="shell-session" class="shell-dialog controls-dialog" aria-labelledby="session-title"><div class="shell-dialog-heading"><h2 id="session-title">桌面会话</h2><button data-close-dialog aria-label="关闭会话面板"><Icon name="close" size={16} /></button></div><button class="shell-text-button" data-shell-action="home"><Icon name="home" size={16} />返回首页</button><button class="shell-text-button" data-shell-action="restart"><Icon name="restart" size={16} />重新加载桌面</button></dialog>
+<dialog id="shell-calendar" class="shell-dialog calendar-dialog" aria-labelledby="shell-calendar-title"><div class="shell-dialog-heading"><h2 id="shell-calendar-title">日历</h2></div><div id="shell-calendar-grid"></div></dialog>
+<dialog id="shell-notifications" class="shell-dialog controls-dialog" aria-labelledby="notifications-title"><div class="shell-dialog-heading"><h2 id="notifications-title">站内动态</h2></div><div class="shell-update-list">{posts.slice(0, 5).map(p => <a href={`/posts/${p.slug}/`}><strong>{p.title}</strong><time>{p.date}</time></a>)}</div></dialog>
+<dialog id="shell-network" class="shell-dialog controls-dialog" aria-labelledby="network-title"><div class="shell-dialog-heading"><h2 id="network-title">网络状态</h2></div><p id="shell-network-state"></p></dialog>
+<dialog id="shell-audio" class="shell-dialog controls-dialog" aria-labelledby="audio-title"><div class="shell-dialog-heading"><h2 id="audio-title">音乐音量</h2></div><label class="shell-volume-label"><span class="setting-name"><Icon name="volume" size={16} />音量</span><input aria-label="音乐音量" id="shell-audio-volume" type="range" min="0" max="100" value="80" /></label><button class="shell-text-button" data-shell-action="mute"><Icon name="mute" size={16} />静音 / 恢复</button><button class="shell-text-button" data-shell-action="music"><Icon name="music" size={16} />打开播放器</button></dialog>
+<dialog id="shell-music" class="shell-dialog music-dialog" aria-labelledby="music-panel-title"><div class="shell-dialog-heading"><h2 id="music-panel-title">音乐</h2></div><div id="shell-music-content"></div></dialog>
+<dialog id="shell-session" class="shell-dialog controls-dialog" aria-labelledby="session-title"><div class="shell-dialog-heading"><h2 id="session-title">桌面会话</h2></div><button class="shell-text-button" data-shell-action="home"><Icon name="home" size={16} />返回首页</button><button class="shell-text-button" data-shell-action="restart"><Icon name="restart" size={16} />重新加载桌面</button></dialog>
 <noscript><nav class="shell-fallback-nav">{apps.map(app => <a href={app.url}>{app.name}</a>)}</nav></noscript>
 <div id="shell-announcement" class="shell-toast" role="status" aria-live="polite"></div>
-<script is:inline defer src="/desktop.js?v=20261009-5"></script>
+<script is:inline defer src="/terminal.js?v=20261009-9"></script>
+<script is:inline defer src="/desktop.js?v=20261009-9"></script>

@@ -166,13 +166,10 @@
 .shell-dialog::backdrop { background: #12101b80; backdrop-filter: blur(7px); }
 .shell-dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .shell-dialog-heading h2 { margin: 0; font-size: 23px; letter-spacing: -.6px; font-weight: 600; }
-.shell-dialog-heading > button { display: grid; place-items: center; flex: 0 0 27px; height: 27px; background: var(--shell-hover); color: var(--shell-muted); border: 0; border-radius: 8px; font-size: 18px; }
 .launcher-dialog { margin-top: min(16vh, 130px); }
 .launcher-search { display: flex; align-items: center; gap: 12px; padding: 13px; border: 1px solid var(--shell-accent); background: var(--shell-hover); border-radius: 12px; color: var(--shell-accent); }
 .launcher-search input { background: transparent; border: 0; color: var(--shell-text); width: 100%; outline: none !important; font-size: 13px; }
 .launcher-search > svg { flex: 0 0 auto; }
-.launcher-close { display: grid; place-items: center; flex: 0 0 26px; height: 26px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--shell-muted); }
-.launcher-close:hover { background: var(--shell-soft); color: var(--shell-text); }
 .shell-dialog kbd { font: 10px ui-monospace, monospace; color: var(--shell-muted); white-space: nowrap; }
 .launcher-results { margin-top: 15px; max-height: min(450px, calc(100dvh - 240px)); overflow: auto; }
 .launcher-results button { display: flex; align-items: center; gap: 13px; width: 100%; background: transparent; border: 1px solid transparent; color: var(--shell-text); padding: 8px 12px; text-align: left; border-radius: 10px; }

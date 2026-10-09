@@ -1,0 +1,32 @@
+:root[data-desktop] .shell-workspaces { --workspace-pill-thickness: calc(16px * 2 / 3); gap: 10px; }
+:root[data-desktop] .shell-workspaces button { width: 22px; height: 28px; flex: 0 0 auto; transition: width 360ms cubic-bezier(.2,.9,.2,1), height 360ms cubic-bezier(.2,.9,.2,1), background-color 200ms; }
+.shell-workspaces button::after { inset: calc((28px - var(--workspace-pill-thickness)) / 2) 0; transition: inset 360ms cubic-bezier(.2,.9,.2,1), background-color 280ms, transform 280ms cubic-bezier(.2,.9,.2,1); }
+:root[data-desktop] .shell-workspaces button.is-current { width: 30px; }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-workspaces button { width: 28px; height: 22px; }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-workspaces button.is-current { width: 28px; height: 30px; }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-workspaces button::after { inset: 0 calc((28px - var(--workspace-pill-thickness)) / 2); }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-workspaces button:hover::after { transform: scaleX(1.2); }
+.shell-clock time { transform: rotate(0deg); transition: transform 320ms cubic-bezier(.2,.9,.2,1); }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-clock { width: 28px; height: 56px; min-width: 0; padding: 8px 2px !important; font-size: 12px; }
+:root:is([data-shell-position=left],[data-shell-position=right]) .shell-clock time { flex-shrink: 0; transform: rotate(90deg); }
+.shell-bar { backdrop-filter: blur(18px); transition: color 200ms ease; }
+.shell-dialog.shell-popover { border: 0; background: transparent; backdrop-filter: none; box-shadow: none; }
+.shell-popover[data-edge=top] { border-radius: 0 0 20px 20px; }
+.shell-popover[data-edge=bottom] { border-radius: 20px 20px 0 0; }
+.shell-popover[data-edge=left] { border-radius: 0 20px 20px 0; }
+.shell-popover[data-edge=right] { border-radius: 20px 0 0 20px; }
+:root[data-bar-panel=true] .shell-bar { z-index: 132; background: transparent; backdrop-filter: none; box-shadow: none; }
+.shell-panel-bridge { z-index: 125; border: 0; border-radius: 0; background: hsl(var(--shell-hue) calc(var(--shell-saturation) * .4) var(--shell-bg-lightness) / var(--shell-opacity)); backdrop-filter: blur(18px); mask-position: center; mask-size: 100% 100%; mask-repeat: no-repeat; }
+.shell-panel-bridge, .shell-panel-bridge.is-closing { animation: none; }
+.shell-popover[open] { animation: bar-surface-open 420ms cubic-bezier(.2,.9,.2,1) both; }
+.shell-popover[open].is-closing { animation: bar-surface-close 180ms cubic-bezier(.4,0,.8,.2) both; }
+@keyframes bar-surface-open {
+  0% { opacity: 0; transform: scale(var(--panel-scale-x),var(--panel-scale-y)); }
+  55% { opacity: 1; transform: scale(1.008,1.014); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes bar-surface-close { to { opacity: 0; transform: scale(var(--panel-scale-x),var(--panel-scale-y)); } }
+@media (prefers-reduced-motion: reduce) {
+  :root[data-desktop] .shell-workspaces button, .shell-workspaces button::after, .shell-clock time { transition: none; }
+  .shell-panel-bridge, .shell-popover[open], .shell-popover[open].is-closing { animation: none; }
+}

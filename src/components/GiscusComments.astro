@@ -1,15 +1,10 @@
 ---
+import { giscus } from '../data/giscus';
 const {
   term = "guestbook",
   title = "评论",
 } = Astro.props;
 
-const giscus = {
-  repo: "spartan-x125/spartan-x125.github.io",
-  repoId: "R_kgDOSeIVsA",
-  category: "General",
-  categoryId: "DIC_kwDOSeIVsM4C-Lls",
-};
 const isConfigured = Boolean(giscus.repoId && giscus.categoryId);
 ---
 

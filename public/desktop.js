@@ -50,6 +50,7 @@
   const editing = target => target instanceof Element && !!target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
   const send = (type, payload = {}) => parent.postMessage({ channel: 'spartan-desktop', type, ...payload }, location.origin);
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const mobile = matchMedia('(max-width: 700px)');
   document.addEventListener('click', event => {
     const target = event.target.closest?.('button, a, summary');
     if (target && !reduceMotion.matches && !target.matches(':disabled')) {
@@ -176,7 +177,7 @@
       if (url) { event.preventDefault(); send('open', { url, title: a.textContent.trim() }); }
     });
     document.addEventListener('keydown', event => {
-      if (editing(event.target) && event.key !== 'Escape') return;
+      if (editing(event.target) && event.key !== 'Escape' && !isMod(event, embedded ? readStorage('desktop-settings', {}).modifier || 'both' : settings.modifier)) return;
       if (event.key === 'Escape' || ((event.metaKey || event.altKey) && isShortcut(event))) {
         // The parent owns the modifier preference; do not consume disabled keys.
         if (event.key !== 'Escape' && !isMod(event, readStorage('desktop-settings', {}).modifier || 'both')) return;
@@ -241,12 +242,17 @@
   fullscreenLayer.hidden = true;
   document.body.append(fullscreenLayer);
   const apps = [...JSON.parse($('#shell-launcher').dataset.apps), { name: '窗口总览', action: 'overview', icon: 'grid' }, { name: '控制中心', action: 'controls', icon: 'settings' }, { name: '终端', action: 'terminal', icon: 'terminal' }, { name: '操作指南', action: 'help', icon: 'help' }];
-  const siteTitle = document.title.split(' | ').at(-1);
+  const siteTitle = JSON.parse($('#shell-launcher').dataset.profile).name;
+  document.title = siteTitle;
   const dialogs = $$('.shell-dialog');
-  dialogs.forEach(dialog => dialog.classList.add('shell-popover'));
+  dialogs.forEach(dialog => {
+    dialog.classList.add('shell-popover');
+    dialog.addEventListener('cancel', event => event.preventDefault());
+  });
   let panelAnchor = null;
   const panelTimers = new Map();
   const panelBridge = make('div', 'shell-panel-bridge');
+  let panelSurface = null, surfaceFrame = 0;
   panelBridge.hidden = true;
   panelBridge.setAttribute('aria-hidden', 'true');
   document.body.append(panelBridge);
@@ -263,8 +269,8 @@
   const colOf = win => fullscreenState?.win === win ? fullscreenState.column : win?.el.closest('.desktop-column');
   const closeDialogs = (immediate = true) => dialogs.forEach(d => closeDialog(d, immediate));
   const pushURL = win => {
-    if (!win?.url || location.pathname + location.search + location.hash === win.url) return;
-    history.pushState({ desktopWindow: win.id }, '', win.url);
+    if (!win || history.state?.desktopWindow === win.id) return;
+    history.pushState({ desktopWindow: win.id, url: win.url }, '', '/');
   };
   const focusWindow = (win, options = {}) => {
     if (!win) return;
@@ -277,12 +283,18 @@
     ws.focused = win.id;
     win.el.classList.add('is-focused');
     $('#shell-active-title').textContent = win.title;
-    if (win.url) document.title = win.documentTitle || `${win.title} | ${siteTitle}`;
+    document.title = siteTitle;
     if (options.scroll !== false && fullscreenState?.win !== win) {
       const col = colOf(win);
-      const left = col.offsetLeft - (ws.strip.clientWidth - col.offsetWidth) / 2;
-      ws.strip.scrollTo({ left, behavior: reduceMotion.matches || options.instant ? 'instant' : 'smooth' });
-      if (col.scrollHeight > col.clientHeight) col.scrollTo({ top: Math.max(0, win.el.offsetTop - (col.clientHeight - win.el.offsetHeight) / 2), behavior: reduceMotion.matches ? 'instant' : 'smooth' });
+      const behavior = reduceMotion.matches || options.instant ? 'instant' : 'smooth';
+      if (mobile.matches) {
+        const top = win.el.getBoundingClientRect().top - ws.strip.getBoundingClientRect().top + ws.strip.scrollTop;
+        ws.strip.scrollTo({ top: Math.max(0, top - 12), behavior });
+      } else {
+        const left = col.offsetLeft - (ws.strip.clientWidth - col.offsetWidth) / 2;
+        ws.strip.scrollTo({ left, behavior });
+        if (col.scrollHeight > col.clientHeight) col.scrollTo({ top: Math.max(0, win.el.offsetTop - (col.clientHeight - win.el.offsetHeight) / 2), behavior });
+      }
     }
     if (options.keyboard) win.el.focus({ preventScroll: true });
     if (options.history) pushURL(win);
@@ -298,10 +310,12 @@
     return workspaces.at(-1);
   }
   function ensureTrailingWorkspace() {
+    if (mobile.matches) return;
     while (workspaces.length < 3) addWorkspace();
     if (columnList(workspaces.at(-1)).length) addWorkspace();
   }
   function switchWorkspace(index, restore = true) {
+    if (mobile.matches) return;
     if (index === workspaceIndex) return;
     const direction = index > workspaceIndex ? 1 : -1;
     restoreFullscreen();
@@ -329,7 +343,11 @@
       b.classList.toggle('has-windows', columnList(ws).length > 0);
       b.setAttribute('aria-current', i === workspaceIndex ? 'true' : 'false');
       b.dataset.workspaceIndex = i;
-      b.onclick = () => switchWorkspace(i);
+      b.onclick = () => {
+        const panel = dialogs.find(dialog => dialog.open);
+        if (panel && panelAnchor === b) closeDialog(panel);
+        else switchWorkspace(i);
+      };
       b.oncontextmenu = event => { event.preventDefault(); showDialog('overview', b); };
       if (!b.isConnected) nav.append(b);
     });
@@ -376,6 +394,9 @@
       if (b.dataset.windowAction === 'fullscreen') fullscreen(win);
       if (b.dataset.windowAction === 'menu') toggleWindowMenu(win);
     });
+    el.addEventListener('click', event => {
+      if (!event.target.closest('input, textarea, select, iframe, a') && !getSelection()?.toString()) restoreTerminalFocus(win);
+    });
     bar.addEventListener('dblclick', event => { if (!event.target.closest('button')) fullscreen(win); });
     attachWindowDrag(win);
     ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'].forEach(edge => {
@@ -403,6 +424,7 @@
     windowSlots(col).forEach(el => Object.assign(el.style, { flex: '1 1 0px', height: '', marginTop: '0', maxHeight: 'none' }));
   }
   function layoutWorkspace(ws) {
+    if (mobile.matches) return;
     const cols = columnList(ws);
     if (!cols.length) return;
     ws.autoLayout = true;
@@ -667,6 +689,7 @@
       const next = list.slice(i + 1).find(w => !w.closing) || list.slice(0, i).reverse().find(w => !w.closing);
       const col = colOf(win);
       windows.delete(win.id);
+      win.terminal?.destroy();
       win.readingControls?.destroy();
       win.el.remove();
       if (!col.children.length) col.remove();
@@ -729,19 +752,18 @@
       ['向左移动列', 'left', () => moveColumn(-1)], ['向右移动列', 'right', () => moveColumn(1)],
       ['切换列宽', 'columns', () => cycleWidth()], ['全屏阅读 / 恢复', 'fullscreen', () => fullscreen(win)],
       ['堆叠右侧窗口', 'stack', () => consume()], ['拆出底部窗口', 'unstack', () => expel()],
-      ['移动到下一工作区', 'workspace', () => moveToWorkspace(workspaceIndex + 1)],
+      ...(!mobile.matches ? [['移动到下一工作区', 'workspace', () => moveToWorkspace(workspaceIndex + 1)]] : []),
     ];
     if (win.url) items.push(['在浏览器新标签页打开', 'external', () => window.open(win.url, '_blank', 'noopener')]);
     for (const [name, icon, fn] of items) {
       const b = button('', name); b.append(iconNode(icon, 16), make('span', '', name));
-      b.onclick = () => { menu.remove(); if (icon !== 'fullscreen') restoreFullscreen(); fn(); }; menu.append(b);
+      b.onclick = () => { menu.remove(); if (icon !== 'fullscreen') restoreFullscreen(); fn(); restoreTerminalFocus(win); }; menu.append(b);
     }
     win.el.append(menu);
   }
   function openURL(value, title, recordHistory = true) {
     const url = internalURL(value);
     if (!url) return;
-    closeDialogs();
     const existing = [...windows.values()].find(win => win.url === url);
     if (existing) { focusWindow(existing, { history: recordHistory, keyboard: true }); return existing; }
     const frame = make('iframe');
@@ -758,7 +780,7 @@
         const name = $('main h1', doc)?.textContent || $('main .feed h2', doc)?.textContent || win.title;
         win.title = name; win.titleNode.textContent = name; frame.title = name; win.el.setAttribute('aria-label', name);
         win.documentTitle = doc.title;
-        if (focused === win) document.title = doc.title;
+        document.title = siteTitle;
         if (!doc.querySelector('main')) {
           const error = make('div', 'desktop-terminal');
           error.append(make('p', '', '这个页面暂时无法打开。'));
@@ -804,6 +826,7 @@
     focusWindow(focused, { keyboard: true });
   }
   function moveToWorkspace(index) {
+    if (mobile.matches) return;
     if (!focused || index < 0) return;
     while (workspaces.length <= index) addWorkspace();
     const col = colOf(focused);
@@ -847,6 +870,11 @@
     col.style.setProperty('--column-width', `${Math.max(300, Math.round((innerWidth - 70) * presets[next]))}px`);
     focusWindow(focused);
   }
+  function restoreTerminalFocus(win = focused) {
+    queueMicrotask(() => {
+      if (root.dataset.crashed !== 'true' && win === focused && windows.has(win?.id) && !dialogs.some(dialog => dialog.open) && !$('.window-menu', win.el)) win.terminal?.focus();
+    });
+  }
   function closeDialog(dialog, immediate = false) {
     if (!dialog?.open) return;
     clearTimeout(panelTimers.get(dialog));
@@ -854,15 +882,39 @@
       panelTimers.delete(dialog);
       dialog.classList.remove('is-closing');
       dialog.close();
+      restoreTerminalFocus();
       if (!dialogs.some(d => d.open)) {
         panelBridge.hidden = true;
+        panelSurface = null;
+        cancelAnimationFrame(surfaceFrame);
+        delete root.dataset.barPanel;
         panelAnchor?.classList.remove('is-panel-active');
+        panelAnchor?.setAttribute('aria-expanded', 'false');
       }
     };
     if (immediate || reduceMotion.matches) { finish(); return; }
     dialog.classList.add('is-closing');
-    panelBridge.classList.add('is-closing');
+    paintPanelSurface();
     panelTimers.set(dialog, setTimeout(finish, 180));
+  }
+  function paintPanelSurface() {
+    cancelAnimationFrame(surfaceFrame);
+    surfaceFrame = 0;
+    if (!panelSurface?.dialog.open) return;
+    const { dialog, bar, edge, horizontal, start, length, depth, gap, flare, origin } = panelSurface;
+    const transform = getComputedStyle(dialog).transform;
+    const matrix = transform === 'none' ? { a: 1, d: 1 } : new DOMMatrix(transform);
+    const along = horizontal ? matrix.a : matrix.d, outward = horizontal ? matrix.d : matrix.a;
+    const left = origin + (start - origin) * along, right = left + length * along;
+    const near = gap * outward, far = (gap + depth) * outward;
+    const shoulder = flare * along, radiusX = 20 * along, radiusY = 20 * outward;
+    const barStart = horizontal ? bar.left : bar.top, barEnd = horizontal ? bar.right : bar.bottom;
+    const thickness = horizontal ? bar.height : bar.width, radius = Math.min(12, thickness / 2);
+    const path = `M${barStart + radius} ${-thickness}H${barEnd - radius}Q${barEnd} ${-thickness} ${barEnd} ${-thickness + radius}V${-radius}Q${barEnd} 0 ${barEnd - radius} 0H${right + shoulder}C${right + shoulder * .45} 0 ${right} ${near * .45} ${right} ${near}V${far - radiusY}Q${right} ${far} ${right - radiusX} ${far}H${left + radiusX}Q${left} ${far} ${left} ${far - radiusY}V${near}C${left} ${near * .45} ${left - shoulder * .45} 0 ${left - shoulder} 0H${barStart + radius}Q${barStart} 0 ${barStart} ${-radius}V${-thickness + radius}Q${barStart} ${-thickness} ${barStart + radius} ${-thickness}Z`;
+    const orientation = edge === 'top' ? `translate(0 ${bar.bottom})` : edge === 'bottom' ? `matrix(1 0 0 -1 0 ${bar.top})` : edge === 'left' ? `matrix(0 1 1 0 ${bar.right} 0)` : `matrix(0 1 -1 0 ${bar.left} 0)`;
+    const mask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${innerWidth} ${innerHeight}"><path transform="${orientation}" d="${path}"/></svg>`;
+    panelBridge.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(mask)}")`;
+    if (dialog.getAnimations().some(animation => animation.playState === 'running')) surfaceFrame = requestAnimationFrame(paintPanelSurface);
   }
   function positionPanel(dialog) {
     if (!dialog?.open) return;
@@ -870,40 +922,51 @@
     const anchor = (panelAnchor || $('.shell-logo')).getBoundingClientRect();
     const edge = root.dataset.shellPosition || 'top';
     const horizontal = edge === 'top' || edge === 'bottom';
-    const available = horizontal ? (edge === 'top' ? innerHeight - bar.bottom : bar.top) - 20 : innerHeight - 24;
+    const flare = horizontal && mobile.matches ? 12 : 20;
+    const gap = flare;
+    const flatStart = horizontal ? bar.left + 12 : bar.top + 12;
+    const flatEnd = horizontal ? bar.right - 12 : bar.bottom - 12;
+    const joinedLength = Math.max(100, flatEnd - flatStart - flare * 2);
+    const available = horizontal ? (edge === 'top' ? innerHeight - bar.bottom : bar.top) - gap - 12 : joinedLength;
     dialog.style.maxHeight = `${Math.max(100, available)}px`;
-    dialog.style.maxWidth = `${horizontal ? innerWidth - 24 : (edge === 'left' ? innerWidth - bar.right : bar.left) - 20}px`;
+    dialog.style.maxWidth = `${horizontal ? joinedLength : Math.max(100, (edge === 'left' ? innerWidth - bar.right : bar.left) - gap - 12)}px`;
     const width = dialog.offsetWidth, height = dialog.offsetHeight;
-    const clamp = (value, maximum) => Math.max(12, Math.min(value, maximum - 12));
+    const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(value, Math.max(minimum, maximum)));
     const centerX = anchor.left + anchor.width / 2, centerY = anchor.top + anchor.height / 2;
-    const left = horizontal ? clamp(centerX - width / 2, innerWidth - width) : edge === 'left' ? bar.right + 8 : bar.left - width - 8;
-    const top = horizontal ? edge === 'top' ? bar.bottom + 8 : bar.top - height - 8 : clamp(centerY - height / 2, innerHeight - height);
+    const left = horizontal ? clamp(centerX - width / 2, flatStart + flare, flatEnd - flare - width) : edge === 'left' ? bar.right + gap : bar.left - width - gap;
+    const top = horizontal ? edge === 'top' ? bar.bottom + gap : bar.top - height - gap : clamp(centerY - height / 2, flatStart + flare, flatEnd - flare - height);
     Object.assign(dialog.style, { left: `${left}px`, top: `${top}px`, right: 'auto', bottom: 'auto' });
     dialog.dataset.edge = edge;
-    dialog.style.transformOrigin = horizontal ? `${Math.max(20, Math.min(width - 20, centerX - left))}px ${edge === 'top' ? 0 : height}px` : `${edge === 'left' ? 0 : width}px ${Math.max(20, Math.min(height - 20, centerY - top))}px`;
-    dialog.style.setProperty('--panel-enter-x', horizontal ? '0px' : edge === 'left' ? '-12px' : '12px');
-    dialog.style.setProperty('--panel-enter-y', horizontal ? edge === 'top' ? '-12px' : '12px' : '0px');
-    dialog.style.setProperty('--panel-scale-x', horizontal ? '.6' : '.08');
-    dialog.style.setProperty('--panel-scale-y', horizontal ? '.08' : '.6');
-    const bridgeLeft = horizontal ? Math.max(left + 20, Math.min(left + width - 60, centerX - 20)) : edge === 'left' ? bar.right - 4 : bar.left - 12;
-    const bridgeTop = horizontal ? edge === 'top' ? bar.bottom - 4 : bar.top - 12 : Math.max(top + 20, Math.min(top + height - 60, centerY - 20));
-    Object.assign(panelBridge.style, { left: `${bridgeLeft}px`, top: `${bridgeTop}px`, width: horizontal ? '40px' : '16px', height: horizontal ? '16px' : '40px' });
+    const originX = horizontal ? clamp(centerX - left, 0, width) : edge === 'left' ? -gap : width + gap;
+    const originY = horizontal ? edge === 'top' ? -gap : height + gap : clamp(centerY - top, 0, height);
+    dialog.style.transformOrigin = `${originX}px ${originY}px`;
+    const scaleX = horizontal ? '.28' : '.025', scaleY = horizontal ? '.025' : '.28';
+    dialog.style.setProperty('--panel-scale-x', scaleX);
+    dialog.style.setProperty('--panel-scale-y', scaleY);
+    Object.assign(panelBridge.style, { left: '0px', top: '0px', width: `${innerWidth}px`, height: `${innerHeight}px` });
+    panelSurface = { dialog, bar, edge, horizontal, start: horizontal ? left : top, length: horizontal ? width : height, depth: horizontal ? height : width, gap, flare, origin: horizontal ? left + originX : top + originY };
     panelBridge.dataset.edge = edge;
     panelBridge.classList.remove('is-closing');
     panelBridge.hidden = false;
+    paintPanelSurface();
   }
   function showDialog(name, anchor = null) {
     const dialog = $(`#shell-${name}`);
     if (!dialog) return;
-    if (dialog.open) { closeDialog(dialog); return; }
+    const fromBar = anchor?.closest('.shell-bar');
+    const active = dialogs.find(panel => panel.open);
+    if (fromBar && active && (dialog.open || anchor === panelAnchor)) { closeDialog(active); return; }
+    if (dialog.open) return;
     const previousAnchor = panelAnchor;
     closeDialogs();
     const fallback = name === 'overview' ? $('#shell-workspaces .is-current') : $(`.shell-bar [data-shell-action="${name}"]`);
     panelAnchor = anchor?.closest('.shell-bar') ? anchor : anchor?.closest('.shell-dialog') ? previousAnchor : fallback || $('.shell-logo');
     panelAnchor.classList.add('is-panel-active');
+    panelAnchor.setAttribute('aria-expanded', 'true');
     if (name === 'overview') renderOverview();
     if (name === 'launcher') { $('#launcher-query').value = ''; launcherIndex = 0; renderLauncher(); }
     if (name === 'calendar') renderCalendar();
+    root.dataset.barPanel = 'true';
     dialog.show();
     positionPanel(dialog);
     if (name === 'launcher') $('#launcher-query').focus();
@@ -929,17 +992,19 @@
   function renderOverview() {
     const host = $('#overview-workspaces'); host.replaceChildren();
     workspaces.forEach((ws, i) => {
+      if (mobile.matches && i !== 0) return;
       const row = make('section', `overview-row${i === workspaceIndex ? ' is-current' : ''}`);
       const heading = make('div', 'overview-row-heading');
       const select = button(i === workspaceIndex ? '当前工作区' : '切换到这里', `切换到工作区 ${i + 1}`);
-      select.onclick = () => { closeDialogs(); switchWorkspace(i); };
-      heading.append(make('strong', '', `工作区 ${i + 1}`), select);
+      select.onclick = () => switchWorkspace(i);
+      heading.append(make('strong', '', mobile.matches ? '窗口' : `工作区 ${i + 1}`));
+      if (!mobile.matches) heading.append(select);
       const cards = make('div', 'overview-windows');
       windowList(ws).forEach(win => {
         const card = button('', `定位 ${win.title}`);
         card.className = `overview-card${win === focused ? ' is-selected' : ''}`;
         card.append(iconNode(win.icon, 24), make('strong', '', win.title));
-        card.onclick = () => { closeDialogs(); focusWindow(win, { keyboard: true, history: true }); };
+        card.onclick = () => focusWindow(win, { keyboard: true, history: true });
         cards.append(card);
       });
       row.append(heading, cards); host.append(row);
@@ -955,112 +1020,12 @@
     for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) grid.append(make('span', day === now.getDate() ? 'today' : '', String(day)));
   }
   function terminal({ column = null, width = 720, focus = true } = {}) {
-    closeDialogs();
     const content = make('div', 'desktop-terminal');
     const profile = JSON.parse($('#shell-launcher').dataset.profile);
-    const host = new URL(profile.github).pathname.split('/').filter(Boolean)[0] + '.github.io';
-    const prompt = () => {
-      const node = make('span', 'terminal-prompt');
-      node.append(make('span', 'terminal-user', `${profile.name}@blog`), make('span', '', ':'), make('span', 'terminal-directory', '~'), make('span', '', '$ '));
-      return node;
-    };
-    const commandLine = text => {
-      const line = make('div', 'terminal-command-line');
-      line.append(prompt(), make('span', 'terminal-command', text));
-      return line;
-    };
-    const fastfetch = () => {
-      const panel = make('div', 'terminal-fastfetch');
-      const avatar = make('img', 'fastfetch-avatar');
-      avatar.src = profile.avatar; avatar.alt = `${profile.name} 的头像`;
-      const info = make('div', 'fastfetch-info');
-      const title = `${profile.name}@blog`;
-      const heading = make('a', 'fastfetch-heading', title);
-      heading.href = '/about/';
-      info.append(heading, make('div', 'fastfetch-separator', '-'.repeat(title.length)));
-      const details = make('div', 'fastfetch-fields');
-      const stats = profile.stats;
-      const days = Math.max(1, Math.floor((Date.now() - new Date(`${stats.started}T00:00:00+08:00`).getTime()) / 86400000) + 1);
-      const words = `${(stats.words / 1000).toFixed(1)}k`;
-      const rows = [
-        ['Site', host, `https://${host}/`],
-        ['Host', 'GitHub Pages'],
-        ['Framework', 'Astro'],
-        ['Posts', String(profile.postCount)],
-        ['Categories', String(stats.categories)],
-        ['Tags', String(stats.tags)],
-        ['Uptime', `${days} days`],
-        ['Words', words],
-        ['Updated', stats.updated],
-        ['GitHub', profile.github.replace(/^https?:\/\//, ''), profile.github],
-        ['Email', profile.email.replace(/^mailto:/, ''), profile.email],
-      ];
-      rows.forEach(([label, value, href]) => {
-        const row = make('div', 'fastfetch-row');
-        const term = make('strong', 'fastfetch-key', `${label}:`.padEnd(12, ' ')), description = make('span', 'fastfetch-value');
-        if (href) { const link = make('a', '', value); link.href = href; if (!href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener'; } description.append(link); }
-        else description.textContent = value;
-        row.append(term, description); details.append(row);
-      });
-      const colors = make('div', 'fastfetch-colors');
-      colors.setAttribute('aria-hidden', 'true');
-      for (let row = 0; row < 2; row++) {
-        const line = make('div', 'fastfetch-color-row');
-        for (let color = 0; color < 8; color++) {
-          const block = make('span', `ansi-color ansi-${row * 8 + color}`, '███');
-          line.append(block);
-        }
-        colors.append(line);
-      }
-      info.append(details, colors); panel.append(avatar, info);
-      return panel;
-    };
-    const output = make('div', 'terminal-output');
-    output.append(commandLine('fastfetch'), fastfetch());
-    const form = make('form', 'terminal-input');
-    const input = make('input'); input.autocomplete = 'off'; input.spellcheck = false; input.setAttribute('aria-label', '桌面终端命令');
-    input.autocapitalize = 'off'; input.setAttribute('autocorrect', 'off');
-    form.append(prompt(), input); content.append(output, form);
     const win = createWindow({ title: `${profile.name}@blog: ~`, content, width, column, icon: 'terminal' });
     win.el.dataset.kind = 'terminal';
-    const history = [];
-    let historyIndex = 0;
-    let draft = '';
-    input.addEventListener('keydown', event => {
-      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-        event.preventDefault();
-        if (historyIndex === history.length) draft = input.value;
-        historyIndex = Math.max(0, Math.min(history.length, historyIndex + (event.key === 'ArrowUp' ? -1 : 1)));
-        input.value = historyIndex === history.length ? draft : history[historyIndex];
-        input.setSelectionRange(input.value.length, input.value.length);
-      }
-      if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); output.replaceChildren(); }
-      if (event.ctrlKey && event.key.toLowerCase() === 'c') {
-        event.preventDefault(); output.append(commandLine(`${input.value}^C`)); input.value = '';
-      }
-    });
-    form.addEventListener('submit', event => {
-      event.preventDefault();
-      const text = input.value.trim(); input.value = '';
-      if (!text) return;
-      history.push(text); historyIndex = history.length; draft = '';
-      output.append(commandLine(text));
-      const [command, ...args] = text.split(/\s+/);
-      const commands = { posts: '/posts/', about: '/about/', friends: '/friends/', guestbook: '/guestbook/', updates: '/updates/', home: '/' };
-      if (command === 'help') output.append(make('div', '', 'fastfetch  clear  date  whoami  pwd  ls  echo\nposts  about  friends  guestbook  updates  home\nopen <path>'));
-      else if (command === 'fastfetch') output.append(fastfetch());
-      else if (command === 'clear') output.replaceChildren();
-      else if (command === 'date') output.append(make('div', '', new Date().toLocaleString('zh-CN')));
-      else if (command === 'whoami') output.append(make('div', '', profile.name));
-      else if (command === 'pwd') output.append(make('div', '', `/home/${profile.name}`));
-      else if (command === 'echo') output.append(make('div', '', args.join(' ')));
-      else if (command === 'ls') output.append(make('div', '', 'posts/  about/  friends/  guestbook/  updates/'));
-      else if (commands[command]) openURL(commands[command]);
-      else if (command === 'open' && internalURL(args.join(' '))) openURL(args.join(' '));
-      else output.append(make('div', 'terminal-error', `${command}: command not found`));
-      win.body.scrollTop = win.body.scrollHeight;
-    });
-    if (focus) { input.focus({ preventScroll: true }); focusWindow(win); }
+    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, close: closeWindow, internalURL });
+    if (focus) { focusWindow(win); win.terminal.focus(); }
     return win;
   }
   const appearanceMessage = () => ({ channel: 'spartan-desktop', type: 'appearance', theme: root.dataset.theme, properties: { '--accent-hue': String(settings.hue), '--card-opacity': String(settings.opacity), '--card-strong-opacity': String(Math.min(settings.opacity + .1, 1)) } });
@@ -1150,9 +1115,9 @@
       navigator.clipboard?.writeText(location.origin + cleanURL(location.href)).then(() => announce('页面链接已复制')).catch(() => announce('未能复制链接，请从地址栏复制'));
       return;
     }
-    if (name === 'home') { closeDialogs(); openURL('/'); return; }
+    if (name === 'home') { openURL('/'); return; }
     if (name === 'restart') { location.reload(); return; }
-    if (name === 'new-workspace') { switchWorkspace(workspaces.length - 1); if (columnList().length) switchWorkspace(workspaces.length); closeDialogs(); return; }
+    if (name === 'new-workspace') { switchWorkspace(workspaces.length - 1); if (columnList().length) switchWorkspace(workspaces.length); return; }
     if (name === 'previous') navigateColumn(-1);
     if (name === 'next') navigateColumn(1);
     if (name === 'terminal') terminal();
@@ -1176,12 +1141,12 @@
     return ['Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Space', 'Slash', 'Comma', 'Period', 'BracketLeft', 'BracketRight', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'KeyQ', 'KeyO', 'KeyD', 'KeyS', 'KeyT', 'KeyF', 'KeyM', 'KeyC', 'KeyR', 'KeyI', 'KeyU'].includes(event.code);
   }
   function handleKey(event) {
-    if (editing(event.target) && event.key !== 'Escape') return;
+    if (root.dataset.crashed === 'true') return;
+    if (editing(event.target) && event.key !== 'Escape' && !isMod(event, embedded ? readStorage('desktop-settings', {}).modifier || 'both' : settings.modifier)) return;
     if (event.key === 'Escape') {
       if (pointerInteraction) { pointerInteraction.cancel(); return; }
-      const open = dialogs.find(d => d.open);
-      if (open) closeDialog(open);
-      else restoreFullscreen();
+      if (dialogs.some(dialog => dialog.open)) return;
+      restoreFullscreen();
       $$('.window-menu').forEach(m => m.remove());
       return;
     }
@@ -1235,6 +1200,7 @@
     refreshChrome();
   }
   function handleWheel(event) {
+    if (mobile.matches) { current().strip.scrollBy({ top: event.deltaY || event.deltaX, behavior: 'instant' }); return; }
     const delta = event.deltaMode === 1 ? 24 : event.deltaMode === 2 ? innerWidth : 1;
     if (event.mod) {
       if (Date.now() - lastWheel < 150) return;
@@ -1254,27 +1220,32 @@
   $('#mobile-toc-panel')?.remove();
   $('#mobile-toc-toggle')?.remove();
   let primary;
+  const initialPath = cleanURL(location.href);
   originalChildren.forEach((content, i) => {
     if (content.matches('.article-reading-card')) return;
     const profile = content.matches('.sidebar-column');
     const auxiliary = content.matches('.right-sidebar, .article-reading-card');
     if (profile) {
-      const col = newColumn(420, workspaces[0]);
+      const width = Math.max(320, (main.clientWidth - 70) / 2);
+      const col = newColumn(width, workspaces[0]);
+      col.classList.add('initial-terminal-column');
       const musicCard = $('.music-card', content);
       if ($('.profile-card', content)) {
-        const profileTerminal = terminal({ column: col, width: 420, focus: false });
+        const profileTerminal = terminal({ column: col, width, focus: false });
         Object.assign(profileTerminal.el.style, { flex: '1', maxHeight: 'none' });
+        if (initialPath === '/') primary = profileTerminal;
       }
       if (musicCard) {
         $('#shell-music-content').append(musicCard);
       }
       return;
     }
+    if (initialPath === '/') return;
     if (content.matches('.feed') && $('#post-list', content)) {
       const label = make('label', 'archive-search', '搜索文章'); label.append($('#post-search'));
       content.insertBefore(label, $('#post-list', content));
     }
-    const title = auxiliary ? '分类与标签' : location.pathname === '/' ? '最新文章' : document.title.split(' | ')[0];
+    const title = auxiliary ? '分类与标签' : $('h1, h2', content)?.textContent || siteTitle;
     const width = profile ? 320 : auxiliary ? 300 : content.matches('.article-page') ? 720 : 570;
     // Original page order is intentionally retained rather than inserting after focus.
     const col = newColumn(width, workspaces[0]);
@@ -1287,12 +1258,12 @@
   renderEmpty();
   applySettings();
   focusWindow(primary || windowList()[0], { scroll: matchMedia('(max-width: 860px)').matches, instant: true });
-  history.replaceState({ desktopWindow: focused?.id }, '', location.href);
+  history.replaceState({ desktopWindow: focused?.id, url: focused?.url }, '', '/');
+  if (primary?.terminal && !mobile.matches) primary.terminal.focus();
 
   document.addEventListener('click', event => {
     const shellAction = event.target.closest('[data-shell-action]');
-    if (shellAction) { action(shellAction.dataset.shellAction, shellAction); return; }
-    if (event.target.closest('[data-close-dialog]')) { closeDialog(event.target.closest('dialog')); return; }
+    if (shellAction) { action(shellAction.dataset.shellAction, shellAction); restoreTerminalFocus(); return; }
     if (!event.target.closest('.window-menu, [data-window-action="menu"]')) $$('.window-menu').forEach(m => m.remove());
     const a = event.target.closest('a[href]');
     if (!a || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || a.target === '_blank' || a.hasAttribute('download')) return;
@@ -1312,12 +1283,10 @@
     const url = internalURL(a.href);
     if (url) { event.preventDefault(); openURL(url, a.textContent.trim()); }
   });
-  document.addEventListener('pointerdown', event => {
-    if (!event.target.closest('.shell-dialog, .shell-bar')) closeDialogs(false);
-  });
   document.addEventListener('keydown', handleKey);
   document.addEventListener('wheel', event => {
     if (dialogs.some(d => d.open)) return;
+    if (mobile.matches) return;
     const mod = isMod(event, settings.modifier);
     const content = event.target.closest('.window-content');
     const horizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
@@ -1338,13 +1307,13 @@
     if (data.type === 'wheel' && Number.isFinite(data.deltaX) && Number.isFinite(data.deltaY)) handleWheel(data);
     if (data.type === 'state' && typeof data.url === 'string' && internalURL(data.url)) {
       win.url = cleanURL(data.url);
-      if (focused === win) history.replaceState({ desktopWindow: win.id }, '', win.url);
+      if (focused === win) history.replaceState({ desktopWindow: win.id, url: win.url }, '', '/');
     }
   });
   window.addEventListener('popstate', event => {
     const win = windows.get(event.state?.desktopWindow);
     if (win) focusWindow(win, { keyboard: true });
-    else openURL(cleanURL(location.href), null, false);
+    else if (event.state?.url) openURL(event.state.url, null, false);
   });
   $('#launcher-query').addEventListener('input', () => { launcherIndex = 0; renderLauncher(); });
   $('#launcher-query').addEventListener('keydown', event => {
@@ -1404,7 +1373,19 @@
     if (focused) focusWindow(focused);
     positionPanel(dialogs.find(dialog => dialog.open));
   });
+  mobile.addEventListener('change', () => {
+    restoreFullscreen();
+    if (mobile.matches) {
+      const first = workspaces[0];
+      workspaces.slice(1).forEach(ws => columnList(ws).forEach(col => moveNode(col, first.strip)));
+      workspaceIndex = 0;
+      workspaces.forEach((ws, i) => { ws.strip.hidden = i !== 0; });
+      first.focused = focused?.id || windowList(first)[0]?.id;
+    } else ensureTrailingWorkspace();
+    refreshChrome();
+    if (focused) focusWindow(focused, { instant: true });
+  });
   const panelObserver = new ResizeObserver(() => requestAnimationFrame(() => positionPanel(dialogs.find(dialog => dialog.open && !dialog.classList.contains('is-closing')))));
   dialogs.forEach(dialog => panelObserver.observe(dialog));
-  window.desktopWeb = { openURL, action, focusWindow, updateURL(url) { if (focused?.url) focused.url = cleanURL(url); }, get windows() { return [...windows.values()]; }, get workspaces() { return workspaces; } };
+  window.desktopWeb = { openURL, action, focusWindow, updateURL(url) { if (focused?.url) focused.url = cleanURL(url); }, get activeURL() { return focused?.url || initialPath; }, get windows() { return [...windows.values()]; }, get workspaces() { return workspaces; } };
 })();

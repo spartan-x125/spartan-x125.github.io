@@ -245,7 +245,7 @@
 
     const index = JSON.parse(panel.dataset.searchIndex || "[]");
     const normalize = (value) => (value || "").trim().toLowerCase();
-    const params = new URLSearchParams(window.location.search);
+    const params = new URL(window.desktopWeb?.activeURL || window.location.href, location.origin).searchParams;
     const queryFromUrl = params.get("q");
     if (queryFromUrl && !input.value) input.value = queryFromUrl;
 
@@ -299,11 +299,9 @@
       if (!query) return;
       event.preventDefault();
       const firstResult = results.querySelector("a");
-      if (firstResult) {
-        window.location.href = firstResult.href;
-      } else {
-        window.location.href = `/posts/?q=${encodeURIComponent(query)}`;
-      }
+      const target = firstResult?.href || `/posts/?q=${encodeURIComponent(query)}`;
+      if (window.desktopWeb) window.desktopWeb.openURL(target);
+      else window.location.href = target;
     });
   }
 
@@ -1051,7 +1049,7 @@
     if (searchInput.dataset.filterReady === "true") return;
     searchInput.dataset.filterReady = "true";
 
-    const params = new URLSearchParams(window.location.search);
+    const params = new URL(window.desktopWeb?.activeURL || window.location.href, location.origin).searchParams;
     const tagFromUrl = params.get("tag");
     const categoryFromUrl = params.get("category");
     const queryFromUrl = params.get("q");
@@ -1063,7 +1061,7 @@
 
     const normalize = (value) => value.trim().toLowerCase();
     const syncUrl = () => {
-      const url = new URL(window.location.href);
+      const url = new URL(window.desktopWeb?.activeURL || window.location.href, location.origin);
       const query = searchInput.value.trim();
       if (query) {
         url.searchParams.set("q", query);
@@ -1083,10 +1081,11 @@
         url.searchParams.set("category", activeCategory);
       }
 
-      window.history.replaceState(window.history.state, "", url);
       if (document.documentElement.dataset.embedded === 'true') {
+        window.history.replaceState(window.history.state, "", url);
         parent.postMessage({ channel: 'spartan-desktop', type: 'state', url: url.href }, location.origin);
-      } else window.desktopWeb?.updateURL(url.href);
+      } else if (window.desktopWeb) window.desktopWeb.updateURL(url.href);
+      else window.history.replaceState(window.history.state, "", url);
     };
 
     const renderPagination = (visibleCards) => {
