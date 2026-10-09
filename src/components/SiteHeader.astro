@@ -1,162 +1,106 @@
 ---
-import { profile } from "../data/profile";
-import { getAllPosts } from "../utils/posts";
-
-const searchPosts = await getAllPosts();
-const searchIndex = searchPosts.map((post) => ({
-  title: post.title,
-  description: post.description,
-  category: post.category,
-  tags: post.tags,
-  date: post.date,
-  url: `/posts/${post.slug}/`,
-}));
+import '../styles/desktop.css';
+import Icon from './DesktopIcon.astro';
+import { desktopIconPaths } from '../data/desktopIcons';
+import { profile } from '../data/profile';
+import { getAllPosts } from '../utils/posts';
+const posts = await getAllPosts();
+const siteStats = {
+  categories: new Set(posts.map(post => post.category || '未分类')).size,
+  tags: new Set(posts.flatMap(post => post.tags ?? [])).size,
+  started: [...posts].sort((a, b) => a.date.localeCompare(b.date))[0]?.date || '2026-05-16',
+  words: posts.reduce((total, post) => total + (post.wordCount ?? 0), 0),
+  updated: [...posts].sort((a, b) => b.updatedDate.localeCompare(a.updatedDate))[0]?.updatedDate || '暂无',
+};
+const apps = [
+  { name: '文章归档', url: '/posts/', icon: 'archive' },
+  { name: '关于我', url: '/about/', icon: 'user' },
+  { name: '友情链接', url: '/friends/', icon: 'link' },
+  { name: '留言板', url: '/guestbook/', icon: 'chat' },
+  { name: '更新历史', url: '/updates/', icon: 'history' },
+];
 ---
-
-<header class="topbar" id="site-topbar">
-  <a class="brand" href="/">{profile.title}</a>
-  <nav class="topnav" id="mobile-nav-panel" data-mobile-panel="nav" aria-label="站点导航">
-    <a href="/">首页</a>
-    <a href="/posts/">文章</a>
-    <a href="/updates/">更新</a>
-    <a href="/friends/">友链</a>
-    <a href="/guestbook/">留言</a>
-  </nav>
-  <div class="topbar-tools">
-    <button
-      class="icon-button topbar-tool search-toggle"
-      type="button"
-      data-mobile-panel-toggle="search"
-      aria-controls="topbar-search-panel"
-      aria-expanded="false"
-      aria-label="打开文章搜索"
-      title="搜索"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="11" cy="11" r="6" />
-        <path d="m16 16 4 4" />
-      </svg>
-    </button>
-    <div
-      class="topbar-search-panel"
-      id="topbar-search-panel"
-      data-mobile-panel="search"
-      data-search-index={JSON.stringify(searchIndex)}
-      aria-label="文章搜索"
-    >
-      <label>
-        <span>搜索</span>
-        <input id="post-search" type="search" placeholder="搜索标题、摘要、分类或标签" autocomplete="off" />
-      </label>
-      <div class="topbar-search-results" id="topbar-search-results" aria-live="polite"></div>
-    </div>
-    <button
-      class="icon-button topbar-tool color-toggle"
-      id="color-toggle"
-      type="button"
-      aria-controls="accent-panel"
-      aria-expanded="false"
-      aria-label="打开外观设置"
-      title="外观设置"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3a9 9 0 0 0 0 18h1.2a1.8 1.8 0 0 0 1.2-3.14 1.7 1.7 0 0 1 1.14-2.96H17a4 4 0 0 0 0-8h-1.2A9 9 0 0 0 12 3Z" />
-        <circle cx="7.8" cy="10" r=".7" />
-        <circle cx="10.4" cy="7.4" r=".7" />
-        <circle cx="14" cy="7.4" r=".7" />
-      </svg>
-    </button>
-    <div class="accent-panel appearance-panel" id="accent-panel" hidden>
-      <div class="appearance-heading">
-        <p class="eyebrow">Appearance</p>
-        <strong>外观设置</strong>
-        <button class="appearance-reset" id="appearance-reset" type="button" aria-label="恢复初始设定" title="恢复初始设定">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20 6v5h-5" />
-            <path d="M4 18v-5h5" />
-            <path d="M17.6 9A6.5 6.5 0 0 0 6.9 6.7L4 9.4" />
-            <path d="M6.4 15A6.5 6.5 0 0 0 17.1 17.3L20 14.6" />
-          </svg>
-        </button>
-      </div>
-      <label class="appearance-control hue-control">
-        <span>
-          主题色相
-          <output id="accent-hue-value" for="accent-hue">200°</output>
-        </span>
-        <input class="hue-range" id="accent-hue" type="range" min="0" max="360" value="200" aria-label="调整主题色相" />
-      </label>
-      <label class="appearance-control">
-        <span>
-          背景模糊度
-          <output id="background-blur-value" for="background-blur">0px</output>
-        </span>
-        <input id="background-blur" type="range" min="0" max="18" value="0" step="1" aria-label="调整背景模糊度" />
-      </label>
-      <label class="appearance-control">
-        <span>
-          壁纸透明度
-          <output id="background-opacity-value" for="background-opacity">100%</output>
-        </span>
-        <input id="background-opacity" type="range" min="0.2" max="1" value="1" step="0.01" aria-label="调整壁纸透明度" />
-      </label>
-      <label class="appearance-control">
-        <span>
-          卡片透明度
-          <output id="card-opacity-value" for="card-opacity">24%</output>
-        </span>
-        <input id="card-opacity" type="range" min="0.08" max="1" value="0.24" step="0.01" aria-label="调整卡片透明度" />
-      </label>
-    </div>
-    <button class="icon-button theme-toggle topbar-tool" id="theme-toggle" type="button" aria-label="切换明暗模式" title="明暗模式">
-      <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M21 14.2A7.7 7.7 0 0 1 9.8 3a8.5 8.5 0 1 0 11.2 11.2Z" />
-      </svg>
-      <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="4" />
-        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-      </svg>
-    </button>
-    <button
-      class="icon-button topbar-tool nav-menu-toggle"
-      type="button"
-      data-mobile-panel-toggle="nav"
-      aria-controls="mobile-nav-panel"
-      aria-expanded="false"
-      aria-label="打开站点导航"
-      title="导航"
-    >
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 7h14" />
-        <path d="M5 12h14" />
-        <path d="M5 17h14" />
-      </svg>
-    </button>
+<script is:inline>
+  document.documentElement.dataset.desktop = 'true';
+  document.documentElement.dataset.embedded = String(window.parent !== window && new URLSearchParams(location.search).get('embed') === '1');
+  try { document.documentElement.dataset.theme = localStorage.getItem('blog-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch { document.documentElement.dataset.theme = 'light'; }
+</script>
+<header class="shell-bar" aria-label="桌面顶栏">
+  <div class="shell-left">
+    <button class="shell-logo" data-shell-action="launcher" title="启动器 · Mod + Space" aria-label="打开启动器"><img src={profile.avatar} alt="" /></button>
+    <nav id="shell-workspaces" class="shell-workspaces" aria-label="工作区"></nav>
+    <span class="shell-active-title" id="shell-active-title" hidden>{profile.title}</span>
+  </div>
+  <div class="bar-center">
+    <button class="shell-clock" data-shell-action="calendar" aria-label="查看日历"><time id="shell-clock">--:--</time><span id="shell-date"></span></button>
+    <button class="shell-icon" data-shell-action="wallpaper" title="更换壁纸" aria-label="更换壁纸"><Icon name="wallpaper" size={17} /></button>
+  </div>
+  <div class="shell-right">
+    <button class="shell-media" data-shell-action="music" aria-label="打开音乐播放器" title="音乐播放器"><Icon name="music" size={16} /><span id="shell-track">音乐</span></button>
+    <button class="shell-icon" data-shell-action="notifications" title="站内动态" aria-label="查看站内动态"><Icon name="bell" size={17} /></button>
+    <button class="shell-icon" data-shell-action="audio" title="音乐音量" aria-label="调整音乐音量"><Icon name="volume" size={17} /></button>
+    <button class="shell-icon" data-shell-action="controls" title="壁纸亮度" aria-label="调整壁纸亮度"><Icon name="sun" size={17} /></button>
+    <span class="shell-battery" id="shell-battery" aria-label="电量 100%"><Icon name="battery" size={17} /><span id="shell-battery-value">100%</span><span id="shell-battery-charging" hidden><Icon name="charging" size={12} /></span></span>
+    <button class="shell-control" data-shell-action="controls" title="控制中心 · Mod + S" aria-label="打开控制中心"><Icon name="settings" size={17} /></button>
+    <button class="shell-icon" data-shell-action="session" title="桌面会话" aria-label="桌面会话"><Icon name="power" size={17} /></button>
   </div>
 </header>
-<button
-  class="floating-action-button article-floating-back-to-top back-to-top-button"
-  id="back-to-top"
-  type="button"
-  aria-label="回到顶部"
-  title="回到顶部"
->
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 19V5" />
-    <path d="M6.5 10.5 12 5l5.5 5.5" />
-  </svg>
-</button>
-<button
-  class="mobile-floating-toggle mobile-music-toggle"
-  id="mobile-music-toggle"
-  type="button"
-  data-mobile-panel-toggle="music"
-  aria-controls="mobile-music-panel"
-  aria-expanded="false"
-  aria-label="打开音乐播放器"
-  title="音乐"
->
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M9 18.5a3 3 0 1 1-2-2.83V6.5l10-2.2v9.2a3 3 0 1 1-2-2.83V8.02l-6 1.32v9.16Z" />
-  </svg>
-</button>
+<div class="shell-search-source" hidden><label>搜索文章<input id="post-search" type="search" placeholder="搜索标题、摘要、分类或标签" autocomplete="off" /></label></div>
+
+<template id="desktop-icons">{Object.keys(desktopIconPaths).map(name => <Icon name={name} />)}</template>
+<dialog id="shell-launcher" class="shell-dialog launcher-dialog" aria-label="启动器" data-apps={JSON.stringify(apps)} data-profile={JSON.stringify({ name: profile.name, avatar: profile.avatar, github: profile.github, email: profile.email, postCount: posts.length, stats: siteStats })}>
+  <div class="launcher-search"><Icon name="search" /><input id="launcher-query" type="search" aria-label="搜索功能" placeholder="搜索功能…" autocomplete="off" /><button class="launcher-close" data-close-dialog aria-label="关闭启动器"><Icon name="close" size={16} /></button></div>
+  <div id="launcher-results" class="launcher-results" aria-label="搜索结果"></div>
+</dialog>
+<dialog id="shell-overview" class="shell-dialog overview-dialog" aria-labelledby="overview-title">
+  <div class="shell-dialog-heading"><h2 id="overview-title">窗口总览</h2><button data-close-dialog aria-label="关闭总览"><Icon name="close" size={16} /></button></div>
+  <div id="overview-workspaces"></div><button class="shell-text-button" data-shell-action="new-workspace"><Icon name="workspaceAdd" size={16} />新建工作区</button>
+</dialog>
+<dialog id="shell-controls" class="shell-dialog controls-dialog" aria-labelledby="controls-title">
+  <div class="shell-dialog-heading"><h2 id="controls-title">控制中心</h2><button data-close-dialog aria-label="关闭控制中心"><Icon name="close" size={16} /></button></div>
+  <div class="control-tiles">
+    <button id="theme-toggle" aria-pressed="false"><Icon name="moon" /><span>明暗模式</span></button>
+    <button data-shell-action="overview"><Icon name="grid" /><span>窗口总览</span></button>
+    <button data-shell-action="help"><Icon name="help" /><span>操作指南</span></button>
+  </div>
+  <div class="shell-settings">
+    <label><span><span class="setting-name"><Icon name="opacity" size={15} />bar 不透明度</span><output id="shell-shellOpacity-value"></output></span><input aria-label="bar 不透明度" id="shell-shellOpacity" type="range" min="0.08" max="1" step="0.01" value="1" /></label>
+    <label><span class="setting-name"><Icon name="palette" size={15} />bar 主题色</span><select aria-label="bar 主题色" id="shell-color-mode"><option value="wallpaper">跟随壁纸</option><option value="custom">自定义</option></select></label>
+    <label id="shell-custom-color" hidden><span class="setting-name"><Icon name="palette" size={15} />自定义颜色</span><input aria-label="自定义颜色" id="shell-color" type="color" value="#69558c" /></label>
+    <label><span><span class="setting-name"><Icon name="palette" size={15} />主题色相</span><output id="shell-hue-value"></output></span><input aria-label="主题色相" id="shell-hue" type="range" min="0" max="360" value="200" /></label>
+    <label><span><span class="setting-name"><Icon name="opacity" size={15} />卡片不透明度</span><output id="shell-opacity-value"></output></span><input aria-label="卡片不透明度" id="shell-opacity" type="range" min="0.08" max="1" step="0.01" value="0.24" /></label>
+    <label><span><span class="setting-name"><Icon name="blur" size={15} />壁纸模糊</span><output id="shell-blur-value"></output></span><input id="shell-blur" type="range" min="0" max="18" value="0" /></label>
+    <label><span><span class="setting-name"><Icon name="sun" size={15} />壁纸亮度</span><output id="shell-brightness-value"></output></span><input id="shell-brightness" type="range" min="0.2" max="1" step="0.01" value="1" /></label>
+    <label><span><span class="setting-name"><Icon name="wallpaper" size={15} />壁纸不透明度</span><output id="shell-wallpaperOpacity-value"></output></span><input id="shell-wallpaperOpacity" type="range" min="0.2" max="1" step="0.01" value="1" /></label>
+    <label><span class="setting-name"><Icon name="position" size={15} />bar 位置</span><select aria-label="bar 位置" id="shell-position"><option value="top">顶部</option><option value="bottom">底部</option><option value="left">左侧</option><option value="right">右侧</option></select></label>
+    <label class="modifier-setting"><span class="setting-name"><Icon name="keyboard" size={15} />网页快捷键修饰键</span><select id="shell-modifier"><option value="both">Super / Win 和 Alt</option><option value="super">仅 Super / Win</option><option value="alt">仅 Alt</option></select></label>
+  </div><button class="shell-text-button" data-shell-action="reset-settings"><Icon name="reset" size={16} />恢复默认外观</button>
+</dialog>
+<dialog id="shell-help" class="shell-dialog help-dialog" aria-labelledby="help-title">
+  <div class="shell-dialog-heading"><h2 id="help-title">操作指南</h2><button data-close-dialog aria-label="关闭操作指南"><Icon name="close" size={16} /></button></div>
+  <div class="shortcut-list">
+    <div><span>切换左右列 / 上下窗口</span><kbd>Mod + ← → / ↑ ↓</kbd></div>
+    <div><span>切换窗口</span><kbd>Mod + H L / K J</kbd></div>
+    <div><span>移动列 / 移动堆叠窗口</span><kbd>Mod + Ctrl + 方向键</kbd></div>
+    <div><span>关闭当前窗口</span><kbd>Mod + Q</kbd></div>
+    <div><span>启动器 / 窗口总览</span><kbd>Mod + Space / O</kbd></div>
+    <div><span>控制中心 / 快捷键</span><kbd>Mod + S / Shift + /</kbd></div>
+    <div><span>切换工作区 / 移动当前列到工作区</span><kbd>Mod + 1…9 / Ctrl + 1…9</kbd></div>
+    <div><span>上一个 / 下一个工作区</span><kbd>Mod + I / U</kbd></div>
+    <div><span>最大化 / 全屏阅读</span><kbd>Mod + F / Shift + F</kbd></div>
+    <div><span>切换列宽 / 居中当前列</span><kbd>Mod + R / C</kbd></div>
+    <div><span>堆叠右侧窗口 / 拆出底部窗口</span><kbd>Mod + , / .</kbd></div>
+    <div><span>定位第一列 / 最后一列</span><kbd>Mod + Home / End</kbd></div>
+    <div><span>循环切换窗口</span><kbd>Alt + Tab</kbd></div>
+    <div><span>关闭面板 / 退出全屏阅读</span><kbd>Esc</kbd></div>
+  </div>
+</dialog>
+<dialog id="shell-calendar" class="shell-dialog calendar-dialog" aria-labelledby="shell-calendar-title"><div class="shell-dialog-heading"><h2 id="shell-calendar-title">日历</h2><button data-close-dialog aria-label="关闭日历"><Icon name="close" size={16} /></button></div><div id="shell-calendar-grid"></div></dialog>
+<dialog id="shell-notifications" class="shell-dialog controls-dialog" aria-labelledby="notifications-title"><div class="shell-dialog-heading"><h2 id="notifications-title">站内动态</h2><button data-close-dialog aria-label="关闭站内动态"><Icon name="close" size={16} /></button></div><div class="shell-update-list">{posts.slice(0, 5).map(p => <a href={`/posts/${p.slug}/`}><strong>{p.title}</strong><time>{p.date}</time></a>)}</div></dialog>
+<dialog id="shell-network" class="shell-dialog controls-dialog" aria-labelledby="network-title"><div class="shell-dialog-heading"><h2 id="network-title">网络状态</h2><button data-close-dialog aria-label="关闭网络状态"><Icon name="close" size={16} /></button></div><p id="shell-network-state"></p></dialog>
+<dialog id="shell-audio" class="shell-dialog controls-dialog" aria-labelledby="audio-title"><div class="shell-dialog-heading"><h2 id="audio-title">音乐音量</h2><button data-close-dialog aria-label="关闭音量面板"><Icon name="close" size={16} /></button></div><label class="shell-volume-label"><span class="setting-name"><Icon name="volume" size={16} />音量</span><input aria-label="音乐音量" id="shell-audio-volume" type="range" min="0" max="100" value="80" /></label><button class="shell-text-button" data-shell-action="mute"><Icon name="mute" size={16} />静音 / 恢复</button><button class="shell-text-button" data-shell-action="music"><Icon name="music" size={16} />打开播放器</button></dialog>
+<dialog id="shell-music" class="shell-dialog music-dialog" aria-labelledby="music-panel-title"><div class="shell-dialog-heading"><h2 id="music-panel-title">音乐</h2><button data-close-dialog aria-label="关闭音乐播放器"><Icon name="close" size={16} /></button></div><div id="shell-music-content"></div></dialog>
+<dialog id="shell-session" class="shell-dialog controls-dialog" aria-labelledby="session-title"><div class="shell-dialog-heading"><h2 id="session-title">桌面会话</h2><button data-close-dialog aria-label="关闭会话面板"><Icon name="close" size={16} /></button></div><button class="shell-text-button" data-shell-action="home"><Icon name="home" size={16} />返回首页</button><button class="shell-text-button" data-shell-action="restart"><Icon name="restart" size={16} />重新加载桌面</button></dialog>
+<noscript><nav class="shell-fallback-nav">{apps.map(app => <a href={app.url}>{app.name}</a>)}</nav></noscript>
+<div id="shell-announcement" class="shell-toast" role="status" aria-live="polite"></div>
+<script is:inline defer src="/desktop.js?v=20261009-5"></script>

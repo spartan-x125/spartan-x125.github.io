@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { ClientRouter } from "astro:transitions";
+
 import ProfileSidebar from "../components/ProfileSidebar.astro";
 import RightSidebar from "../components/RightSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -23,7 +23,7 @@ const updates = getPostUpdates(allPosts).slice(0, 5);
     <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>{profile.name}</title>
-    <ClientRouter />
+
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
@@ -36,7 +36,6 @@ const updates = getPostUpdates(allPosts).slice(0, 5);
       <section class="feed" aria-labelledby="feed-title">
         <div class="feed-header">
           <div>
-            <p class="eyebrow">Latest Notes</p>
             <h2 id="feed-title">最新文章</h2>
           </div>
         </div>
@@ -51,7 +50,6 @@ const updates = getPostUpdates(allPosts).slice(0, 5);
                     <span>{post.category}</span>
                   </div>
                   <h3>{post.title}</h3>
-                  <p>{post.description}</p>
                 </a>
                 <div class="tag-row post-card-tags" aria-label={`${post.title} 的标签`}>
                   {
@@ -73,7 +71,6 @@ const updates = getPostUpdates(allPosts).slice(0, 5);
         <section class="updates-section" aria-labelledby="updates-title">
           <div class="section-title-row">
             <div>
-              <p class="eyebrow">Changelog</p>
               <h2 id="updates-title">更新历史</h2>
             </div>
             <a class="text-button" href="/updates/">完整历史</a>
@@ -96,6 +93,6 @@ const updates = getPostUpdates(allPosts).slice(0, 5);
     </main>
     <SiteFooter />
 
-    <script is:inline src="/site.js?v=20260622-2"></script>
+    <script is:inline src="/site.js?v=20261009-4"></script>
   </body>
 </html>

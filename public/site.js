@@ -804,7 +804,7 @@
     if (!article || progressBars.length === 0 || tocTargets.length === 0) return;
 
     const readingCard = document.getElementById("reading-toc")?.closest(".article-reading-card");
-    const isCompact = window.matchMedia("(max-width: 860px)").matches;
+    const isCompact = !document.documentElement.dataset.desktop && window.matchMedia("(max-width: 860px)").matches;
     if (readingCard) {
       readingCard.toggleAttribute("aria-hidden", isCompact);
     }
@@ -830,8 +830,10 @@
 
     const updateProgress = () => {
       const rect = article.getBoundingClientRect();
-      const total = Math.max(article.scrollHeight - window.innerHeight, 1);
-      const read = Math.min(Math.max(-rect.top, 0), total);
+      const scroller = article.closest('.window-content');
+      const top = scroller ? scroller.getBoundingClientRect().top : 0;
+      const total = Math.max(article.scrollHeight - (scroller ? scroller.clientHeight : window.innerHeight), 1);
+      const read = Math.min(Math.max(top - rect.top, 0), total);
       const width = `${(read / total) * 100}%`;
       progressBars.forEach((progressBar) => {
         progressBar.style.width = width;
@@ -840,6 +842,7 @@
 
     window.__readingProgressHandler = updateProgress;
     window.addEventListener("scroll", updateProgress, { passive: true });
+    article.closest('.window-content')?.addEventListener('scroll', updateProgress, { passive: true });
     updateProgress();
   }
 
@@ -1080,7 +1083,10 @@
         url.searchParams.set("category", activeCategory);
       }
 
-      window.history.replaceState({}, "", url);
+      window.history.replaceState(window.history.state, "", url);
+      if (document.documentElement.dataset.embedded === 'true') {
+        parent.postMessage({ channel: 'spartan-desktop', type: 'state', url: url.href }, location.origin);
+      } else window.desktopWeb?.updateURL(url.href);
     };
 
     const renderPagination = (visibleCards) => {
@@ -1310,17 +1316,17 @@
 
   function initPage() {
     initTheme();
-    initAccentColor();
-    initTopbar();
+    const desktop = document.documentElement.dataset.desktop === 'true';
+    const embedded = document.documentElement.dataset.embedded === 'true';
+    if (!desktop) { initAccentColor(); initTopbar(); }
     initRuntimeStats();
-    initGlobalSearch();
-    initBackground();
-    initSidebarLayout();
-    initMusic();
+    if (!desktop) initGlobalSearch();
+    if (!embedded) initBackground();
+    if (!desktop) initSidebarLayout();
+    if (!embedded) initMusic();
     initArticleTables();
     initReadingTools();
-    initBackToTop();
-    initMobileFloatingPanels();
+    if (!desktop) { initBackToTop(); initMobileFloatingPanels(); }
     initPostFilters();
     initLikes();
     initGiscus();

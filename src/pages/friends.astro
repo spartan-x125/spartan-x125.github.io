@@ -1,6 +1,6 @@
 ---
 import "../styles/global.css";
-import { ClientRouter } from "astro:transitions";
+
 import ProfileSidebar from "../components/ProfileSidebar.astro";
 import RightSidebar from "../components/RightSidebar.astro";
 import SiteFooter from "../components/SiteFooter.astro";
@@ -22,7 +22,7 @@ const posts = await getAllPosts();
     <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>友链 | {profile.name}</title>
-    <ClientRouter />
+
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
@@ -30,14 +30,12 @@ const posts = await getAllPosts();
     <main class="blog-layout mobile-sidebar-collapsed">
       <ProfileSidebar mode="home" />
       <section class="feed" aria-labelledby="friends-page-title">
-        <p class="eyebrow">Friends</p>
         <h1 id="friends-page-title">友链</h1>
         <div class="friend-list friend-list-wide">
           {
             friendLinks.map((friend) => (
               <a class="friend-card" href={friend.url}>
                 <strong>{friend.name}</strong>
-                <span>{friend.description}</span>
               </a>
             ))
           }
@@ -46,6 +44,6 @@ const posts = await getAllPosts();
       <RightSidebar posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20260622-2"></script>
+    <script is:inline src="/site.js?v=20261009-4"></script>
   </body>
 </html>

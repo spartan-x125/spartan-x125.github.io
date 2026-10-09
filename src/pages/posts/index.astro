@@ -1,6 +1,6 @@
 ---
 import "../../styles/global.css";
-import { ClientRouter } from "astro:transitions";
+
 import ProfileSidebar from "../../components/ProfileSidebar.astro";
 import RightSidebar from "../../components/RightSidebar.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
@@ -21,7 +21,7 @@ const posts = await getAllPosts();
     <link rel="icon" type="image/jpeg" href="/avatar/avatar.jpg" />
     <meta name="generator" content={Astro.generator} />
     <title>文章 | {profile.name}</title>
-    <ClientRouter />
+
   </head>
   <body data-backgrounds={JSON.stringify(backgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
@@ -33,7 +33,6 @@ const posts = await getAllPosts();
       <section class="feed" aria-labelledby="posts-title">
         <div class="feed-header">
           <div>
-            <p class="eyebrow">Archive</p>
             <h1 id="posts-title">文章</h1>
           </div>
           <div class="archive-tools">
@@ -67,7 +66,6 @@ const posts = await getAllPosts();
                     <span>{post.category}</span>
                   </div>
                   <h3>{post.title}</h3>
-                  <p>{post.description}</p>
                 </a>
                 <div class="tag-row post-card-tags" aria-label={`${post.title} 的标签`}>
                   {
@@ -89,6 +87,6 @@ const posts = await getAllPosts();
       <RightSidebar mode="posts" posts={posts} />
     </main>
     <SiteFooter />
-    <script is:inline src="/site.js?v=20260622-2"></script>
+    <script is:inline src="/site.js?v=20261009-4"></script>
   </body>
 </html>

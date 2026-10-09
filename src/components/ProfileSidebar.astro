@@ -24,8 +24,6 @@ const { mode = "home", showContactLinks = mode === "home" } = Astro.props;
     <div class="profile-summary">
       <img class="avatar" src={profile.avatar} alt={`${profile.name} 的头像`} />
       <a class="profile-name" href="/about/">{profile.name}</a>
-      <p class="signature">{profile.signature}</p>
-      {mode === "home" && <p class="bio">{profile.bio}</p>}
     </div>
 
   {
@@ -54,7 +52,6 @@ const { mode = "home", showContactLinks = mode === "home" } = Astro.props;
   {
     mode === "about" && (
       <section class="side-panel" aria-labelledby="about-side-title">
-        <p class="eyebrow">Profile</p>
         <h2 id="about-side-title">{profile.about.heading}</h2>
         <p>{profile.about.paragraphs[0]}</p>
       </section>
@@ -71,9 +68,6 @@ const { mode = "home", showContactLinks = mode === "home" } = Astro.props;
     data-tracks={JSON.stringify(musicTracks)}
     transition:persist
   >
-    <div class="music-heading">
-      <p class="eyebrow">Now Playing</p>
-    </div>
     <div class="music-player">
       <img class="music-cover" id="music-cover" src={musicTracks[0]?.cover} alt="" />
       <div class="music-info">
