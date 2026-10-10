@@ -53,15 +53,15 @@
   const commands = {
     help: ['help [-d | -s | -m] [command]', 'Display command help.', 'Use help for an overview, help COMMAND for details, -s for syntax, -d for a short description, or -m for a manual page.', ['help posts', 'help -m open']],
     man: ['man <command>', 'Read a command manual.', 'Equivalent to help -m COMMAND.', ['man read']],
-    home: ['home', 'Browse the site directory.', 'Open the keyboard-driven site browser inside this shell.', ['home']],
-    posts: ['posts [search terms]', 'Browse and search articles.', 'Select an article with j/k or the arrow keys. Press Enter to read it. Search matches titles, summaries, categories and tags.', ['posts', 'posts ISAC']],
+    home: ['home', 'Browse the site directory.', 'Open the keyboard-driven site browser in a separate terminal card. The command shell stays available.', ['home']],
+    posts: ['posts [search terms]', 'Browse and search articles.', 'Select an article with j/k or the arrow keys. Press Right or Enter to read it in a new terminal card. Left returns to the parent page. Search matches titles, summaries, categories and tags.', ['posts', 'posts ISAC']],
     read: ['read <slug | number>', 'Read an article.', 'Use an article slug or the number shown by ls posts. The reader supports scrolling, text search, headings and links.', ['read welcome', 'read 1']],
     cat: ['cat <slug | number>', 'Read an article.', 'Alias for read.', ['cat welcome']],
     about: ['about', 'Read the About page.', 'Read the profile and contact links in the terminal reader.', ['about']],
-    friends: ['friends', 'Browse friend links.', 'Select a site with j/k or the arrow keys. Enter opens the selected external site in a new tab.', ['friends']],
+    friends: ['friends', 'Browse friend links.', 'Select a site with j/k or the arrow keys. Right/Enter opens the selected external site in a new tab.', ['friends']],
     guestbook: ['guestbook', 'Open the guestbook.', 'Read the guestbook in the terminal and press c to load the live GitHub discussion. Tab reaches its controls; GitHub handles sign-in and posting.', ['guestbook']],
     updates: ['updates', 'Browse the update history.', 'Articles are sorted by their latest update. Enter reads the selected article.', ['updates']],
-    open: ['open [--gui] <path>', 'Open a site page.', 'By default, pages open inside this shell. --gui opens the original graphical page as a desktop window. Paths may include article search parameters.', ['open /about/', 'open /posts/welcome/', 'open --gui /posts/']],
+    open: ['open [--gui] <path>', 'Open a site page.', 'By default, pages open in separate terminal cards. --gui opens the original graphical page as a desktop window. Paths may include article search parameters.', ['open /about/', 'open /posts/welcome/', 'open --gui /posts/']],
     cd: ['cd <path>', 'Navigate to a site page.', 'Open a virtual directory or article. This browser does not access your device filesystem.', ['cd posts', 'cd /about/']],
     ls: ['ls [posts]', 'List virtual directories or articles.', 'ls lists page commands. ls posts lists article numbers, slugs and titles.', ['ls', 'ls posts']],
     fastfetch: ['fastfetch', 'Display the site profile and statistics.', 'Show the avatar, site details, contact links and statistics.', ['fastfetch']],
@@ -71,7 +71,7 @@
     whoami: ['whoami', 'Print the site owner.', 'Display the blog profile name.', ['whoami']],
     pwd: ['pwd', 'Print the virtual home directory.', 'This is the blog shell home, not a directory on your device.', ['pwd']],
     echo: ['echo [text ...]', 'Print text.', 'Quoted text and escaped characters are supported. Commands are never executed by the operating system.', ['echo "Hello, world"']],
-    exit: ['exit', 'Close this shell window.', 'You can open another shell from the launcher or with Mod+T.', ['exit']],
+    exit: ['exit', 'Close this shell window.', 'Open another shell from the launcher or your configured terminal shortcut.', ['exit']],
     reboot: ['reboot', 'Restart the blog desktop.', 'Reload the page and start a fresh shell session. Appearance preferences are retained.', ['reboot']],
   };
   const pagePaths = { home: '/', posts: '/posts/', about: '/about/', friends: '/friends/', guestbook: '/guestbook/', updates: '/updates/' };
@@ -100,7 +100,7 @@
     for (const [heading, text] of [
       ['NAME', `${name} — ${info[1]}`], ['SYNOPSIS', info[0]], ['DESCRIPTION', info[2]],
       ['EXAMPLES', info[3].map(example => `$ ${example}`).join('\n')],
-      ['KEYBOARD', 'Shell: ↑/↓ history · Tab complete · Ctrl+L clear · Ctrl+C cancel\nBrowser: j/k or ↑/↓ select · Enter open · / search · q back\nReader: Space/b page · g/G start/end · t headings · l links · n/N search'],
+      ['KEYBOARD', 'Shell: ↑/↓ history · Tab complete · Ctrl+L clear · Ctrl+C cancel\nBrowser: j/k or ↑/↓ select · Right/Enter open · / search · Left parent / q back\nReader: Space/b page · g/G start/end · t headings · l links · n/N search'],
       ['SEE ALSO', 'help, home, posts, read, open'],
     ]) block.append(node('h3', '', heading), node('div', '', text));
     return block;
@@ -120,7 +120,7 @@
       });
     });
     block.append(node('h3', '', 'GETTING STARTED'), node('div', '', '$ posts          Browse articles\n$ read welcome   Read an article\n$ open --gui /about/   Open a graphical window'),
-      node('h3', '', 'KEYBOARD'), node('div', '', '↑/↓ history · Tab complete · Ctrl+L clear · Ctrl+C cancel\nj/k or ↑/↓ select · Enter open · / search · q back\nSpace/b page · g/G start/end · t headings · l links'),
+      node('h3', '', 'KEYBOARD'), node('div', '', '↑/↓ history · Tab complete · Ctrl+L clear · Ctrl+C cancel\nj/k or ↑/↓ select · Right/Enter open · Left parent · / search · q back\nSpace/b page · g/G start/end · t headings · l links'),
       node('p', 'terminal-note', 'This shell navigates the blog. It does not run commands on your device.'));
     return block;
   }
@@ -141,7 +141,7 @@
     return article;
   }
   window.BlogTerminal = {
-    mount({ content, win, profile, openURL, close, internalURL }) {
+    mount({ content, win, profile, openURL, close, internalURL, openTerminal, page = null, goBack }) {
       const prompt = () => {
         const el = node('span', 'terminal-prompt');
         el.append(node('span', 'terminal-user', `${profile.name}@blog`), node('span', '', ':'), node('span', 'terminal-directory', '~'), node('span', '', '$ ')); return el;
@@ -192,14 +192,17 @@
       const focusApp = () => app.focus({ preventScroll: true });
       const setTitle = title => { win.title = title; win.titleNode.textContent = title; win.el.setAttribute('aria-label', title); };
       const leave = () => {
+        if (page) { goBack(); return; }
         loading = false; request++; state = null; appHistory.length = 0; app.hidden = true; app.replaceChildren();
         content.classList.remove('is-browsing'); win.body.classList.remove('is-terminal-app');
         setTitle(`${profile.name}@blog: ~`); focusShell(); scrollOutput();
       };
-      const back = () => {
+      const back = (parent = false) => {
         request++;
         if (loading) { loading = false; if (state) render(); else leave(); return; }
-        if (appHistory.length) { state = appHistory.pop(); render(); } else leave();
+        if (appHistory.length) { state = appHistory.pop(); render(); }
+        else if (page) goBack(parent);
+        else leave();
       };
       const remember = () => { if (state) { state.scroll = pane?.scrollTop || 0; appHistory.push(state); } };
       const browserURL = value => {
@@ -211,7 +214,8 @@
         if (!internalURL(href) && !href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
         return link;
       };
-      async function showPage(value, rememberPage = true) {
+      function showPage(value) { return openTerminal(value, win); }
+      async function loadPage(value, rememberPage = true) {
         const url = browserURL(value);
         if (!url) throw new Error('Unknown site path. Use home to browse pages.');
         const token = ++request; loading = true;
@@ -256,7 +260,9 @@
           state = next; render();
         } catch (error) {
           if (destroyed || token !== request) return;
-          leave(); print(`open: ${error.message}`, 'terminal-error'); scrollOutput();
+          loading = false;
+          if (page) { state = { type: 'reader', path: url, title: 'ERROR', article: node('article', 'terminal-document', `open: ${error.message}`) }; render(); }
+          else { leave(); print(`open: ${error.message}`, 'terminal-error'); scrollOutput(); }
         }
       }
       function shellButton(text, label, callback) {
@@ -266,7 +272,7 @@
         app.replaceChildren(); setTitle(`${profile.name}@blog: ${state.path}`);
         const header = node('header', 'terminal-browser-header');
         headerPath = node('span', 'terminal-browser-path', `blog:${state.path}`);
-        header.append(shellButton('‹', '返回命令行上一级', back), headerPath, shellButton('×', '退出命令行页面浏览器', leave));
+        header.append(shellButton('‹', '返回命令行上一级', () => back(true)), headerPath, shellButton('×', '退出命令行页面浏览器', leave));
         searchForm = node('form', 'terminal-browser-search'); searchForm.hidden = true;
         searchInput = node('input'); searchInput.type = 'search'; searchInput.autocomplete = 'off'; searchInput.setAttribute('aria-label', state.type === 'list' ? '终端列表搜索' : '终端页面搜索');
         searchInput.placeholder = state.type === 'list' ? 'Filter…' : 'Find in page…'; searchInput.value = state.query || '';
@@ -297,17 +303,25 @@
         const items = filteredItems(); state.selected = Math.max(0, Math.min(state.selected, items.length - 1));
         listHost.replaceChildren();
         items.forEach((item, index) => {
-          const row = shellButton('', `打开 ${item.title}`, () => { if (state.selected === index) item.action(); else { state.selected = index; renderList(); focusApp(); } });
+          const row = shellButton('', `选择 ${item.title}`, () => { if (state.selected !== index) { state.selected = index; updateListSelection(items); } focusApp(); });
           row.className = `terminal-list-row${index === state.selected ? ' is-selected' : ''}`;
           row.setAttribute('aria-current', String(index === state.selected)); row.setAttribute('role', 'listitem');
           row.append(node('span', 'terminal-list-number', `${index === state.selected ? '›' : ' '} ${String(index + 1).padStart(2, '0')}`), node('span', 'terminal-list-kind', item.kind), node('span', 'terminal-list-title', item.title), node('span', 'terminal-list-meta', item.meta));
           row.ondblclick = () => item.action(); listHost.append(row);
         });
         if (!items.length) listHost.append(node('p', 'terminal-note', 'No matching entries. Press / to change the filter.'));
+        updateListSelection(items);
+      }
+      function updateListSelection(items) {
+        Array.from(listHost.querySelectorAll('.terminal-list-row')).forEach((row, index) => {
+          row.classList.toggle('is-selected', index === state.selected);
+          row.setAttribute('aria-current', String(index === state.selected));
+          row.querySelector('.terminal-list-number').textContent = `${index === state.selected ? '›' : ' '} ${String(index + 1).padStart(2, '0')}`;
+        });
         const item = items[state.selected];
         preview.replaceChildren(node('span', 'terminal-preview-label', 'PREVIEW'));
         if (item) preview.append(node('h2', '', item.title), node('p', 'terminal-note', item.meta), node('p', '', item.description || item.url), node('p', 'terminal-preview-tags', (item.tags || []).map(tag => `#${tag}`).join(' ')), node('p', 'terminal-note', item.url));
-        footer.textContent = `j/k ↑/↓ select · Enter open · / search · q back  ${items.length ? state.selected + 1 : 0}/${items.length}`;
+        footer.textContent = `j/k ↑/↓ select · →/Enter open · ← parent · / search · q back  ${items.length ? state.selected + 1 : 0}/${items.length}`;
         searchCount.textContent = `${items.length} entries`;
         const row = listHost.children[state.selected];
         if (row) { const top = row.offsetTop - pane.offsetTop; if (top < pane.scrollTop || top + row.offsetHeight > pane.scrollTop + pane.clientHeight) pane.scrollTo({ top: Math.max(0, top - pane.clientHeight / 2), behavior: 'instant' }); }
@@ -315,7 +329,7 @@
       function readerStatus() {
         if (state?.type !== 'reader') return;
         const max = Math.max(0, pane.scrollHeight - pane.clientHeight);
-        footer.textContent = `j/k scroll · / find · t toc · l links · q back${state.term ? ' · c comments' : ''}  ${max ? Math.round(pane.scrollTop / max * 100) : 100}%${state.matches?.length && state.matchIndex >= 0 ? ` · ${state.matchIndex + 1}/${state.matches.length} matches (n/N)` : ''}`;
+        footer.textContent = `j/k scroll · ← parent · / find · t toc · l links · q back${state.term ? ' · c comments' : ''}  ${max ? Math.round(pane.scrollTop / max * 100) : 100}%${state.matches?.length && state.matchIndex >= 0 ? ` · ${state.matchIndex + 1}/${state.matches.length} matches (n/N)` : ''}`;
       }
       function findText() {
         state.article.querySelectorAll('mark.terminal-search-hit').forEach(mark => mark.replaceWith(document.createTextNode(mark.textContent)));
@@ -388,19 +402,20 @@
         if (app.hidden) return;
         if (event.target.matches('input, textarea') || event.altKey || event.metaKey) return;
         const key = event.key;
-        const known = ['q', 'Escape', 'Backspace', 'j', 'k', 'ArrowUp', 'ArrowDown', 'Enter', '/', 'g', 'G', 'Home', 'End', ' ', 'b', 'PageDown', 'PageUp', 't', 'l', 'n', 'N', 'c', '?'];
+        const known = ['q', 'Escape', 'Backspace', 'j', 'k', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', '/', 'g', 'G', 'Home', 'End', ' ', 'b', 'PageDown', 'PageUp', 't', 'l', 'n', 'N', 'c', '?'];
         const ctrl = event.ctrlKey && ['c', 'd', 'u'].includes(key.toLowerCase());
         if (event.ctrlKey && !ctrl) return;
         if (!known.includes(key) && !ctrl) return;
         event.preventDefault(); event.stopPropagation();
         if (ctrl && key.toLowerCase() === 'c') { leave(); return; }
         if (['q', 'Escape', 'Backspace'].includes(key)) { back(); return; }
+        if (key === 'ArrowLeft') { back(true); return; }
         if (!state) return;
         if (key === '/') { searchForm.hidden = false; searchInput.focus(); searchInput.select(); return; }
-        if (key === '?') { footer.textContent = state.type === 'list' ? 'j/k ↑/↓ · Enter open · / filter · g/G first/last · q back · Ctrl+C shell' : 'j/k ↑/↓ · Space/b page · g/G start/end · / find · n/N next/previous · t toc · l links · c comments · q back'; return; }
+        if (key === '?') { footer.textContent = state.type === 'list' ? 'j/k ↑/↓ · →/Enter open · ← parent · / filter · g/G first/last · q back · Ctrl+C shell' : 'j/k ↑/↓ · ← parent · Space/b page · g/G start/end · / find · n/N next/previous · t toc · l links · c comments · q back'; return; }
         if (state.type === 'list') {
           const items = filteredItems(), step = Math.max(1, Math.floor(pane.clientHeight / 66) - 1);
-          if (key === 'Enter') { items[state.selected]?.action(); return; }
+          if (key === 'Enter' || key === 'ArrowRight') { items[state.selected]?.action(); return; }
           if (['g', 'Home'].includes(key)) state.selected = 0;
           else if (['G', 'End'].includes(key)) state.selected = items.length - 1;
           else state.selected += ['k', 'ArrowUp', 'b', 'PageUp', 'u'].includes(key) ? (['b', 'PageUp', 'u'].includes(key) ? -step : -1) : ['j', 'ArrowDown', ' ', 'PageDown', 'd'].includes(key) ? ([' ', 'PageDown', 'd'].includes(key) ? step : 1) : 0;
@@ -492,10 +507,11 @@
         try { await run(text); } catch (error) { if (!destroyed) print(`shell: ${error.message}`, 'terminal-error'); }
         finally { running = false; if (!destroyed && app.hidden) scrollOutput(); }
       });
-      return { focus() {
+      if (page) loadPage(page, false);
+      return { get path() { return state?.path || page; }, focus() {
         if (app.hidden) focusShell();
         else if (!app.contains(document.activeElement) || !document.activeElement.matches('input, textarea, iframe')) focusApp();
-      }, browse: showPage, destroy() { destroyed = true; request++; } };
+      }, browse: loadPage, destroy() { destroyed = true; request++; } };
     },
   };
 })();

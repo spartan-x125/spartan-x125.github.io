@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const root = document.documentElement;
+  const shortcuts = window.BlogShortcuts;
   const embedded = root.dataset.embedded === 'true';
   const $ = (selector, scope = document) => scope.querySelector(selector);
   const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
@@ -177,14 +178,10 @@
       if (url) { event.preventDefault(); send('open', { url, title: a.textContent.trim() }); }
     });
     document.addEventListener('keydown', event => {
-      if (editing(event.target) && event.key !== 'Escape' && !isMod(event, embedded ? readStorage('desktop-settings', {}).modifier || 'both' : settings.modifier)) return;
-      if (event.key === 'Escape' || ((event.metaKey || event.altKey) && isShortcut(event))) {
-        // The parent owns the modifier preference; do not consume disabled keys.
-        if (event.key !== 'Escape' && !isMod(event, readStorage('desktop-settings', {}).modifier || 'both')) return;
-        event.preventDefault();
-        send('key', { key: event.key, code: event.code, ctrlKey: event.ctrlKey, shiftKey: event.shiftKey, altKey: event.altKey, metaKey: event.metaKey, repeat: event.repeat });
-      }
-    });
+      const id = shortcuts.match(event, readStorage('desktop-settings', {}));
+      if (id) { event.preventDefault(); event.stopImmediatePropagation(); send('shortcut', { id, repeat: event.repeat }); }
+      else if (event.key === 'Escape' && !editing(event.target)) send('key', { key: 'Escape' });
+    }, { capture: true });
     document.addEventListener('wheel', event => {
       const mod = isMod(event, readStorage('desktop-settings', {}).modifier || 'both');
       if (mod || event.shiftKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
@@ -215,7 +212,7 @@
   main.className = 'desktop-space';
   main.replaceChildren();
   document.body.classList.add('desktop-ready');
-  const defaults = { hue: 200, opacity: .24, blur: 0, barBlur: 18, brightness: 1, wallpaperOpacity: 1, modifier: 'both', position: 'top', shellOpacity: 1, shellColorMode: 'wallpaper', shellColor: '#69558c' };
+  const defaults = { hue: 200, opacity: .24, blur: 0, barBlur: 18, brightness: 1, wallpaperOpacity: 1, modifier: 'both', position: 'top', shellOpacity: 1, shellColorMode: 'wallpaper', shellColor: '#69558c', wallpaperMotion: 'fade', shortcutPreset: 'web', shortcutsEnabled: true, shortcuts: {} };
   const legacy = readStorage('blog-appearance-settings', {});
   const stored = readStorage('desktop-settings', { hue: legacy.hue, opacity: legacy.cardOpacity, blur: legacy.backgroundBlur, wallpaperOpacity: legacy.backgroundOpacity });
   const bounded = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback;
@@ -227,6 +224,10 @@
     position: ['top', 'bottom', 'left', 'right'].includes(stored.position) ? stored.position : 'top',
     shellOpacity: bounded(stored.shellOpacity, .08, 1, defaults.shellOpacity),
     barBlur: bounded(stored.barBlur, 0, 40, defaults.barBlur),
+    wallpaperMotion: window.BlogWallpaper.modes.includes(stored.wallpaperMotion) ? stored.wallpaperMotion : defaults.wallpaperMotion,
+    shortcutPreset: stored.shortcutPreset === 'niri' ? 'niri' : 'web',
+    shortcutsEnabled: stored.shortcutsEnabled !== false,
+    shortcuts: Object.fromEntries(shortcuts.definitions.filter(item => stored.shortcuts?.[item.id] === null || shortcuts.valid(stored.shortcuts?.[item.id])).map(item => [item.id, stored.shortcuts[item.id]])),
     shellColorMode: stored.shellColorMode === 'custom' ? 'custom' : 'wallpaper',
     shellColor: /^#[\da-f]{6}$/i.test(stored.shellColor || '') ? stored.shellColor : defaults.shellColor,
   };
@@ -255,7 +256,7 @@
   const panelBridge = make('div', 'shell-panel-bridge');
   let panelSurface = null, surfaceFrame = 0;
   let surfaceHitContext, wallpaperPage = 0;
-  const wallpapers = JSON.parse(document.body.dataset.backgrounds || '[]');
+  let recordingShortcut = null, keyboardLocked = false, keyboardRequest = 0;
   panelBridge.hidden = true;
   panelBridge.setAttribute('aria-hidden', 'true');
   document.body.append(panelBridge);
@@ -317,6 +318,24 @@
     while (workspaces.length < 3) addWorkspace();
     if (columnList(workspaces.at(-1)).length) addWorkspace();
   }
+  function compactWorkspaces() {
+    if (mobile.matches) return;
+    const activeBefore = current();
+    if (!windowList(activeBefore).length && workspaces.slice(workspaceIndex + 1).every(ws => !windowList(ws).length)) {
+      while (workspaces.length > 3 && workspaces.at(-1) !== activeBefore) workspaces.pop().strip.remove();
+    }
+    ensureTrailingWorkspace();
+    const active = current(), trailing = workspaces.at(-1);
+    const occupied = workspaces.filter(ws => windowList(ws).length).length;
+    const minimum = Math.max(3, occupied + 1 + (!windowList(active).length && active !== trailing ? 1 : 0));
+    for (let i = workspaces.length - 2; i >= 0 && workspaces.length > minimum; i--) {
+      const ws = workspaces[i];
+      if (ws !== active && !windowList(ws).length) { ws.strip.remove(); workspaces.splice(i, 1); }
+    }
+    workspaceIndex = workspaces.indexOf(active);
+    workspaces.forEach((ws, i) => { ws.strip.setAttribute('aria-label', `工作区 ${i + 1}`); ws.strip.hidden = ws !== active; });
+    refreshChrome();
+  }
   function switchWorkspace(index, restore = true) {
     if (mobile.matches) return;
     if (index === workspaceIndex) return;
@@ -332,6 +351,7 @@
     if (restore && focused) focusWindow(focused, { scroll: false, keyboard: true });
     else { focused?.el.classList.add('is-focused'); refreshChrome(); }
     renderEmpty();
+    compactWorkspaces();
     if (!reduceMotion.matches) current().strip.animate([{ opacity: 0, transform: `translateY(${direction * 28}px)` }, { opacity: 1, transform: 'translateY(0)' }], { duration: 280, easing: 'cubic-bezier(.22,1,.36,1)' });
   }
   function renderEmpty() {
@@ -345,6 +365,7 @@
       b.classList.toggle('is-current', i === workspaceIndex);
       b.classList.toggle('has-windows', columnList(ws).length > 0);
       b.setAttribute('aria-current', i === workspaceIndex ? 'true' : 'false');
+      b.setAttribute('aria-label', `切换到工作区 ${i + 1}`);
       b.dataset.workspaceIndex = i;
       b.onclick = () => {
         const panel = dialogs.find(dialog => dialog.open);
@@ -354,6 +375,7 @@
       b.oncontextmenu = event => { event.preventDefault(); showDialog('overview', b); };
       if (!b.isConnected) nav.append(b);
     });
+    while (nav.children.length > workspaces.length) nav.lastElementChild.remove();
     $('#shell-active-title').textContent = focused?.title || '空白工作区';
     $$('[data-dock-url]').forEach(a => a.classList.toggle('is-running', [...windows.values()].some(win => win.url && new URL(win.url, location.href).pathname === a.dataset.dockUrl)));
     if ($('#shell-overview').open) renderOverview();
@@ -556,6 +578,7 @@
         ensureTrailingWorkspace();
         renderEmpty();
         focusWindow(win, { scroll: changed, history: true });
+        compactWorkspaces();
         animateLayout(before);
       }
       current().strip.style.scrollBehavior = '';
@@ -675,7 +698,7 @@
     handle.addEventListener('pointercancel', () => finish(true));
     handle.addEventListener('lostpointercapture', () => finish());
   }
-  function closeWindow(win = focused) {
+  function closeWindow(win = focused, { returnTo = null } = {}) {
     if (!win || win.closing) return;
     if (fullscreenState?.win === win) restoreFullscreen();
     win.closing = true;
@@ -697,10 +720,13 @@
       win.el.remove();
       if (!col.children.length) col.remove();
       if (ws.autoLayout) layoutWorkspace(ws);
-      if (focused === win) focused = null;
-      if (next && current() === ws) focusWindow(next, { history: true, keyboard: true });
-      else { ws.focused = next?.id || null; refreshChrome(); }
+      const wasFocused = focused === win;
+      if (wasFocused) focused = null;
+      if (returnTo && windows.has(returnTo.id) && !returnTo.closing) { focusWindow(returnTo, { history: true, keyboard: true }); returnTo.terminal?.focus(); }
+      else if (wasFocused && next && current() === ws) focusWindow(next, { history: true, keyboard: true });
+      else { if (ws.focused === win.id) ws.focused = next?.id || null; refreshChrome(); }
       renderEmpty();
+      compactWorkspaces();
     };
     if (reduceMotion.matches) finish();
     else { win.el.classList.remove('is-opening'); win.el.classList.add('is-closing'); setTimeout(finish, 160); }
@@ -880,6 +906,7 @@
   }
   function closeDialog(dialog, immediate = false) {
     if (!dialog?.open) return;
+    if (dialog.id === 'shell-shortcuts') cancelShortcutRecording();
     if (!immediate && dialog.classList.contains('is-closing')) return;
     clearTimeout(panelTimers.get(dialog));
     const finish = () => {
@@ -990,6 +1017,8 @@
     if (name === 'overview') renderOverview();
     if (name === 'launcher') { $('#launcher-query').value = ''; launcherIndex = 0; renderLauncher(); }
     if (name === 'calendar') renderCalendar();
+    if (name === 'shortcuts') { renderShortcutBindings(); updateKeyboardPriority(); }
+    if (name === 'help') renderShortcutGuide();
     if (name === 'wallpaper') {
       wallpaperPage = Math.floor(Math.max(0, currentWallpaper()) / 9);
       renderWallpapers();
@@ -1048,11 +1077,10 @@
     for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) grid.append(make('span', day === now.getDate() ? 'today' : '', String(day)));
   }
   function currentWallpaper() {
-    const source = $('.background-layer')?.style.backgroundImage || '';
-    const index = wallpapers.findIndex(url => source.includes(url));
-    return index >= 0 ? index : readStorage('blog-background-state', {}).index ?? 0;
+    return window.BlogWallpaper.currentIndex;
   }
   function renderWallpapers() {
+    const wallpapers = window.BlogWallpaper.images;
     const pages = Math.max(1, Math.ceil(wallpapers.length / 9));
     wallpaperPage = Math.max(0, Math.min(pages - 1, wallpaperPage));
     const grid = $('#wallpaper-grid'); grid.replaceChildren();
@@ -1064,10 +1092,9 @@
       tile.className = 'wallpaper-tile'; tile.setAttribute('aria-pressed', String(index === selected));
       const image = make('img'); image.src = source; image.alt = `壁纸 ${index + 1}`; image.loading = 'lazy'; image.decoding = 'async';
       tile.append(image);
-      tile.onclick = () => {
-        $('.background-layer').style.backgroundImage = `url("${source}")`;
-        root.style.setProperty('--active-background-image', `url("${source}")`);
-        saveStorage('blog-background-state', { index, changedAt: Date.now() });
+      tile.onclick = async () => {
+        const changed = await window.BlogWallpaper.select(index, { mode: settings.wallpaperMotion });
+        if (!changed) return;
         $$('.wallpaper-tile', grid).forEach((item, i) => item.setAttribute('aria-pressed', String(wallpaperPage * 9 + i === index)));
       };
       grid.append(tile);
@@ -1075,12 +1102,27 @@
     $('#wallpaper-page').textContent = `${wallpaperPage + 1} / ${pages}`;
     $$('[data-wallpaper-page]').forEach(item => { item.disabled = Number(item.dataset.wallpaperPage) < 0 ? wallpaperPage === 0 : wallpaperPage === pages - 1; });
   }
-  function terminal({ column = null, width = 720, focus = true } = {}) {
+  function terminal({ column = null, width = 720, focus = true, page = null, origin = null } = {}) {
     const content = make('div', 'desktop-terminal');
     const profile = JSON.parse($('#shell-launcher').dataset.profile);
     const win = createWindow({ title: `${profile.name}@blog: ~`, content, width, column, icon: 'terminal' });
     win.el.dataset.kind = 'terminal';
-    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, close: closeWindow, internalURL });
+    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, close: closeWindow, internalURL, page,
+      openTerminal: (url, source) => terminal({ page: url, origin: source, width: colOf(source)?.offsetWidth || 720 }),
+      goBack: (parent = false) => {
+        let destination = origin && windows.has(origin.id) && !origin.closing ? origin : null;
+        if (parent && win.terminal.path) {
+          const path = new URL(win.terminal.path, location.origin).pathname.replace(/\/$/, '') || '/';
+          if (path === '/') { closeWindow(win, { returnTo: destination }); return; }
+          const parentPath = path.startsWith('/posts/') ? '/posts/' : '/';
+          if (!destination?.terminal?.path || new URL(destination.terminal.path, location.origin).pathname !== parentPath) {
+            destination = windowList().find(item => item !== win && !item.closing && item.terminal?.path && new URL(item.terminal.path, location.origin).pathname === parentPath)
+              || terminal({ page: parentPath, origin: destination, width: colOf(win)?.offsetWidth || 720 });
+          }
+        }
+        closeWindow(win, { returnTo: destination });
+      },
+    });
     if (focus) { focusWindow(win); win.terminal.focus(); }
     return win;
   }
@@ -1156,6 +1198,11 @@
       range.style.setProperty('--range-progress', `${(settings[key] - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100}%`);
     });
     $('#shell-modifier').value = settings.modifier;
+    $('#shell-wallpaperMotion').value = settings.wallpaperMotion;
+    $('#shortcut-preset').value = settings.shortcutPreset;
+    $('#shortcuts-enabled').checked = settings.shortcutsEnabled;
+    $('#shortcut-modifier-setting').hidden = settings.shortcutPreset !== 'niri';
+    updateShortcutTitles();
     $('#shell-position').value = settings.position;
     $('#shell-color-mode').value = settings.shellColorMode;
     $('#shell-color').value = settings.shellColor;
@@ -1166,7 +1213,7 @@
     panel ? positionPanel(panel) : paintPanelSurface();
   }
   function action(name, anchor = null) {
-    if (['launcher', 'overview', 'controls', 'help', 'calendar', 'wallpaper', 'notifications', 'network', 'session'].includes(name)) {
+    if (['launcher', 'overview', 'controls', 'help', 'shortcuts', 'calendar', 'wallpaper', 'notifications', 'network', 'session'].includes(name)) {
       if (name === 'network') $('#shell-network-state').textContent = navigator.onLine ? '当前网络已连接' : '当前处于离线状态';
       showDialog(name, anchor); return;
     }
@@ -1187,70 +1234,142 @@
     if (name === 'previous') navigateColumn(-1);
     if (name === 'next') navigateColumn(1);
     if (name === 'terminal') terminal();
-    if (name === 'reset-settings') { settings = { ...defaults }; applySettings(); announce('已恢复默认外观'); }
+    if (name === 'reset-settings') { settings = { ...defaults, shortcutPreset: settings.shortcutPreset, shortcuts: settings.shortcuts, shortcutsEnabled: settings.shortcutsEnabled, modifier: settings.modifier }; applySettings(); announce('已恢复默认外观'); }
     if (name === 'music') showDialog('music', anchor);
   }
   function isMod(event, preference = 'both') {
     return (preference !== 'alt' && event.metaKey) || (preference !== 'super' && event.altKey && !event.getModifierState?.('AltGraph'));
   }
-  function isShortcut(event) {
-    return ['Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Space', 'Slash', 'Comma', 'Period', 'BracketLeft', 'BracketRight', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8', 'Digit9', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'KeyQ', 'KeyO', 'KeyD', 'KeyS', 'KeyT', 'KeyF', 'KeyM', 'KeyC', 'KeyR', 'KeyI', 'KeyU'].includes(event.code);
+  function shortcutLabel(id) {
+    const values = shortcuts.bindings(settings, id);
+    return values.length ? values.map(shortcuts.format).join(' / ') : '未绑定';
+  }
+  function updateShortcutTitles() {
+    ['launcher', 'controls', 'overview', 'shortcuts'].forEach(id => {
+      const item = shortcuts.definitions.find(item => item.id === id);
+      $$(`.shell-bar [data-shell-action="${id}"]`).forEach(button => { button.title = `${item.label} · ${shortcutLabel(id)}`; });
+    });
+  }
+  function renderShortcutGuide() {
+    const list = $('#shell-help .shortcut-list'); list.replaceChildren();
+    shortcuts.definitions.filter(item => !mobile.matches || item.group !== '工作区').forEach(item => {
+      const row = make('div'); row.append(make('span', '', item.label), make('kbd', '', shortcutLabel(item.id))); list.append(row);
+    });
+    const row = make('div'); row.append(make('span', '', '退出窗口全屏'), make('kbd', '', 'Esc')); list.append(row);
+  }
+  function cancelShortcutRecording() {
+    const id = recordingShortcut; recordingShortcut = null;
+    const button = id && $(`[data-shortcut="${id}"]`);
+    if (button) { button.classList.remove('is-recording'); button.textContent = shortcutLabel(id); button.setAttribute('aria-pressed', 'false'); }
+  }
+  function renderShortcutBindings() {
+    cancelShortcutRecording();
+    const list = $('#shortcut-bindings'); list.replaceChildren(); let group = '';
+    shortcuts.definitions.filter(item => !mobile.matches || item.group !== '工作区').forEach(item => {
+      if (item.group !== group) { group = item.group; list.append(make('h3', '', group)); }
+      const row = make('div', 'shortcut-row'), record = button(shortcutLabel(item.id), `修改：${item.label}`);
+      record.className = 'shortcut-record'; record.dataset.shortcut = item.id;
+      record.onclick = () => {
+        const cancel = recordingShortcut === item.id; cancelShortcutRecording();
+        $('#shortcut-status').textContent = cancel ? '' : '按下组合键；Esc 取消，Delete 清除。';
+        if (!cancel) { recordingShortcut = item.id; record.classList.add('is-recording'); record.textContent = '按下组合键…'; record.setAttribute('aria-pressed', 'true'); }
+      };
+      const reset = iconButton('reset', `重置：${item.label}`); reset.className = 'shortcut-reset';
+      reset.onclick = () => { delete settings.shortcuts[item.id]; cancelShortcutRecording(); applySettings(); renderShortcutBindings(); $('#shortcut-status').textContent = ''; };
+      row.append(make('span', '', item.label), record, reset); list.append(row);
+    });
+  }
+  function captureShortcut(event) {
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (event.repeat || event.isComposing) return;
+    if (event.key === 'Escape') { cancelShortcutRecording(); $('#shortcut-status').textContent = ''; return; }
+    if (/^(Control|Alt|Shift|Meta)/.test(event.code)) return;
+    const binding = shortcuts.normalize(event), status = $('#shortcut-status');
+    if (['Delete', 'Backspace'].includes(event.code) && !event.ctrlKey && !event.altKey && !event.metaKey) settings.shortcuts[recordingShortcut] = null;
+    else {
+      if (!shortcuts.valid(binding) || event.getModifierState?.('AltGraph')) { status.textContent = '请使用 Ctrl、Alt、Super 组合键或功能键。'; return; }
+      const conflict = shortcuts.definitions.find(item => item.id !== recordingShortcut && shortcuts.bindings(settings, item.id).some(value => shortcuts.identity(value) === shortcuts.identity(binding)));
+      if (conflict) { status.textContent = `已用于「${conflict.label}」，请换一个组合键。`; return; }
+      settings.shortcuts[recordingShortcut] = binding;
+    }
+    cancelShortcutRecording(); applySettings(); renderShortcutBindings(); status.textContent = '已保存';
+  }
+  function updateKeyboardPriority(message = '') {
+    $('#shortcut-priority').textContent = document.fullscreenElement ? '退出全屏键盘优先' : '开启全屏键盘优先';
+    $('#shortcut-priority').setAttribute('aria-pressed', String(!!document.fullscreenElement));
+    $('#shortcut-priority-status').textContent = message || (keyboardLocked ? '已启用。长按 Esc 可退出；系统保留按键仍由系统处理。' : navigator.keyboard?.lock ? '全屏后可请求键盘锁定，系统保留按键仍由系统处理。' : '当前浏览器不支持键盘锁定。');
+  }
+  async function toggleKeyboardPriority() {
+    const request = ++keyboardRequest;
+    try {
+      if (document.fullscreenElement) { navigator.keyboard?.unlock?.(); keyboardLocked = false; await document.exitFullscreen(); return; }
+      await root.requestFullscreen();
+      if (request !== keyboardRequest || !document.fullscreenElement) return;
+      if (!navigator.keyboard?.lock) { updateKeyboardPriority('已进入全屏；当前浏览器不支持键盘锁定。'); return; }
+      updateKeyboardPriority('等待浏览器允许键盘锁定；可随时退出全屏。');
+      await navigator.keyboard.lock();
+      if (request !== keyboardRequest || !document.fullscreenElement) { if (!document.fullscreenElement) navigator.keyboard.unlock(); return; }
+      keyboardLocked = true; updateKeyboardPriority();
+    } catch {
+      if (request !== keyboardRequest) return;
+      keyboardLocked = false; updateKeyboardPriority('浏览器未允许全屏或键盘锁定，可使用自定义组合键。');
+    }
   }
   function handleKey(event) {
     if (root.dataset.crashed === 'true') return;
-    if (editing(event.target) && event.key !== 'Escape' && !isMod(event, embedded ? readStorage('desktop-settings', {}).modifier || 'both' : settings.modifier)) return;
+    if (recordingShortcut) { captureShortcut(event); return; }
+    const id = shortcuts.match(event, settings);
+    if (id) { event.preventDefault(); event.stopImmediatePropagation(); executeShortcut(id, event.repeat); return; }
     if (event.key === 'Escape') {
       if (pointerInteraction) { pointerInteraction.cancel(); return; }
       if (dialogs.some(dialog => dialog.open)) return;
       restoreFullscreen();
       $$('.window-menu').forEach(m => m.remove());
-      return;
     }
-    if (pointerInteraction || !isMod(event, settings.modifier) || !isShortcut(event)) return;
-    event.preventDefault?.();
-    // Repeated presses should move focus, but must not repeatedly close windows.
-    if (event.repeat && ['KeyQ', 'KeyO', 'Space', 'KeyD', 'KeyS', 'KeyT', 'KeyF', 'KeyM'].includes(event.code)) return;
-    const code = event.code;
-    if (code === 'Slash' && event.shiftKey) { showDialog('help'); return; }
-    if (code === 'Space' || code === 'KeyD') { showDialog('launcher'); return; }
-    if (code === 'KeyS') { showDialog('controls'); return; }
-    if (code === 'KeyO') { showDialog('overview'); return; }
+  }
+  function executeShortcut(id, repeat = false) {
+    if (pointerInteraction || root.dataset.crashed === 'true') return;
+    if (repeat && !/^(focus|moveLeft|moveRight|moveUp|moveDown|workspacePrevious|workspaceNext|cycle|width)/.test(id)) return;
+    if (['help', 'launcher', 'controls', 'overview', 'shortcuts'].includes(id)) { showDialog(id); return; }
     if (dialogs.some(d => d.open)) return;
-    if (!['KeyF', 'KeyM', 'KeyQ'].includes(code)) restoreFullscreen();
-    if (code === 'Tab') {
+    if (!['maximize', 'fullscreen', 'close'].includes(id)) restoreFullscreen();
+    if (id === 'cycleNext' || id === 'cyclePrevious') {
       const list = windowList();
-      const next = (list.indexOf(focused) + (event.shiftKey ? -1 : 1) + list.length) % Math.max(1, list.length);
+      const next = (list.indexOf(focused) + (id === 'cyclePrevious' ? -1 : 1) + list.length) % Math.max(1, list.length);
       focusWindow(list[next], { keyboard: true, history: true }); return;
     }
-    if (/^Digit[1-9]$/.test(code)) { const index = Number(code.slice(-1)) - 1; event.ctrlKey ? moveToWorkspace(index) : switchWorkspace(Math.min(index, workspaces.length - 1)); return; }
-    const direction = { ArrowLeft: -1, KeyH: -1, ArrowRight: 1, KeyL: 1 }[code];
-    if (direction) { event.ctrlKey ? moveColumn(direction) : navigateColumn(direction); return; }
-    const vertical = { ArrowUp: -1, KeyK: -1, ArrowDown: 1, KeyJ: 1 }[code];
-    if (vertical) { navigateStack(vertical, event.ctrlKey); return; }
-    const wsDirection = { PageUp: -1, KeyI: -1, PageDown: 1, KeyU: 1 }[code];
-    if (wsDirection) { const index = Math.max(0, Math.min(workspaces.length - 1, workspaceIndex + wsDirection)); event.ctrlKey ? moveToWorkspace(index) : switchWorkspace(index); return; }
-    if (code === 'KeyQ') closeWindow();
-    if (code === 'KeyT') terminal();
-    if (code === 'KeyF' || code === 'KeyM') event.shiftKey ? fullscreen() : maximize();
-    if (code === 'KeyC') focusWindow(focused);
-    if (code === 'KeyR') cycleWidth(event.shiftKey);
-    if (code === 'Comma') consume();
-    if (code === 'Period') expel();
-    if (code === 'BracketLeft' || code === 'BracketRight') {
+    const numbered = /^(moveWorkspace|workspace)([1-9])$/.exec(id);
+    if (numbered) { const index = Number(numbered[2]) - 1; numbered[1] === 'moveWorkspace' ? moveToWorkspace(index) : switchWorkspace(Math.min(index, workspaces.length - 1)); return; }
+    const direction = { focusLeft: -1, focusRight: 1, moveLeft: -1, moveRight: 1 }[id];
+    if (direction) { id.startsWith('move') ? moveColumn(direction) : navigateColumn(direction); return; }
+    const vertical = { focusUp: -1, focusDown: 1, moveUp: -1, moveDown: 1 }[id];
+    if (vertical) { navigateStack(vertical, id.startsWith('move')); return; }
+    const wsDirection = { workspacePrevious: -1, workspaceNext: 1, moveWorkspacePrevious: -1, moveWorkspaceNext: 1 }[id];
+    if (wsDirection) { const index = Math.max(0, Math.min(workspaces.length - 1, workspaceIndex + wsDirection)); id.startsWith('move') ? moveToWorkspace(index) : switchWorkspace(index); return; }
+    if (id === 'close') closeWindow();
+    if (id === 'terminal') terminal();
+    if (id === 'fullscreen') fullscreen();
+    if (id === 'maximize') maximize();
+    if (id === 'center') focusWindow(focused);
+    if (id === 'widthNext' || id === 'widthPrevious') cycleWidth(id === 'widthPrevious');
+    if (id === 'consume') consume();
+    if (id === 'expel') expel();
+    if (id === 'joinLeft' || id === 'joinRight') {
       const col = colOf(focused);
       if (col?.children.length > 1) {
         const win = focused.el;
         const newCol = newColumn(col.offsetWidth, current(), col);
-        if (code === 'BracketLeft') col.before(newCol);
+        if (id === 'joinLeft') col.before(newCol);
         moveNode(win, newCol); focusWindow(focused);
       } else if (col) {
-        const target = code === 'BracketLeft' ? col.previousElementSibling : col.nextElementSibling;
+        const target = id === 'joinLeft' ? col.previousElementSibling : col.nextElementSibling;
         if (target?.matches('.desktop-column')) { moveNode(focused.el, target); col.remove(); focusWindow(focused); }
       }
     }
-    if (code === 'Home' || code === 'End') {
-      const cols = columnList(); const target = code === 'Home' ? cols[0] : cols.at(-1);
-      if (event.ctrlKey && focused && target && target !== colOf(focused)) { moveNode(colOf(focused), current().strip, code === 'Home' ? target : target.nextElementSibling); focusWindow(focused); }
+    if (['first', 'last', 'moveFirst', 'moveLast'].includes(id)) {
+      const first = id === 'first' || id === 'moveFirst';
+      const cols = columnList(), target = first ? cols[0] : cols.at(-1);
+      if (id.startsWith('move') && focused && target && target !== colOf(focused)) { moveNode(colOf(focused), current().strip, first ? target : target.nextElementSibling); focusWindow(focused); }
       else if (target) focusWindow(windows.get($('.desktop-window', target).dataset.windowId), { keyboard: true });
     }
     refreshChrome();
@@ -1342,7 +1461,7 @@
   document.addEventListener('pointerdown', event => {
     if (!event.target.closest('.shell-dialog, .shell-bar') && !insidePanelSurface(event.clientX, event.clientY)) closeDialogs(false);
   }, { passive: true });
-  document.addEventListener('keydown', handleKey);
+  document.addEventListener('keydown', handleKey, { capture: true });
   document.addEventListener('wheel', event => {
     if (dialogs.some(d => d.open)) return;
     if (mobile.matches) return;
@@ -1363,6 +1482,7 @@
     if (data.type === 'ready') syncAppearance(win);
     if (data.type === 'open' && typeof data.url === 'string') { focusWindow(win, { scroll: false }); openURL(data.url, String(data.title || '博客页面')); }
     if (data.type === 'key') { focusWindow(win, { scroll: false }); handleKey(data); }
+    if (data.type === 'shortcut' && settings.shortcutsEnabled && shortcuts.definitions.some(item => item.id === data.id)) { focusWindow(win, { scroll: false }); executeShortcut(data.id, data.repeat); }
     if (data.type === 'wheel' && Number.isFinite(data.deltaX) && Number.isFinite(data.deltaY)) handleWheel(data);
     if (data.type === 'state' && typeof data.url === 'string' && internalURL(data.url)) {
       win.url = cleanURL(data.url);
@@ -1387,9 +1507,19 @@
   });
   ['hue', 'opacity', 'blur', 'barBlur', 'brightness', 'wallpaperOpacity', 'shellOpacity'].forEach(key => $(`#shell-${key}`).addEventListener('input', event => { settings[key] = Number(event.target.value); applySettings(); }));
   $$('[data-wallpaper-page]').forEach(item => item.addEventListener('click', () => { wallpaperPage += Number(item.dataset.wallpaperPage); renderWallpapers(); }));
+  document.addEventListener('blog-wallpaper-pool', event => {
+    if ($('#shell-wallpaper').open) { if (event.detail.poolChanged) wallpaperPage = Math.floor(currentWallpaper() / 9); renderWallpapers(); }
+  });
   $('#shell-color-mode').addEventListener('change', event => { settings.shellColorMode = event.target.value; applySettings(); });
   $('#shell-color').addEventListener('input', event => { settings.shellColor = event.target.value; applySettings(); });
-  $('#shell-modifier').addEventListener('change', event => { settings.modifier = event.target.value; applySettings(); });
+  $('#shell-modifier').addEventListener('change', event => { settings.modifier = event.target.value; applySettings(); renderShortcutBindings(); });
+  $('#shell-wallpaperMotion').addEventListener('change', event => { settings.wallpaperMotion = event.target.value; applySettings(); });
+  $('#shortcut-preset').addEventListener('change', event => { settings.shortcutPreset = event.target.value; applySettings(); renderShortcutBindings(); $('#shortcut-status').textContent = ''; });
+  $('#shortcuts-enabled').addEventListener('change', event => { settings.shortcutsEnabled = event.target.checked; applySettings(); });
+  $('#shortcut-reset-all').addEventListener('click', () => { settings.shortcuts = {}; applySettings(); renderShortcutBindings(); $('#shortcut-status').textContent = ''; });
+  $('#shortcut-priority').addEventListener('click', toggleKeyboardPriority);
+  document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) { ++keyboardRequest; navigator.keyboard?.unlock?.(); keyboardLocked = false; } updateKeyboardPriority(); });
+  addEventListener('pagehide', () => navigator.keyboard?.unlock?.());
   $('#shell-position').addEventListener('change', event => {
     settings.position = event.target.value;
     applySettings();
@@ -1444,8 +1574,9 @@
       workspaceIndex = 0;
       workspaces.forEach((ws, i) => { ws.strip.hidden = i !== 0; });
       first.focused = focused?.id || windowList(first)[0]?.id;
-    } else ensureTrailingWorkspace();
+    } else compactWorkspaces();
     refreshChrome();
+    if ($('#shell-wallpaper').open) { wallpaperPage = Math.floor(currentWallpaper() / 9); renderWallpapers(); }
     if (focused) focusWindow(focused, { instant: true });
   });
   const panelObserver = new ResizeObserver(() => requestAnimationFrame(() => positionPanel(dialogs.find(dialog => dialog.open && !dialog.classList.contains('is-closing')))));

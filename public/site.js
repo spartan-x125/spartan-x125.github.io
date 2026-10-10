@@ -440,6 +440,8 @@
   }
 
   function initBackground() {
+    if (document.documentElement.dataset.embedded === 'true') return;
+    if (window.BlogWallpaper) { window.BlogWallpaper.init(); return; }
     const layer = document.querySelector(".background-layer");
     const backgrounds = JSON.parse(document.body.dataset.backgrounds || "[]");
     if (!layer || backgrounds.length === 0) return;

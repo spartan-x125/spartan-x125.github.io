@@ -24,3 +24,24 @@ export const backgroundImages = [
   "/backgrounds/144357044_p0.jpg",
   "/backgrounds/146860319_p0.jpg",
 ];
+
+export const mobileBackgroundImages = [
+  "/backgrounds/mobile/101586788_p0.webp",
+  "/backgrounds/mobile/114687187_p0.webp",
+  "/backgrounds/mobile/116699716_p0.webp",
+  "/backgrounds/mobile/116840117_p1.webp",
+  "/backgrounds/mobile/116840117_p3.webp",
+  "/backgrounds/mobile/116840117_p4.webp",
+  "/backgrounds/mobile/118673252_p0.webp",
+  "/backgrounds/mobile/119217070_p0.webp",
+  "/backgrounds/mobile/124763766_p0.webp",
+  "/backgrounds/mobile/125999934_p11.webp",
+  "/backgrounds/mobile/125999934_p15.webp",
+  "/backgrounds/mobile/125999934_p17.webp",
+  "/backgrounds/mobile/126504073_p0.webp",
+  "/backgrounds/mobile/134247119_p0.webp",
+  "/backgrounds/mobile/138686506_p0.webp",
+  "/backgrounds/mobile/144607418_p0.webp",
+  "/backgrounds/mobile/144886431_p0.webp",
+  "/backgrounds/mobile/147011112_p0.webp",
+];

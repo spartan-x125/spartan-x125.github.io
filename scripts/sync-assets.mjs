@@ -98,35 +98,34 @@ function syncMusicTracks() {
   return nextTracks.length - existingTracks.length;
 }
 
-function readExistingBackgrounds() {
+function readExistingBackgrounds(name = 'backgroundImages') {
   const source = readFileSync(backgroundsDataFile, "utf8");
-  return Array.from(source.matchAll(/"([^"]+)"/g), (match) => match[1]);
+  const body = source.match(new RegExp(`export const ${name} = \\[([\\s\\S]*?)\\];`))?.[1] || '';
+  return Array.from(body.matchAll(/"([^"]+)"/g), (match) => match[1]);
 }
 
-function formatBackgrounds(images) {
+function formatBackgrounds(images, name = 'backgroundImages') {
   const body = images.map((image) => `  ${JSON.stringify(image)},`).join("\n");
-  return `export const backgroundImages = [
+  return `export const ${name} = [
 ${body}
 ];
 `;
 }
 
 function syncBackgrounds() {
-  const existingImages = readExistingBackgrounds();
-  const knownImages = new Set(existingImages);
-  const nextImages = [...existingImages];
-
-  readdirSync(backgroundsDir)
-    .filter((file) => imageExtensions.has(extname(file).toLowerCase()))
-    .sort((a, b) => a.localeCompare(b, "zh-Hans-CN"))
-    .forEach((file) => {
-      const src = `/backgrounds/${file}`;
-      if (knownImages.has(src)) return;
-      nextImages.push(src);
-    });
-
-  writeFileSync(backgroundsDataFile, formatBackgrounds(nextImages), "utf8");
-  return nextImages.length - existingImages.length;
+  let added = 0;
+  const groups = [['backgroundImages', backgroundsDir, '/backgrounds'], ['mobileBackgroundImages', join(backgroundsDir, 'mobile'), '/backgrounds/mobile']];
+  const source = groups.map(([name, directory, prefix]) => {
+    const existing = readExistingBackgrounds(name), next = [...existing];
+    readdirSync(directory).filter(file => imageExtensions.has(extname(file).toLowerCase()))
+      .sort((a, b) => a.localeCompare(b, 'zh-Hans-CN')).forEach(file => {
+        const url = `${prefix}/${file}`;
+        if (!next.includes(url)) { next.push(url); added++; }
+      });
+    return formatBackgrounds(next, name);
+  }).join('\n');
+  writeFileSync(backgroundsDataFile, source, 'utf8');
+  return added;
 }
 
 const addedTracks = syncMusicTracks();

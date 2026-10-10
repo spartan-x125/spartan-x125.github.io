@@ -76,8 +76,20 @@ const apps = [
     <label><span><span class="setting-name"><Icon name="sun" size={15} />壁纸亮度</span><output id="shell-brightness-value"></output></span><input id="shell-brightness" type="range" min="0.2" max="1" step="0.01" value="1" /></label>
     <label><span><span class="setting-name"><Icon name="wallpaper" size={15} />壁纸不透明度</span><output id="shell-wallpaperOpacity-value"></output></span><input id="shell-wallpaperOpacity" type="range" min="0.2" max="1" step="0.01" value="1" /></label>
     <label><span class="setting-name"><Icon name="position" size={15} />bar 位置</span><select aria-label="bar 位置" id="shell-position"><option value="top">顶部</option><option value="bottom">底部</option><option value="left">左侧</option><option value="right">右侧</option></select></label>
-    <label class="modifier-setting"><span class="setting-name"><Icon name="keyboard" size={15} />网页快捷键修饰键</span><select id="shell-modifier"><option value="both">Super / Win 和 Alt</option><option value="super">仅 Super / Win</option><option value="alt">仅 Alt</option></select></label>
-  </div><button class="shell-text-button" data-shell-action="reset-settings"><Icon name="reset" size={16} />恢复默认外观</button>
+    <label><span class="setting-name"><Icon name="wallpaper" size={15} />壁纸切换动画</span><select aria-label="壁纸切换动画" id="shell-wallpaperMotion"><option value="none">无动画</option><option value="fade">淡入</option><option value="slide">滑入</option><option value="wipe">揭幕</option><option value="zoom">缩放</option><option value="random">随机动画</option></select></label>
+  </div><button class="shell-text-button" data-shell-action="shortcuts"><Icon name="keyboard" size={16} />快捷键设置</button><button class="shell-text-button" data-shell-action="reset-settings"><Icon name="reset" size={16} />恢复默认外观</button>
+</dialog>
+<dialog id="shell-shortcuts" class="shell-dialog shortcuts-dialog" aria-labelledby="shortcuts-title">
+  <div class="shell-dialog-heading"><h2 id="shortcuts-title">快捷键</h2></div>
+  <div class="shell-settings shortcut-settings">
+    <label><span class="setting-name"><Icon name="keyboard" size={15} />快捷键方案</span><select id="shortcut-preset" aria-label="快捷键方案"><option value="web">网页 · Ctrl + Alt + Shift</option><option value="niri">niri / Noctalia · Mod</option></select></label>
+    <label class="modifier-setting" id="shortcut-modifier-setting"><span class="setting-name"><Icon name="keyboard" size={15} />niri 修饰键</span><select id="shell-modifier" aria-label="niri 修饰键"><option value="both">Super / Win 和 Alt</option><option value="super">仅 Super / Win</option><option value="alt">仅 Alt</option></select></label>
+    <label><span>启用快捷键</span><input type="checkbox" id="shortcuts-enabled" aria-label="启用快捷键" checked /></label>
+    <div class="shortcut-priority"><button type="button" class="shell-text-button" id="shortcut-priority">开启全屏键盘优先</button><p id="shortcut-priority-status" role="status"></p></div>
+  </div>
+  <p id="shortcut-status" class="shortcut-status" role="status"></p>
+  <div id="shortcut-bindings" class="shortcut-bindings"></div>
+  <button type="button" class="shell-text-button" id="shortcut-reset-all"><Icon name="reset" size={16} />恢复本方案快捷键</button>
 </dialog>
 <dialog id="shell-help" class="shell-dialog help-dialog" aria-labelledby="help-title">
   <div class="shell-dialog-heading"><h2 id="help-title">操作指南</h2></div>
@@ -115,5 +127,7 @@ const apps = [
 <dialog id="shell-session" class="shell-dialog controls-dialog" aria-labelledby="session-title"><div class="shell-dialog-heading"><h2 id="session-title">桌面会话</h2></div><button class="shell-text-button" data-shell-action="home"><Icon name="home" size={16} />返回首页</button><button class="shell-text-button" data-shell-action="restart"><Icon name="restart" size={16} />重新加载桌面</button></dialog>
 <noscript><nav class="shell-fallback-nav">{apps.map(app => <a href={app.url}>{app.name}</a>)}</nav></noscript>
 <div id="shell-announcement" class="shell-toast" role="status" aria-live="polite"></div>
-<script is:inline defer src="/terminal.js?v=20261010-1"></script>
-<script is:inline defer src="/desktop.js?v=20261010-1"></script>
+<script is:inline defer src="/shortcuts.js?v=20261010-3"></script>
+<script is:inline defer src="/wallpaper.js?v=20261010-3"></script>
+<script is:inline defer src="/terminal.js?v=20261010-3"></script>
+<script is:inline defer src="/desktop.js?v=20261010-3"></script>

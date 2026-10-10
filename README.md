@@ -12,17 +12,21 @@ Bar panels grow from their triggering button with a brief spring animation. The 
 
 Buttons, links, panels, workspaces and opening/moving windows have brief transitions, respecting reduced-motion preferences. Decorative captions and preview descriptions are removed. Closing every window leaves a clear wallpaper, without an empty-workspace launcher prompt or a close-window notification.
 
-The homepage initially opens only the shell, at half the desktop workspace width and the full available height. The shell uses a 50% opaque black background without backdrop blur, leaving wallpaper details visible while keeping text legible. Fastfetch shows the avatar, website and contact links, statistics, and an English hint to type `help`. The avatar heading opens the terminal About reader.
+The homepage initially opens only the shell, at half the desktop workspace width and the full available height. The shell uses a 50% opaque black background without backdrop blur, leaving wallpaper details visible while keeping text legible. Fastfetch shows the avatar, website and contact links, statistics, and an English hint to type `help`. The avatar heading opens About in a separate terminal card.
 
-All browseable pages have terminal versions: `home`, `posts`, `about`, `friends`, `guestbook`, `updates`, and individual articles with `read <slug>` or `read <number>`. `open <path>` stays inside the shell; `open --gui <path>` opens the original graphical window. The launcher and bar links continue opening graphical pages. `ls posts` lists article numbers and slugs. Article content comes from the same Markdown modules as the graphical pages through a generated static `terminal-data.json`; draft posts remain excluded.
+All browseable pages have terminal versions: `home`, `posts`, `about`, `friends`, `guestbook`, `updates`, and individual articles with `read <slug>` or `read <number>`. Page commands, `open <path>`, and directory entries open separate terminal cards, preserving the original shell's output and command history. `open --gui <path>` opens the original graphical window. The launcher and bar links continue opening graphical pages. `ls posts` lists article numbers and slugs. Article content comes from the same Markdown modules as the graphical pages through a generated static `terminal-data.json`; draft posts remain excluded.
 
-The terminal browser has a directory list, selection preview, article reader, search, heading outline and link picker. Use j/k or arrows to select and scroll, Enter to open, / to search, Space/b or PageDown/PageUp to page, g/G for first/last or start/end, t for headings, l for links, n/N for search matches, and q/Esc to return. Ctrl+C leaves the browser. The footer shows applicable shortcuts. Mouse selection, double-click, links and back/exit buttons are available too. Mouse actions on the window, titlebar or bar restore the active shell focus, so keyboard browsing continues after using the mouse. On guestbook and article readers, c loads the existing live Giscus discussion; its sign-in and posting controls remain keyboard-accessible with Tab.
+The terminal browser has a directory list, selection preview, article reader, search, heading outline and link picker. Use j/k or Up/Down to select and scroll, Right/Enter to open, Left to return to the parent page, / to search, Space/b or PageDown/PageUp to page, g/G for first/last or start/end, t for headings, l for links, and n/N for search matches. q/Esc closes the reader and returns focus to its originating card; Ctrl+C returns to the shell. The footer shows applicable shortcuts. Mouse selection, double-click, links and back/exit buttons are available too. Mouse actions on the window, titlebar or bar restore the active shell focus, so keyboard browsing continues after using the mouse. On guestbook and article readers, c loads the existing live Giscus discussion; its sign-in and posting controls remain keyboard-accessible with Tab.
 
 Help follows the [Bash help/manual structure](https://www.gnu.org/s/bash/manual/html_node/Bash-Builtins.html): grouped command descriptions, syntax, examples and keyboard guidance. `help <command>` and `man <command>` show detailed manuals; `help -s`, `help -d` and `help -m` select syntax, description or manual output. Up/Down recall history, Tab completes commands and paths, Ctrl+L clears output, and Ctrl+C cancels input. Quoted arguments are supported. This interface only navigates blog content and never executes commands on the visitor's operating system.
 
 Dangerous-looking commands such as `rm -rf /*`, `sudo rm -rf /`, disk-format commands and the classic fork bomb trigger a fictional boot failure and kernel panic. This is a visual Easter egg; no files or appearance preferences are deleted. Refresh, press R or choose Reboot to restore the initial desktop. The `reboot` command also starts a fresh session.
 
 On screens up to 700px wide, windows flow vertically in one scrollable column. Workspace switching, workspace creation and workspace movement are disabled and their controls are hidden. On larger screens, horizontal tiling and the desktop workspaces remain available. Resizing from desktop to mobile brings existing windows into the single visible workspace.
+
+Desktop workspaces keep at least three slots and one trailing empty slot. Extra empty workspaces are reclaimed after closing or moving windows and switching workspaces. The current empty workspace stays active until the visitor leaves it, so cleanup does not unexpectedly switch their view.
+
+Mobile uses its own portrait wallpaper library in `public/backgrounds/mobile`; desktop uses the original landscape library. Selections and automatic-change timestamps are stored separately for each library. Both use the same paged 3-by-3 picker, ten-minute automatic changes, wallpaper-derived bar colors and animation setting. The control center offers fade, slide, wipe, zoom, random, or no animation. Reduced-motion preferences disable wallpaper animations.
 
 Internal navigation, archive filters and window focus keep the outer browser URL at `/` and the tab title at `Spartan_x`. The actual static article routes remain available for incoming links and embedded graphical pages. Refreshing the root starts a fresh shell desktop.
 
@@ -32,7 +36,9 @@ Scrollable cards retain a floating back-to-top button inside their window. Artic
 
 The launcher lists pages and desktop functions, without individual article entries or a visible title. Functional entries, window controls and appearance settings use a shared set of SVG line icons.
 
-Common shortcuts use Super/Win or Alt (selectable in the control center):
+The default web shortcut preset uses Ctrl + Alt + Shift to reduce collisions with common desktop shortcuts. For example, T opens a shell, Q closes a window, S opens the control center, V opens shortcut settings, arrows change focus, and 1–9 switch workspaces. Moving a column to a workspace uses Ctrl + Alt + 1–9. Shortcut settings support recording a custom binding for every action, duplicate-binding feedback, individual reset/disable, and restoring the preset. Preferences are saved locally. The guide and bar tooltips follow the effective bindings. Global shortcuts are captured before terminal input and forwarded from embedded graphical pages.
+
+The optional niri preset uses Super/Win or Alt (selectable in shortcut settings):
 
 | Shortcut | Action |
 | --- | --- |
@@ -49,7 +55,7 @@ Common shortcuts use Super/Win or Alt (selectable in the control center):
 | Mod + comma / period | Stack / unstack windows |
 | Mod + Shift + / | Full shortcut guide |
 
-Alt is the alternative when Super/Win is reserved by the system or browser. The bar audio control operates the blog music player. Niri's comma binding is retained, with Noctalia settings accessible through Mod + S. Bar refers to the desktop bar and its panels; shell refers to the terminal interface.
+Shortcut settings also offer an explicit fullscreen [Keyboard Lock](https://developer.chrome.com/docs/capabilities/web-apis/keyboard-lock) request when supported. Browser permission and operating-system restrictions still apply; a website cannot override every system shortcut. Exit fullscreen with the same button or the browser's escape gesture. The bar audio control operates the blog music player. Niri's comma binding is retained, with Noctalia settings accessible through Mod + S. Bar refers to the desktop bar and its panels; shell refers to the terminal interface.
 
 ## Development
 
@@ -62,4 +68,17 @@ npm run dev
 
 ```sh
 npm run build
+```
+
+Shortcut routing checks:
+
+```sh
+node scripts/check-shortcuts.mjs
+```
+
+To import portrait wallpapers, pass their source folder to the importer. It preserves the originals and produces WebP assets up to 1440 by 2560 pixels; asset synchronization maintains separate desktop and mobile lists.
+
+```sh
+node scripts/import-mobile-wallpapers.mjs "C:\竖屏img"
+npm run sync:assets
 ```

@@ -6,7 +6,7 @@ import ProfileSidebar from "../../components/ProfileSidebar.astro";
 import SiteFooter from "../../components/SiteFooter.astro";
 import SiteHeader from "../../components/SiteHeader.astro";
 import { profile } from "../../data/profile";
-import { backgroundImages } from "../../data/backgroundImages";
+import { backgroundImages, mobileBackgroundImages } from "../../data/backgroundImages";
 import { likeService } from "../../data/likeService";
 import { getAllPosts } from "../../utils/posts";
 
@@ -39,7 +39,7 @@ const Content = post.Content ?? post.default;
     <title>{profile.name}</title>
 
   </head>
-  <body data-backgrounds={JSON.stringify(backgroundImages)}>
+  <body data-backgrounds={JSON.stringify(backgroundImages)} data-backgrounds-mobile={JSON.stringify(mobileBackgroundImages)}>
     <div class="background-layer" aria-hidden="true" transition:persist></div>
     <SiteHeader />
     <main class="article-layout mobile-sidebar-collapsed">
@@ -132,6 +132,6 @@ const Content = post.Content ?? post.default;
     </aside>
     <SiteFooter />
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script is:inline src="/site.js?v=20261010-1"></script>
+    <script is:inline src="/site.js?v=20261010-3"></script>
   </body>
 </html>

@@ -35,6 +35,26 @@
 .wallpaper-pages button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: var(--shell-soft); color: var(--shell-accent); }
 .wallpaper-pages button:disabled { opacity: .35; cursor: default; }
 .wallpaper-pages output { color: var(--shell-muted); font: 12px ui-monospace,monospace; }
+.background-layer { transition: filter 180ms ease, opacity 180ms ease; }
+.wallpaper-transition-surface { overflow: hidden; pointer-events: none; }
+.wallpaper-transition-surface > div { position: absolute; inset: 0; background-position: center; background-size: cover; }
+.shortcut-settings { display: flex; flex-direction: column; gap: 18px; }
+.shortcut-settings select { width: 100%; }
+.shortcut-priority { display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+.shortcut-priority p { margin: 0; color: var(--shell-muted); font-size: 12px; }
+.shortcut-bindings h3 { margin: 24px 0 10px; color: var(--shell-accent); font-size: 14px; }
+.shortcut-row { display: grid; grid-template-columns: minmax(0,1fr) auto 28px; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--shell-line); font-size: 13px; }
+.shortcut-record { min-height: 32px; max-width: 240px; padding: 6px 10px; border: 1px solid var(--shell-line); border-radius: 8px; color: var(--shell-accent); background: var(--shell-soft); font: 11px ui-monospace,monospace; }
+.shortcut-record.is-recording { border-color: var(--shell-accent); box-shadow: 0 0 0 2px var(--shell-soft); }
+.shortcut-reset { width: 28px; height: 28px; padding: 4px; border: 0; border-radius: 6px; color: var(--shell-muted); background: transparent; }
+.shortcut-status:empty { display: none; }
+.shortcut-status { color: var(--shell-accent); font-size: 13px; }
+.shortcuts-dialog .shortcut-list kbd { white-space: normal; }
+@media (max-width: 700px) {
+  .shell-bar { grid-template-columns: auto minmax(0,1fr) auto; }
+  .shortcut-record { max-width: 145px; font-size: 10px; }
+  .wallpaper-tile, .wallpaper-empty { aspect-ratio: 9 / 16; }
+}
 :root[data-desktop] .shell-dialog :is(.shell-settings,.shell-volume-label) input[type=range] { appearance: none; -webkit-appearance: none; display: block; width: 100%; height: 28px; padding: 0; margin: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; --range-progress: 50%; }
 .shell-dialog :is(.shell-settings,.shell-volume-label) input[type=range]::-webkit-slider-runnable-track { height: 6px; border: 0; background: linear-gradient(90deg,var(--shell-accent) var(--range-progress),var(--shell-line) var(--range-progress)) center / calc(100% - 14px) 100% no-repeat; }
 .shell-dialog :is(.shell-settings,.shell-volume-label) input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; margin-top: -4px; border: 0; border-radius: 50%; background: var(--shell-accent); cursor: pointer; }
