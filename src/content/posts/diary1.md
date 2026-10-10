@@ -3,7 +3,7 @@ title: "深夜玉玉随笔"
 description: "如标题，精神状态欠佳时所写，全文仅有公式化卖惨犯病，懒得总结"
 category: "日记"
 tags: ["随笔", "情绪垃圾","有害垃圾","惯例性破防"]
-draft: false
+draft: true
 ---
 
 
