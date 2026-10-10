@@ -40,6 +40,9 @@
 .terminal-browser-preview h2 { margin: 20px 0 14px; font: 600 18px/1.55 var(--terminal-font); color: #e2e8f0; overflow-wrap: anywhere; }
 .terminal-browser-preview p { margin: 14px 0; overflow-wrap: anywhere; }
 .terminal-preview-tags { color: #7dcfff; }
+.terminal-friend-preview { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; object-position: top; border: 1px solid #ffffff26; border-radius: 6px; background: #0003; pointer-events: none; margin-top: 8px; }
+.terminal-rm-error { color: #d4d9e3; white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal-input[hidden] { display: none; }
 .terminal-browser-footer { flex: 0 0 auto; min-height: 43px; padding: 11px 18px; border-top: 1px solid #ffffff1c; background: #0003; color: #a9b1d6; font-size: 12px; line-height: 1.65; }
 .terminal-browser-reader { flex: 1; min-height: 0; min-width: 0; padding: 24px 30px 44px; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #414868 transparent; }
 .terminal-document { font: inherit; line-height: 1.85; overflow-wrap: anywhere; }
@@ -99,22 +102,16 @@
   .terminal-app:not([hidden]) { animation: panel-open 180ms ease-out; }
   .terminal-list-row { transition: background 140ms, border-color 140ms; }
 }
-:root[data-crashed=true] :is(.shell-bar,.desktop-space,.desktop-fullscreen-layer,.shell-dialog,.shell-panel-bridge) { pointer-events: none; filter: grayscale(1); }
-.terminal-crash { position: fixed; inset: 0; z-index: 1000; display: grid; align-items: center; padding: clamp(22px,5vw,80px); color: #c7d0db; background: rgb(3 5 7 / .9); font: 14px/1.8 "Cascadia Code", Consolas, "Microsoft YaHei", monospace; outline: none; overflow-y: auto; }
-.terminal-crash-screen { width: min(780px,100%); margin: 0 auto; }
-.terminal-crash-label { color: #788391; font-size: 12px; letter-spacing: .16em; margin-bottom: 28px; }
-.terminal-crash-command { margin-bottom: 14px; color: #e0af68; overflow-wrap: anywhere; }
-.terminal-crash-log { min-height: 220px; font-size: 13px; overflow-wrap: anywhere; }
-.terminal-crash.is-panicked { background: #05080b; }
-.terminal-crash-panic { border-top: 1px solid #f7768e40; padding-top: 26px; }
-.terminal-crash-code { color: #f7768e; font-size: 12px; letter-spacing: .16em; }
-.terminal-crash-panic h1 { color: #edf2f7; margin: 12px 0; font: 600 clamp(24px,4vw,38px)/1.4 "Cascadia Code", Consolas, monospace; }
-.terminal-crash-panic p { margin: 12px 0; }
-.terminal-reboot { margin-top: 20px; padding: 10px 20px; border: 1px solid #7dcfff60; border-radius: 5px; color: #7dcfff; background: #7dcfff0a; font: inherit; }
-.terminal-reboot:hover { background: #7dcfff20; }
-.terminal-crash-hint { color: #788391; font-size: 12px; }
+:root[data-crashed=true] :is(.shell-bar,.desktop-space,.desktop-fullscreen-layer,.shell-dialog,.shell-panel-bridge) { pointer-events: none; }
+.terminal-crash { position: fixed; inset: 0; z-index: 1000; display: grid; align-items: center; padding: clamp(28px,8vw,110px); color: #fff; background: #0864ad; font: 16px/1.7 system-ui, sans-serif; outline: none; overflow-y: auto; }
+.terminal-crash-screen { width: min(860px,100%); margin: 0 auto; }
+.terminal-crash-face { font-size: clamp(70px,13vw,130px); font-weight: 300; line-height: 1; margin-bottom: 36px; }
+.terminal-crash h1 { color: white; font: 400 clamp(22px,3vw,30px)/1.6 system-ui, sans-serif; max-width: 780px; margin: 0 0 24px; }
+.terminal-crash-code { font: 13px/1.8 "Cascadia Code", Consolas, monospace; margin-top: 34px; }
+.terminal-reboot { margin-top: 20px; padding: 10px 24px; border: 1px solid #ffffff90; border-radius: 5px; color: white; background: #ffffff12; font: inherit; }
+.terminal-reboot:hover { background: #ffffff28; }
+.terminal-crash-hint { color: #ffffffb0; font-size: 12px; letter-spacing: .1em; }
 @media (prefers-reduced-motion: no-preference) {
-  .terminal-crash { animation: simulated-signal-loss 280ms ease-out; transition: background-color 600ms; }
-  .terminal-crash-panic:not([hidden]) { animation: panel-open 300ms ease-out; }
-  @keyframes simulated-signal-loss { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  :root.is-crashing :is(.shell-bar,.desktop-space,.desktop-fullscreen-layer) { animation: simulated-signal-loss 240ms steps(2,end) 3; }
+  @keyframes simulated-signal-loss { 0%,100% { opacity: 1; transform: none; filter: none; } 35% { opacity: .4; transform: translateX(5px); filter: grayscale(1); } 70% { opacity: .75; transform: translateX(-3px); filter: contrast(2); } }
 }

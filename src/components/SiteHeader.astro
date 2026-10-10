@@ -1,6 +1,7 @@
 ---
 import '../styles/desktop.css';
 import '../styles/terminal.css';
+import '../styles/browser.css';
 import '../styles/bar.css';
 import Icon from './DesktopIcon.astro';
 import { desktopIconPaths } from '../data/desktopIcons';
@@ -17,6 +18,7 @@ const siteStats = {
 const apps = [
   { name: '文章归档', url: '/posts/', icon: 'archive' },
   { name: '关于我', url: '/about/', icon: 'user' },
+  { name: 'Clab 通信实验室', url: '/clab/', icon: 'wave' },
   { name: '友情链接', url: '/friends/', icon: 'link' },
   { name: '留言板', url: '/guestbook/', icon: 'chat' },
   { name: '更新历史', url: '/updates/', icon: 'history' },
@@ -129,5 +131,7 @@ const apps = [
 <div id="shell-announcement" class="shell-toast" role="status" aria-live="polite"></div>
 <script is:inline defer src="/shortcuts.js?v=20261010-3"></script>
 <script is:inline defer src="/wallpaper.js?v=20261010-3"></script>
-<script is:inline defer src="/terminal.js?v=20261010-3"></script>
-<script is:inline defer src="/desktop.js?v=20261010-3"></script>
+<script is:inline defer src="/browser.js?v=20261010-4"></script>
+<script is:inline defer src="/stars.js?v=20261010-4"></script>
+<script is:inline defer src="/terminal.js?v=20261010-6"></script>
+<script is:inline defer src="/desktop.js?v=20261010-5"></script>

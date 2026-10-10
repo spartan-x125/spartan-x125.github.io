@@ -20,7 +20,11 @@ The terminal browser has a directory list, selection preview, article reader, se
 
 Help follows the [Bash help/manual structure](https://www.gnu.org/s/bash/manual/html_node/Bash-Builtins.html): grouped command descriptions, syntax, examples and keyboard guidance. `help <command>` and `man <command>` show detailed manuals; `help -s`, `help -d` and `help -m` select syntax, description or manual output. Up/Down recall history, Tab completes commands and paths, Ctrl+L clears output, and Ctrl+C cancels input. Quoted arguments are supported. This interface only navigates blog content and never executes commands on the visitor's operating system.
 
-Dangerous-looking commands such as `rm -rf /*`, `sudo rm -rf /`, disk-format commands and the classic fork bomb trigger a fictional boot failure and kernel panic. This is a visual Easter egg; no files or appearance preferences are deleted. Refresh, press R or choose Reboot to restore the initial desktop. The `reboot` command also starts a fresh session.
+Dangerous-looking commands such as `rm -rf /*`, `sudo rm -rf /`, disk-format commands and the classic fork bomb first flood the shell with simulated Linux permission, busy-device and read-only-filesystem errors. The desktop then briefly loses its signal and enters a fictional blue crash screen. This is a visual Easter egg; no files or appearance preferences are deleted. Refresh, press R or choose Reboot to restore the initial desktop. Reduced-motion preferences remove the signal-loss animation.
+
+Every launcher page can be opened repeatedly as independent windows. The browser entry and `browser [URL]` command open cards with an address bar, back/forward controls and reload. Graphical and terminal friend links open these browser cards; terminal selection or hover shows a locally stored homepage screenshot from `public/friend-previews/`, without loading the external website. Screenshot paths are configured in `src/data/friendLinks.ts`; replace the corresponding WebP image to refresh a preview. The top-right external-link button opens the current address in a real browser tab. Browsers cannot embed sites that forbid frames or HTTPS pages that require insecure HTTP resources; the external-link button remains available for those sites. Cross-origin navigation inside an external page cannot be inspected, so its address bar retains the last requested address; navigations made with the card's own address bar always update it.
+
+`stars` opens a card at a random tiling position. It selects observations from the public NASA Image and Video Library across nebulae, galaxies, star clusters, supernova remnants, pulsars, gravitational lenses, comets and planets, rather than a fixed list of nearby objects. Introductions retain the archive's original language and provide the archive record, original photograph and credit. Slow or unavailable NASA requests fall back to a bundled six-object catalogue with local photographs. The implementation uses the [NASA library's public CORS API](https://images.nasa.gov/docs/images.nasa.gov_api_docs.pdf) without an API key.
 
 On screens up to 700px wide, windows flow vertically in one scrollable column. Workspace switching, workspace creation and workspace movement are disabled and their controls are hidden. On larger screens, horizontal tiling and the desktop workspaces remain available. Resizing from desktop to mobile brings existing windows into the single visible workspace.
 
@@ -74,9 +78,22 @@ Shortcut routing checks:
 
 ```sh
 node scripts/check-shortcuts.mjs
+node scripts/check-desktop-functions.mjs
+node scripts/check-stars.mjs
+node scripts/check-wallpaper-import.mjs
 ```
 
-To import portrait wallpapers, pass their source folder to the importer. It preserves the originals and produces WebP assets up to 1440 by 2560 pixels; asset synchronization maintains separate desktop and mobile lists.
+Double-click `update-wallpapers.bat` in the project root to import wallpapers from `C:\img` (desktop) and `C:\竖屏img` (mobile), update both wallpaper lists and rebuild `docs`. Both libraries use lossless WebP at the original dimensions, with no resizing or lossy compression. The first run migrates old desktop originals and regenerates the previously compressed mobile wallpapers from their original source files. Local source images stay untouched. The source folders decide which library an image belongs to.
+
+The script requires Node.js. If project dependencies are missing, the double-click entry installs them automatically. A finished run leaves the changes ready to commit and push; it does not perform either Git action. Missing folders, unreadable images and build errors are shown in the console, which remains open. Successful imports are kept and failed images can be retried. JPG, JPEG, PNG, WebP, AVIF and GIF files directly inside each folder are supported; subfolders are ignored. Animation, orientation and ICC profiles are retained. `scripts/wallpaper-import-state.json` records source/output hashes: unchanged imports are skipped, changed sources or damaged outputs are regenerated. Files normally use `original-basename.webp`; colliding source basenames retain their original extension before `.webp`.
+
+The same workflow is available from the terminal:
+
+```sh
+npm run import:wallpapers
+```
+
+To manually import an entire portrait folder instead, use the existing importer and synchronize the asset lists:
 
 ```sh
 node scripts/import-mobile-wallpapers.mjs "C:\竖屏img"

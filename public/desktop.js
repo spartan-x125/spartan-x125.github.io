@@ -45,7 +45,7 @@
   const internalURL = (value) => {
     try {
       const url = new URL(value, location.href);
-      return url.origin === location.origin && /^\/(?:$|posts(?:\/|$)|about\/?$|friends\/?$|guestbook\/?$|updates\/?$)/.test(url.pathname) ? cleanURL(url.href) : null;
+      return url.origin === location.origin && /^\/(?:$|posts(?:\/|$)|about\/?$|friends\/?$|guestbook\/?$|updates\/?$|clab(?:\/|$))/.test(url.pathname) ? cleanURL(url.href) : null;
     } catch { return null; }
   };
   const editing = target => target instanceof Element && !!target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
@@ -174,6 +174,7 @@
       const a = event.target.closest?.('a[href]');
       if (!a || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || a.target === '_blank' || a.hasAttribute('download')) return;
       if (a.getAttribute('href').startsWith('#')) return;
+      if (a.matches('.friend-card')) { event.preventDefault(); send('browse', { url: a.href, title: a.textContent.trim() }); return; }
       const url = internalURL(a.href);
       if (url) { event.preventDefault(); send('open', { url, title: a.textContent.trim() }); }
     });
@@ -243,7 +244,7 @@
   const fullscreenLayer = make('div', 'desktop-fullscreen-layer');
   fullscreenLayer.hidden = true;
   document.body.append(fullscreenLayer);
-  const apps = [...JSON.parse($('#shell-launcher').dataset.apps), { name: '窗口总览', action: 'overview', icon: 'grid' }, { name: '控制中心', action: 'controls', icon: 'settings' }, { name: '终端', action: 'terminal', icon: 'terminal' }, { name: '操作指南', action: 'help', icon: 'help' }];
+  const apps = [...JSON.parse($('#shell-launcher').dataset.apps), { name: '浏览器', action: 'browser', icon: 'browser' }, { name: '窗口总览', action: 'overview', icon: 'grid' }, { name: '控制中心', action: 'controls', icon: 'settings' }, { name: '终端', action: 'terminal', icon: 'terminal' }, { name: '操作指南', action: 'help', icon: 'help' }];
   const siteTitle = JSON.parse($('#shell-launcher').dataset.profile).name;
   document.title = siteTitle;
   const dialogs = $$('.shell-dialog');
@@ -407,7 +408,7 @@
     const win = { id, el, bar, body, titleNode, title, url, icon, original: !content.matches('iframe'), baseWidth: width };
     windows.set(id, win);
     (column || newColumn(width, current(), colOf(focused))).append(el);
-    if (!content.matches('iframe, .desktop-terminal, .music-card')) win.readingControls = attachReadingControls(el, body, $('.article-content', content));
+    if (!content.matches('iframe, .desktop-terminal, .desktop-browser, .music-card')) win.readingControls = attachReadingControls(el, body, $('.article-content', content));
     el.addEventListener('pointerdown', () => focusWindow(win, { scroll: false, history: true }), { passive: true });
     el.addEventListener('focusin', () => focusWindow(win, { scroll: false, history: true }));
     actions.addEventListener('click', event => {
@@ -716,6 +717,7 @@
       const col = colOf(win);
       windows.delete(win.id);
       win.terminal?.destroy();
+      win.browser?.destroy();
       win.readingControls?.destroy();
       win.el.remove();
       if (!col.children.length) col.remove();
@@ -793,20 +795,27 @@
   function openURL(value, title, recordHistory = true) {
     const url = internalURL(value);
     if (!url) return;
-    const existing = [...windows.values()].find(win => win.url === url);
-    if (existing) { focusWindow(existing, { history: recordHistory, keyboard: true }); return existing; }
     const frame = make('iframe');
     const frameURL = new URL(url, location.origin);
     frameURL.searchParams.set('embed', '1');
     frame.src = frameURL.href;
     frame.title = title || '博客页面';
     const app = apps.find(a => a.url === url);
-    const win = createWindow({ title: app?.name || title || '博客页面', content: frame, url, icon: app?.icon || 'file', width: url.startsWith('/posts/') && url !== '/posts/' ? 720 : 610 });
+    const win = createWindow({ title: app?.name || title || '博客页面', content: frame, url, icon: app?.icon || 'file', width: url.startsWith('/clab') ? 1100 : url.startsWith('/posts/') && url !== '/posts/' ? 720 : 610 });
     win.frame = frame;
+    if (url.startsWith('/clab')) {
+      const external = iconButton('external', '在浏览器新标签页打开 Clab');
+      external.onclick = () => {
+        let currentURL = win.url || url;
+        try { currentURL = internalURL(frame.contentWindow.location.href) || currentURL; } catch { /* Keep the card address if the frame becomes inaccessible. */ }
+        window.open(new URL(currentURL, location.origin).href, '_blank', 'noopener,noreferrer');
+      };
+      $('.window-actions', win.bar).prepend(external);
+    }
     frame.addEventListener('load', () => {
       try {
         const doc = frame.contentDocument;
-        const name = $('main h1', doc)?.textContent || $('main .feed h2', doc)?.textContent || win.title;
+        const name = url.startsWith('/clab') ? 'Clab · 通信实验室' : $('main h1', doc)?.textContent || $('main .feed h2', doc)?.textContent || win.title;
         win.title = name; win.titleNode.textContent = name; frame.title = name; win.el.setAttribute('aria-label', name);
         win.documentTitle = doc.title;
         document.title = siteTitle;
@@ -822,6 +831,40 @@
       refreshChrome();
     });
     focusWindow(win, { history: recordHistory, keyboard: true });
+    return win;
+  }
+  function openBrowser(value = location.origin) {
+    let url;
+    try { url = window.BlogBrowser.normalize(value); } catch { return; }
+    const content = make('div', 'desktop-browser');
+    const win = createWindow({ title: new URL(url).host, content, url, icon: 'browser', width: 860 });
+    win.el.dataset.kind = 'browser';
+    win.browser = window.BlogBrowser.mount({ content, win, url, iconButton, internalURL, changed: () => { syncAppearance(win); refreshChrome(); } });
+    win.frame = win.browser.frame;
+    focusWindow(win, { history: true, keyboard: true });
+    return win;
+  }
+  async function openStars() {
+    restoreFullscreen();
+    const cols = columnList(), slot = Math.floor(Math.random() * (cols.length + 1)), column = newColumn(560);
+    if (cols[slot]) current().strip.insertBefore(column, cols[slot]);
+    const content = make('article', 'star-card');
+    content.append(make('p', 'star-loading', 'Connecting to the universe…'));
+    const win = createWindow({ title: 'stars', content, width: 560, column, icon: 'star' }); win.el.dataset.kind = 'star';
+    focusWindow(win, { history: true, keyboard: true });
+    let star;
+    try { star = await window.BlogStars.next(); } catch (error) { if (windows.has(win.id)) content.replaceChildren(make('p', 'star-loading', error.message)); return win; }
+    if (root.dataset.crashed === 'true' || !windows.has(win.id) || win.closing) return;
+    content.replaceChildren();
+    const image = make('img', 'star-image'); image.src = star.image; image.alt = star.name; image.decoding = 'async';
+    const copy = make('div', 'star-copy');
+    copy.append(make('p', 'star-english', `${star.english} · ${star.type}`), make('h1', '', star.name), make('p', 'star-description', star.description));
+    const facts = make('dl', 'star-facts');
+    Object.entries(star.facts).forEach(([key, value]) => facts.append(make('dt', '', key), make('dd', '', value)));
+    const sources = make('div', 'star-sources');
+    [['资料 · NASA', star.source], ['照片来源', star.photoSource || star.source], ['原始图片', star.imageSource]].forEach(([label, href]) => { const link = make('a', '', label); link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; sources.append(link); });
+    copy.append(facts, sources, make('p', 'star-credit', `Image credit: ${star.credit}`)); content.append(image, copy);
+    win.title = star.name; win.titleNode.textContent = star.name; win.el.setAttribute('aria-label', star.name); refreshChrome();
     return win;
   }
   function navigateColumn(direction) {
@@ -1107,7 +1150,7 @@
     const profile = JSON.parse($('#shell-launcher').dataset.profile);
     const win = createWindow({ title: `${profile.name}@blog: ~`, content, width, column, icon: 'terminal' });
     win.el.dataset.kind = 'terminal';
-    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, close: closeWindow, internalURL, page,
+    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, openBrowser, openStars, close: closeWindow, internalURL, page,
       openTerminal: (url, source) => terminal({ page: url, origin: source, width: colOf(source)?.offsetWidth || 720 }),
       goBack: (parent = false) => {
         let destination = origin && windows.has(origin.id) && !origin.closing ? origin : null;
@@ -1127,7 +1170,7 @@
     return win;
   }
   const appearanceMessage = () => ({ channel: 'spartan-desktop', type: 'appearance', theme: root.dataset.theme, properties: { '--accent-hue': String(settings.hue), '--card-opacity': String(settings.opacity), '--card-strong-opacity': String(Math.min(settings.opacity + .1, 1)) } });
-  function syncAppearance(win) { win?.frame?.contentWindow?.postMessage(appearanceMessage(), location.origin); }
+  function syncAppearance(win) { if (win?.frame && (!win.browser || new URL(win.browser.url).origin === location.origin)) win.frame.contentWindow?.postMessage(appearanceMessage(), location.origin); }
   let wallpaperPalette = { hue: 200, saturation: 45 };
   let wallpaperRequest = 0;
   const wallpaperColors = new Map();
@@ -1234,6 +1277,7 @@
     if (name === 'previous') navigateColumn(-1);
     if (name === 'next') navigateColumn(1);
     if (name === 'terminal') terminal();
+    if (name === 'browser') openBrowser();
     if (name === 'reset-settings') { settings = { ...defaults, shortcutPreset: settings.shortcutPreset, shortcuts: settings.shortcuts, shortcutsEnabled: settings.shortcutsEnabled, modifier: settings.modifier }; applySettings(); announce('已恢复默认外观'); }
     if (name === 'music') showDialog('music', anchor);
   }
@@ -1442,6 +1486,7 @@
     if (!event.target.closest('.window-menu, [data-window-action="menu"]')) $$('.window-menu').forEach(m => m.remove());
     const a = event.target.closest('a[href]');
     if (!a || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || a.target === '_blank' || a.hasAttribute('download')) return;
+    if (a.matches('.friend-card')) { event.preventDefault(); openBrowser(a.href); return; }
     const href = a.getAttribute('href');
     if (href.startsWith('#')) {
       const id = decodeURIComponent(href.slice(1));
@@ -1474,18 +1519,20 @@
     }
   }, { passive: false });
   window.addEventListener('message', event => {
-    if (event.origin !== location.origin || event.data?.channel !== 'spartan-desktop') return;
+    if (root.dataset.crashed === 'true' || event.origin !== location.origin || event.data?.channel !== 'spartan-desktop') return;
     const win = [...windows.values()].find(w => w.frame?.contentWindow === event.source);
     if (!win) return;
     const data = event.data;
     if (data.type === 'focus') { if (data.pointer) closeDialogs(false); focusWindow(win, { scroll: false, history: true }); }
     if (data.type === 'ready') syncAppearance(win);
-    if (data.type === 'open' && typeof data.url === 'string') { focusWindow(win, { scroll: false }); openURL(data.url, String(data.title || '博客页面')); }
+    if (data.type === 'open' && typeof data.url === 'string' && internalURL(data.url)) { focusWindow(win, { scroll: false }); if (win.browser) win.browser.navigate(data.url); else openURL(data.url, String(data.title || '博客页面')); }
+    if (data.type === 'browse' && typeof data.url === 'string') { focusWindow(win, { scroll: false }); openBrowser(data.url); }
     if (data.type === 'key') { focusWindow(win, { scroll: false }); handleKey(data); }
     if (data.type === 'shortcut' && settings.shortcutsEnabled && shortcuts.definitions.some(item => item.id === data.id)) { focusWindow(win, { scroll: false }); executeShortcut(data.id, data.repeat); }
     if (data.type === 'wheel' && Number.isFinite(data.deltaX) && Number.isFinite(data.deltaY)) handleWheel(data);
     if (data.type === 'state' && typeof data.url === 'string' && internalURL(data.url)) {
-      win.url = cleanURL(data.url);
+      if (win.browser) win.browser.adopt(data.url);
+      else win.url = cleanURL(data.url);
       if (focused === win) history.replaceState({ desktopWindow: win.id, url: win.url }, '', '/');
     }
   });

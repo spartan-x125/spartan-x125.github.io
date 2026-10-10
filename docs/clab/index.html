@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><base href="/clab/">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#167a68"><meta name="description" content="Clab 通信原理交互实验室：自由输入信号与系统，在浏览器中探索波形、频谱、采样和数字传输。">
+  <title>Clab · 通信原理交互实验室</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%23167a68'/%3E%3Cpath d='M7 21Q13 3 20 21T33 21' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Clab 首页"><span class="brand-icon"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 17Q9 0 16 17T29 17"/></svg></span><span>Clab<span class="brand-dot">.</span></span></a>
+    <span class="brand-description">通信原理交互实验室</span>
+    <div class="top-actions"><a href="../" target="_top" class="home-link">返回博客 ↗</a></div>
+  </header>
+  <nav class="workbench-nav" aria-label="工作台"><div class="workbench-tabs"><button data-workbench="W1" class="active">信号与系统</button><button data-workbench="W2">数字传输与接收</button><button data-workbench="W3">信息与编码</button></div><button id="catalog-button" class="button quiet">⌕ 工具与示例</button></nav>
+  <div class="scene-bar"><div class="scene-heading"><input id="scene-name" aria-label="场景名称" maxlength="100"></div><div class="scene-actions"><button id="undo-button" class="button icon-button" title="撤销 Ctrl+Z" aria-label="撤销">↶</button><button id="redo-button" class="button icon-button" title="重做 Ctrl+Shift+Z" aria-label="重做">↷</button><span class="separator"></span><button id="blank-button" class="button quiet">新建</button><button id="library-button" class="button quiet">场景</button><button id="freeze-button" class="button">◫ 冻结比较</button><button id="save-button" class="button primary">保存场景</button></div></div>
+  <nav class="mobile-tabs" aria-label="移动端面板"><button data-mobile="objects">表达式</button><button data-mobile="plots" class="active">图形</button><button data-mobile="inspector">详情与设置</button></nav>
+  <main id="workspace" data-mobile="plots">
+    <aside class="object-panel" id="objects-panel">
+      <div class="panel-heading"><div><h1>表达式与对象 <span id="object-count"></span></h1></div><button id="add-button" class="button icon-button" aria-label="添加对象">＋</button></div>
+      <div class="preset-strip"><select id="theme-select" aria-label="示例主题"></select><div id="preset-buttons" class="preset-buttons"></div></div>
+      <div id="object-list" class="object-list"></div>
+      <form id="new-object-form" class="new-object-form"><label for="new-definition">＋ 添加一个定义</label><textarea id="new-definition" rows="2" placeholder="例如 z(t)=x(t)+y(t)" spellcheck="false" autocomplete="off"></textarea><div class="input-footer"><button type="submit" class="button primary compact">添加</button></div><p id="new-error" class="inline-error" role="alert"></p></form>
+      <div id="suggestions" class="suggestions" hidden></div>
+      <div class="object-footer"><button id="keyboard-button" class="button keyboard-toggle">⌨ 数学键盘</button><button id="syntax-button" class="button quiet">语法速查</button></div>
+    </aside>
+    <section class="plot-panel" id="plots-panel" aria-label="图形工作区">
+      <div class="plot-toolbar"><div><h2 id="plot-title">图形</h2></div><div class="view-controls"><label><input type="checkbox" data-view="time"><span id="time-view-label">时域</span></label><label><input type="checkbox" data-view="spectrum">频谱</label><label><input type="checkbox" data-view="response">频响</label><label><input type="checkbox" data-view="constellation">星座</label><label><input type="checkbox" data-view="eye">眼图</label><label><input type="checkbox" data-view="information">信息与编码</label></div></div>
+      <div id="comparison-label" class="comparison-label" hidden></div>
+      <div id="plots" class="plots"></div>
+      <div id="information-views" class="information-views" hidden></div>
+      <div class="playback-bar" id="playback-bar"><button id="play-button" class="button icon-button" aria-label="播放观察过程">▶</button><button id="step-button" class="button quiet">逐步</button><input id="play-position" type="range" min="0" max="1023" value="0" aria-label="当前采样点或符号"><select id="play-speed" aria-label="播放速度"><option value="1">1×</option><option value=".5">0.5×</option><option value="2">2×</option></select><span id="play-label"></span><button id="replay-button" class="button quiet" title="从头重播">↺</button></div>
+      <p id="compute-state" class="inline-error" role="alert" hidden></p>
+    </section>
+    <aside class="inspector-panel" id="inspector-panel">
+      <div class="panel-heading"><div><h2>对象与条件</h2></div></div>
+      <div id="inspector"></div>
+      <details class="inspector-section" id="calculation-settings"><summary>计算范围</summary><form id="settings-form"><div class="field-pair"><label>起始时间 / s<input name="tMin" type="number" step="any" required></label><label>结束时间 / s<input name="tMax" type="number" step="any" required></label></div><div class="field-pair"><label>最低频率 / Hz<input name="fMin" type="number" step="any" required></label><label>最高频率 / Hz<input name="fMax" type="number" step="any" required></label></div><label>内部仿真点数<select name="points"><option>256</option><option>512</option><option>1024</option><option>2048</option></select></label><div class="seed-field"><label>随机种子<input name="seed" type="number" min="0" max="4294967295" step="1" required></label><button id="new-seed" type="button" class="button" title="更换随机种子">↻</button></div><button type="submit" class="button full">应用计算范围</button><p id="settings-error" class="inline-error" role="alert"></p></form><p id="grid-status" class="small-note"></p></details>
+      <details class="inspector-section"><summary>观察笔记</summary><textarea id="notes" rows="4" maxlength="20000"></textarea><div class="note-actions"><button id="export-button" class="button quiet">导出场景</button><button id="import-button" class="button quiet">导入</button></div></details>
+      <details class="inspector-section"><summary>公式与模型</summary><div id="model-info"></div></details>
+    </aside>
+  </main>
+  <section id="math-keyboard" class="math-keyboard" hidden aria-label="数学键盘"><div class="keyboard-header"><div class="keyboard-groups"><button data-keygroup="basic" class="active">基础</button><button data-keygroup="functions">函数与复数</button><button data-keygroup="signals">信号与系统</button><button data-keygroup="encoding">信息与编码</button><button data-keygroup="objects">当前对象</button></div><button id="close-keyboard" class="button icon-button" aria-label="收起键盘">×</button></div><div id="keyboard-keys" class="keyboard-keys"></div></section>
+  <dialog id="modal"><div class="modal-heading"><h2 id="modal-title"></h2><button id="close-modal" class="button icon-button" aria-label="关闭对话框">×</button></div><div id="modal-body"></div></dialog>
+  <input id="import-file" type="file" accept="application/json,.json" hidden>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript>Clab 需要启用 JavaScript 才能进行本地计算。</noscript>
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>

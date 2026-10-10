@@ -7,7 +7,7 @@
     return el;
   };
   let dataPromise;
-  const loadData = () => dataPromise ||= fetch('/terminal-data.json').then(response => {
+  const loadData = () => dataPromise ||= fetch('/terminal-data.json?v=20261010-6').then(response => {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   }).catch(error => { dataPromise = null; throw error; });
@@ -21,34 +21,44 @@
     if (/^mkfs(?:\.|$)/.test(command || '')) return tokens.some(arg => arg.startsWith('/dev/'));
     return command === 'dd' && tokens.some(arg => /^of=\/dev\/(?:[sv]d[a-z]|nvme\d+n\d+|mmcblk\d+)/.test(arg));
   }
-  function simulateCrash(command) {
+  function simulateCrash(command, output, scrollOutput) {
     if (crashed) return;
     crashed = true;
     const root = document.documentElement;
     root.dataset.crashed = 'true';
     document.querySelectorAll('.desktop-space,.desktop-fullscreen-layer,.shell-bar,.shell-dialog').forEach(el => { el.inert = true; });
     document.querySelector('#music-audio')?.pause();
-    const overlay = node('section', 'terminal-crash'); overlay.tabIndex = -1; overlay.setAttribute('aria-label', 'BlogOS simulated kernel panic');
-    const screen = node('div', 'terminal-crash-screen');
-    const label = node('div', 'terminal-crash-label', 'SPARTAN_OS  /  VIRTUAL MACHINE');
-    const log = node('div', 'terminal-crash-log');
-    log.append(node('div', 'terminal-crash-command', `$ ${command}`), node('div', '', '[ 0.000000] destructive operation accepted'));
-    const panic = node('div', 'terminal-crash-panic'); panic.hidden = true;
-    panic.append(node('span', 'terminal-crash-code', 'KERNEL PANIC'), node('h1', '', 'No working init found.'), node('p', '', 'The virtual root filesystem has left the chat.'), node('p', 'terminal-note', 'Simulation complete. Nothing was deleted.'));
-    const reboot = node('button', 'terminal-reboot', 'Reboot [R]'); reboot.type = 'button'; reboot.onclick = () => location.reload();
-    panic.append(reboot, node('p', 'terminal-crash-hint', 'Refresh the page to restore your desktop.'));
-    screen.append(label, log, panic); overlay.append(screen); document.body.append(overlay); overlay.focus();
-    const messages = ['[ 0.021043] unlink /usr/bin/blog-browser', '[ 0.082117] unlink /lib/libwallpaper.so', '[ 0.143209] bar.service: connection lost', '[ 0.221405] /sbin/init: no such file or directory', '[ 0.390011] VFS: unable to mount virtual root', '[ 0.404404] Kernel panic - not syncing'];
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    messages.forEach((message, index) => setTimeout(() => {
-      log.append(node('div', index > 2 ? 'terminal-error' : '', message));
-    }, reduced ? 0 : 140 + index * 190));
-    setTimeout(() => { overlay.classList.add('is-panicked'); panic.hidden = false; }, reduced ? 0 : 1550);
-    overlay.addEventListener('keydown', event => {
-      if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r')) return;
-      event.stopPropagation();
-      if (event.key.toLowerCase() === 'r') { event.preventDefault(); location.reload(); }
-    });
+    const errors = [
+      ...['console', 'null', 'random', 'urandom', 'tty', 'zero'].map(name => [`/dev/${name}`, 'Permission denied']),
+      ...['pts/0', 'pts/ptmx', 'shm', 'mqueue'].map(name => [`/dev/${name}`, 'Device or resource busy']),
+      ...[1, 2, 87, 216, 404].flatMap(pid => ['fd/0', 'fd/1', 'fd/2', 'exe', 'mem', 'maps', 'task'].map(name => [`/proc/${pid}/${name}`, 'Operation not permitted'])),
+      ...['cpuinfo', 'meminfo', 'uptime', 'version', 'sys/kernel/hostname', 'sys/vm/swappiness'].map(name => [`/proc/${name}`, 'Permission denied']),
+      ...['kernel/uevent_seqnum', 'kernel/security', 'class/graphics/fb0', 'devices/system/cpu/online', 'firmware', 'module'].map(name => [`/sys/${name}`, 'Read-only file system']),
+    ];
+    const batch = 6;
+    for (let i = 0; i < errors.length; i += batch) setTimeout(() => {
+      errors.slice(i, i + batch).forEach(([path, reason]) => output.append(node('div', 'terminal-rm-error', `rm: cannot remove '${path}': ${reason}`)));
+      scrollOutput();
+    }, reduced ? i * 8 : 120 + i / batch * 230);
+    const glitchAt = reduced ? 650 : 2650;
+    setTimeout(() => {
+      output.append(node('div', 'terminal-error', '/usr/bin/clear: No such file or directory\nbar.service: Failed to connect to session bus\n[  4.04404] Kernel panic - not syncing: Attempted to kill init!'));
+      scrollOutput(); root.classList.add('is-crashing');
+    }, glitchAt);
+    setTimeout(() => {
+      root.classList.remove('is-crashing');
+      const overlay = node('section', 'terminal-crash'); overlay.tabIndex = -1; overlay.setAttribute('aria-label', '模拟系统蓝屏');
+      const screen = node('div', 'terminal-crash-screen');
+      screen.append(node('div', 'terminal-crash-face', ':('), node('h1', '', 'Your desktop ran into a problem and needs to restart.'), node('p', '', 'The virtual root filesystem is missing. A restart will restore your session.'), node('p', 'terminal-crash-code', 'STOP CODE: CRITICAL_INIT_PROCESS_DIED'), node('p', 'terminal-crash-hint', 'SPARTAN_OS · SIMULATED SYSTEM FAILURE'));
+      const reboot = node('button', 'terminal-reboot', 'Reboot [R]'); reboot.type = 'button'; reboot.onclick = () => location.reload(); screen.append(reboot);
+      overlay.append(screen); document.body.append(overlay); overlay.focus();
+      overlay.addEventListener('keydown', event => {
+        if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r')) return;
+        event.stopPropagation();
+        if (event.key.toLowerCase() === 'r') { event.preventDefault(); location.reload(); }
+      });
+    }, glitchAt + (reduced ? 150 : 850));
   }
   const commands = {
     help: ['help [-d | -s | -m] [command]', 'Display command help.', 'Use help for an overview, help COMMAND for details, -s for syntax, -d for a short description, or -m for a manual page.', ['help posts', 'help -m open']],
@@ -58,7 +68,9 @@
     read: ['read <slug | number>', 'Read an article.', 'Use an article slug or the number shown by ls posts. The reader supports scrolling, text search, headings and links.', ['read welcome', 'read 1']],
     cat: ['cat <slug | number>', 'Read an article.', 'Alias for read.', ['cat welcome']],
     about: ['about', 'Read the About page.', 'Read the profile and contact links in the terminal reader.', ['about']],
-    friends: ['friends', 'Browse friend links.', 'Select a site with j/k or the arrow keys. Right/Enter opens the selected external site in a new tab.', ['friends']],
+    friends: ['friends', 'Browse friend links.', 'Select or hover over a site to preview it. Right/Enter opens it in a separate browser card. Use its address bar to navigate, or its top-right button to open a real browser tab.', ['friends']],
+    browser: ['browser [URL]', 'Open a browser card.', 'Browse HTTP or HTTPS addresses in a separate card. Some sites restrict embedding; use the top-right button to open those sites in a real browser tab.', ['browser https://for-each.cn/', 'browser /about/']],
+    stars: ['stars', 'Discover a random celestial object.', 'Open a randomly placed card with a NASA photograph, an introduction, facts and source links. Run again to discover another object.', ['stars']],
     guestbook: ['guestbook', 'Open the guestbook.', 'Read the guestbook in the terminal and press c to load the live GitHub discussion. Tab reaches its controls; GitHub handles sign-in and posting.', ['guestbook']],
     updates: ['updates', 'Browse the update history.', 'Articles are sorted by their latest update. Enter reads the selected article.', ['updates']],
     open: ['open [--gui] <path>', 'Open a site page.', 'By default, pages open in separate terminal cards. --gui opens the original graphical page as a desktop window. Paths may include article search parameters.', ['open /about/', 'open /posts/welcome/', 'open --gui /posts/']],
@@ -109,7 +121,7 @@
     const block = node('section', 'terminal-help');
     block.append(node('h2', '', 'BLOG SHELL'), node('p', '', 'Usage: command [options] [arguments]\nType help COMMAND or man COMMAND for a detailed manual.'));
     const groups = [
-      ['BROWSE', ['home', 'posts', 'read', 'about', 'friends', 'guestbook', 'updates', 'open']],
+      ['BROWSE', ['home', 'posts', 'read', 'about', 'friends', 'guestbook', 'updates', 'open', 'browser', 'stars']],
       ['SHELL', ['help', 'man', 'ls', 'cd', 'fastfetch', 'clear', 'history', 'date', 'whoami', 'pwd', 'echo', 'reboot', 'exit']],
     ];
     groups.forEach(([title, names]) => {
@@ -141,7 +153,7 @@
     return article;
   }
   window.BlogTerminal = {
-    mount({ content, win, profile, openURL, close, internalURL, openTerminal, page = null, goBack }) {
+    mount({ content, win, profile, openURL, openBrowser, openStars, close, internalURL, openTerminal, page = null, goBack }) {
       const prompt = () => {
         const el = node('span', 'terminal-prompt');
         el.append(node('span', 'terminal-user', `${profile.name}@blog`), node('span', '', ':'), node('span', 'terminal-directory', '~'), node('span', '', '$ ')); return el;
@@ -239,7 +251,7 @@
             const filter = parsed.searchParams.get('q') || parsed.searchParams.get('tag') || parsed.searchParams.get('category') || '';
             next = { type: 'list', path: url, title: path === '/' ? 'HOME' : path === '/posts' ? 'POSTS' : 'UPDATES', items, query: filter, selected: 0 };
           } else if (path === '/friends') {
-            next = { type: 'list', path: url, title: 'FRIENDS', items: data.friends.map(friend => ({ title: friend.name, meta: new URL(friend.url).host, description: friend.description, url: friend.url, kind: 'link', action: () => window.open(friend.url, '_blank', 'noopener,noreferrer') })), query: '', selected: 0 };
+            next = { type: 'list', path: url, title: 'FRIENDS', items: data.friends.map(friend => ({ title: friend.name, meta: new URL(friend.url).host, description: friend.description, url: friend.url, kind: 'link', preview: friend.preview, action: () => openBrowser(friend.url) })), query: '', selected: 0 };
           } else if (path === '/about') {
             const article = node('article', 'terminal-document');
             article.append(node('h1', '', data.profile.about.heading), ...data.profile.about.paragraphs.map(text => node('p', '', text)), node('h2', '', 'Contact'), makeLink('GitHub', data.profile.github), node('p', '', ''), makeLink(data.profile.email.replace('mailto:', ''), data.profile.email));
@@ -308,6 +320,7 @@
           row.setAttribute('aria-current', String(index === state.selected)); row.setAttribute('role', 'listitem');
           row.append(node('span', 'terminal-list-number', `${index === state.selected ? '›' : ' '} ${String(index + 1).padStart(2, '0')}`), node('span', 'terminal-list-kind', item.kind), node('span', 'terminal-list-title', item.title), node('span', 'terminal-list-meta', item.meta));
           row.ondblclick = () => item.action(); listHost.append(row);
+          row.onpointermove = event => { if ((event.movementX || event.movementY) && state.selected !== index) { state.selected = index; updateListSelection(items); } };
         });
         if (!items.length) listHost.append(node('p', 'terminal-note', 'No matching entries. Press / to change the filter.'));
         updateListSelection(items);
@@ -321,6 +334,13 @@
         const item = items[state.selected];
         preview.replaceChildren(node('span', 'terminal-preview-label', 'PREVIEW'));
         if (item) preview.append(node('h2', '', item.title), node('p', 'terminal-note', item.meta), node('p', '', item.description || item.url), node('p', 'terminal-preview-tags', (item.tags || []).map(tag => `#${tag}`).join(' ')), node('p', 'terminal-note', item.url));
+        if (/^\/friend-previews\/[a-z0-9-]+\.webp$/.test(item?.preview || '')) {
+          const image = node('img', 'terminal-friend-preview');
+          image.src = item.preview; image.alt = `${item.title} 首页截图`;
+          image.decoding = 'async'; image.draggable = false;
+          image.onerror = () => image.remove();
+          preview.append(image);
+        }
         footer.textContent = `j/k ↑/↓ select · →/Enter open · ← parent · / search · q back  ${items.length ? state.selected + 1 : 0}/${items.length}`;
         searchCount.textContent = `${items.length} entries`;
         const row = listHost.children[state.selected];
@@ -381,6 +401,7 @@
           const target = [...reader.article.querySelectorAll('[id]')].find(el => el.id === decodeURIComponent(href.slice(1)));
           if (target) { if (state !== reader) back(); jumpTo(target); }
         } else if (internalURL(href)) showPage(href);
+        else if (/^https?:/.test(link.href)) openBrowser(link.href);
         else window.open(link.href, '_blank', 'noopener,noreferrer');
       }
       function comments() {
@@ -441,7 +462,7 @@
       async function run(text) {
         let args;
         try { args = parse(text); } catch (error) { print(error.message, 'terminal-error'); return; }
-        if (destructiveCommand(text, args)) { simulateCrash(text); return; }
+        if (destructiveCommand(text, args)) { form.hidden = true; simulateCrash(text, output, scrollOutput); return; }
         const command = args.shift();
         if (command === 'rm') { print('rm: the blog filesystem is read-only.', 'terminal-error'); return; }
         if (!commands[command]) { print(`${command}: command not found. Type 'help' to see available commands.`, 'terminal-error'); return; }
@@ -459,6 +480,8 @@
         else if (command === 'echo') print(args.join(' '));
         else if (command === 'exit') close(win);
         else if (command === 'reboot') location.reload();
+        else if (command === 'stars') await openStars();
+        else if (command === 'browser') { if (!openBrowser(args[0] || location.origin)) print('browser: invalid HTTP or HTTPS address.', 'terminal-error'); }
         else if (command === 'ls') {
           if (args[0] === 'posts') { const data = await loadData(); data.posts.forEach((post, index) => print(`${String(index + 1).padStart(2)}  ${post.slug.padEnd(24)} ${post.title}`)); }
           else if (args.length) print(`ls: unknown directory '${args[0]}'. Try ls posts.`, 'terminal-error');

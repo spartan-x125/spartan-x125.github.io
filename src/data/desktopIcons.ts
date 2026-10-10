@@ -1,9 +1,12 @@
 export const desktopIconPaths: Record<string, string> = {
   grid: 'M3 3h8v10H3zM15 3h6v6h-6zM15 13h6v8h-6zM3 17h8v4H3z',
   archive: 'M4 3h16v4H4zM5 7v14h14V7M9 11h6M10 15h4',
+  wave: 'M2 12Q7 0 12 12T22 12M2 21h20M3 3v18',
   book: 'M4 4h6a3 3 0 0 1 3 3v14a4 4 0 0 0-4-3H4zM13 7a3 3 0 0 1 3-3h5v14h-4a4 4 0 0 0-4 3',
   file: 'M14 2H5v20h14V7zM14 2v5h5M8 12h8M8 16h6',
   terminal: 'M3 4h18v16H3zM3 8h18m-15 3 3 3-3 3M12 17h5',
+  browser: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0ZM2 12h20M12 2c6 6 6 14 0 20-6-6-6-14 0-20',
+  star: 'm12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z',
   user: 'M20 21v-2a7 7 0 0 0-14 0v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
   link: 'm10 13 4-4M8 16l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0M16 8l1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0',
   chat: 'M21 11a8 8 0 0 1-8 8H7l-5 3V11a9 9 0 0 1 19 0ZM7 9h10M7 13h6',

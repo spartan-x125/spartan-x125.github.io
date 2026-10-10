@@ -1,0 +1,7 @@
+---
+// Clab static entry: reads the self-contained public app only during dev/build.
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+const html = (await readFile(resolve('public/clab/app.html'), 'utf8')).replace('<head>', '<head><base href="/clab/">');
+---
+<Fragment set:html={html} />

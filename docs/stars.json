@@ -1,0 +1,99 @@
+[
+  {
+    "id": "jupiter",
+    "name": "木星",
+    "english": "Jupiter",
+    "type": "气态巨行星",
+    "description": "太阳系最大的行星，也是从太阳向外数的第五颗行星。它主要由氢和氦构成，没有像地球那样的固体表面。明暗相间的云带与巨大的风暴塑造了它的外观，大红斑是其中最著名的风暴。",
+    "facts": {
+      "位置": "太阳系 · 第五颗行星",
+      "自转": "约 10 小时",
+      "公转": "约 12 个地球年"
+    },
+    "source": "https://science.nasa.gov/jupiter/jupiter-facts/",
+    "credit": "NASA Science · 完整图片署名见来源页面",
+    "image": "/stars/jupiter.webp",
+    "imageSource": "https://science.nasa.gov/wp-content/uploads/2024/03/jupiter-marble-pia22946-16x9-1.jpg"
+  },
+  {
+    "id": "saturn",
+    "name": "土星",
+    "english": "Saturn",
+    "type": "气态巨行星",
+    "description": "土星是太阳系第二大的行星，以广阔而明亮的环系闻名。行星环主要由冰粒组成，也夹杂岩石与尘埃。和木星一样，土星主要由氢和氦构成；它的平均密度比水还低。",
+    "facts": {
+      "位置": "太阳系 · 第六颗行星",
+      "自转": "约 10.7 小时",
+      "公转": "约 29.4 个地球年"
+    },
+    "source": "https://science.nasa.gov/saturn/facts/",
+    "photoSource": "https://science.nasa.gov/photojournal/stately-saturn/",
+    "credit": "NASA / JPL / Space Science Institute",
+    "image": "/stars/saturn.webp",
+    "imageSource": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia12/pia12513/PIA12513.jpg/jcr:content/renditions/cq5dam.web.1280.1280.jpeg"
+  },
+  {
+    "id": "mars",
+    "name": "火星",
+    "english": "Mars",
+    "type": "类地行星",
+    "description": "火星是一颗寒冷、干燥的岩石行星，表面富含氧化铁，因此呈现红色。它拥有稀薄的大气、火山、峡谷与极地冰。地表留下的古老河道和湖盆，为研究它过去的液态水环境提供了线索。",
+    "facts": {
+      "位置": "太阳系 · 第四颗行星",
+      "一天": "约 24.6 小时",
+      "一年": "约 687 个地球日"
+    },
+    "source": "https://science.nasa.gov/mars/facts/",
+    "credit": "NASA Science · 完整图片署名见来源页面",
+    "image": "/stars/mars.webp",
+    "imageSource": "https://science.nasa.gov/wp-content/uploads/2017/11/pia17944.jpg"
+  },
+  {
+    "id": "neptune",
+    "name": "海王星",
+    "english": "Neptune",
+    "type": "冰巨行星",
+    "description": "海王星是太阳系距离太阳最远的行星。它的大气含有氢、氦和甲烷，内部富含水、氨和甲烷等物质。虽然接收到的阳光很少，它的大气仍拥有极强的风暴与高速风。",
+    "facts": {
+      "位置": "太阳系 · 第八颗行星",
+      "自转": "约 16 小时",
+      "公转": "约 165 个地球年"
+    },
+    "source": "https://science.nasa.gov/neptune/neptune-facts/",
+    "credit": "NASA Science · 完整图片署名见来源页面",
+    "image": "/stars/neptune.webp",
+    "imageSource": "https://science.nasa.gov/wp-content/uploads/2024/03/pia01492-neptune-full-disk-16x9-1.jpg"
+  },
+  {
+    "id": "andromeda",
+    "name": "仙女座星系",
+    "english": "Andromeda · M31",
+    "type": "螺旋星系",
+    "description": "仙女座星系是银河系最近的大型邻居，距离我们约 250 万光年。它属于本星系群，在足够黑暗的夜空中可以用肉眼看见。哈勃的拼接观测揭示了它密集的恒星、星团和交错的尘埃带。",
+    "facts": {
+      "距离": "约 250 万光年",
+      "星座": "仙女座",
+      "编号": "Messier 31"
+    },
+    "source": "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-31/",
+    "credit": "NASA / ESA / J. Dalcanton / B. F. Williams / L. C. Johnson / PHAT Team / R. Gendler",
+    "image": "/stars/andromeda.webp",
+    "imageSource": "https://science.nasa.gov/wp-content/uploads/2023/04/hs-2015-02-a-hires_jpg-jpg.webp"
+  },
+  {
+    "id": "orion",
+    "name": "猎户座星云",
+    "english": "Orion Nebula · M42",
+    "type": "恒星形成区",
+    "description": "猎户座星云是距离地球约 1,500 光年的大型恒星诞生区域。年轻恒星的辐射照亮了周围的气体，尘埃与气体云中仍在形成新的恒星。它位于猎户座腰带下方，在黑暗的夜空中可以用肉眼辨认。",
+    "facts": {
+      "距离": "约 1,500 光年",
+      "星座": "猎户座",
+      "编号": "Messier 42"
+    },
+    "source": "https://science.nasa.gov/mission/hubble/science/explore-the-night-sky/hubble-messier-catalog/messier-42/",
+    "credit": "NASA / ESA / M. Robberto / Hubble Orion Treasury Project Team",
+    "image": "/stars/orion.webp",
+    "imageSource": "https://science.nasa.gov/wp-content/uploads/2023/04/orion-nebula-xlarge_web-jpg.webp"
+  }
+]

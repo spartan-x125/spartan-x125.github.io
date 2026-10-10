@@ -1,0 +1,6 @@
+{
+  "name": "clab", "version": "0.1.0", "private": true, "type": "module",
+  "description": "浏览器本地运行的通信原理交互实验室",
+  "scripts": { "dev": "node scripts/serve.mjs", "build": "node scripts/build.mjs", "test": "node --test tests/*.test.mjs", "sync:blog": "node scripts/sync-blog.mjs" },
+  "engines": { "node": ">=20" }
+}

@@ -8,7 +8,11 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "sync:assets": "node scripts/sync-assets.mjs"
+    "sync:assets": "node scripts/sync-assets.mjs",
+    "import:wallpapers": "node scripts/import-wallpapers.mjs",
+    "sync:clab": "node clab/scripts/sync-blog.mjs",
+    "predev": "npm run sync:clab",
+    "prebuild": "npm run sync:clab"
   },
   "dependencies": {
     "astro": "^6.3.3"
