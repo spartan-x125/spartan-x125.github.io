@@ -106,16 +106,23 @@ assert.equal(friendWindows.at(-1), 'https://alpha.example/');
 await terminalWin.el.emit('keydown', { target: app, key: 'q' });
 input.value = 'rm -rf /\\*'; await terminalForm.emit('submit');
 assert.equal(document.documentElement.dataset.crashed, 'true');
-assert.equal(document.body.querySelector('.terminal-crash'), null, 'Blue screen must follow the shell output, not replace it immediately');
+assert.equal(document.body.querySelector('.terminal-crash'), null, 'BIOS failure screen must follow the shell output, not replace it immediately');
 scheduled.sort((a, b) => a.time - b.time);
 const early = scheduled.filter(item => item.time < 2650);
 early.forEach(item => item.fn());
 assert.ok(terminalContent.querySelectorAll('.terminal-rm-error').length >= 50);
 assert.match(terminalContent.textContent, /Read-only file system/);
 scheduled.filter(item => item.time >= 2650).forEach(item => item.fn());
-assert.ok(document.body.querySelector('.terminal-crash'));
-assert.match(document.body.textContent, /CRITICAL_INIT_PROCESS_DIED/);
+const bios = document.body.querySelector('.terminal-crash');
+assert.ok(bios);
+assert.match(document.body.textContent, /SPARTAN BIOS RECOVERY UTILITY/);
+assert.match(document.body.textContent, /No bootable operating system found/);
+assert.doesNotMatch(document.body.textContent, /STOP CODE|CRITICAL_INIT_PROCESS_DIED|Your desktop ran into a problem/);
+for (const key of ['r', 'Enter']) {
+  location.reloaded = false; await bios.emit('keydown', { key }); assert.equal(location.reloaded, true);
+}
+location.reloaded = false;
 await document.body.querySelector('.terminal-reboot').emit('click'); assert.equal(location.reloaded, true);
 assert.ok(opened.every(args => !args[0].includes('for-each')), 'Terminal friends must open cards rather than real tabs');
 terminal.destroy();
-console.log('Verified independent repeated windows, browser URL validation, back/forward/reload, real-tab action, terminal friends preview, mouse-to-keyboard selection, stars dispatch, staged Linux errors and blue-screen reboot.');
+console.log('Verified independent repeated windows, browser URL validation, back/forward/reload, real-tab action, terminal friends preview, mouse-to-keyboard selection, stars dispatch, staged Linux errors and BIOS recovery by keyboard and mouse.');

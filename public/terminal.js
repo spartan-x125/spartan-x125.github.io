@@ -48,15 +48,25 @@
     }, glitchAt);
     setTimeout(() => {
       root.classList.remove('is-crashing');
-      const overlay = node('section', 'terminal-crash'); overlay.tabIndex = -1; overlay.setAttribute('aria-label', '模拟系统蓝屏');
+      const overlay = node('section', 'terminal-crash'); overlay.tabIndex = -1; overlay.setAttribute('aria-label', '模拟 BIOS 启动错误'); overlay.setAttribute('role', 'alertdialog'); overlay.setAttribute('aria-modal', 'true');
       const screen = node('div', 'terminal-crash-screen');
-      screen.append(node('div', 'terminal-crash-face', ':('), node('h1', '', 'Your desktop ran into a problem and needs to restart.'), node('p', '', 'The virtual root filesystem is missing. A restart will restore your session.'), node('p', 'terminal-crash-code', 'STOP CODE: CRITICAL_INIT_PROCESS_DIED'), node('p', 'terminal-crash-hint', 'SPARTAN_OS · SIMULATED SYSTEM FAILURE'));
-      const reboot = node('button', 'terminal-reboot', 'Reboot [R]'); reboot.type = 'button'; reboot.onclick = () => location.reload(); screen.append(reboot);
+      const main = node('div', 'terminal-bios-main');
+      const diagnostics = node('section', 'terminal-bios-diagnostics');
+      const details = node('dl', 'terminal-bios-details');
+      [['Firmware', 'SPARTAN BIOS 1.25'], ['Primary disk', 'Virtual Disk 0'], ['Boot option', 'Spartan_OS'], ['Boot sector', 'INVALID'], ['Boot loader', 'NOT FOUND'], ['System status', 'HALTED']].forEach(([label, value]) => details.append(node('dt', '', label), node('dd', '', value)));
+      diagnostics.append(node('h1', '', 'Boot diagnostics'), details);
+      const failure = node('section', 'terminal-bios-failure');
+      failure.append(node('h2', '', 'BOOT FAILURE'), node('p', '', 'No bootable operating system found.'), node('p', '', 'The boot loader and system files are missing or damaged.'), node('p', 'terminal-bios-code', 'ERROR 0x0000000E'));
+      main.append(diagnostics, failure);
+      const footer = node('footer', 'terminal-bios-footer');
+      const reboot = node('button', 'terminal-reboot', '[R / Enter] Restart'); reboot.type = 'button'; reboot.onclick = () => location.reload();
+      footer.append(reboot, node('span', '', '[F5] Reload'));
+      screen.append(node('header', 'terminal-bios-header', 'SPARTAN BIOS RECOVERY UTILITY'), main, footer);
       overlay.append(screen); document.body.append(overlay); overlay.focus();
       overlay.addEventListener('keydown', event => {
         if (event.key === 'F5' || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'r')) return;
         event.stopPropagation();
-        if (event.key.toLowerCase() === 'r') { event.preventDefault(); location.reload(); }
+        if (event.key.toLowerCase() === 'r' || event.key === 'Enter') { event.preventDefault(); location.reload(); }
       });
     }, glitchAt + (reduced ? 150 : 850));
   }
