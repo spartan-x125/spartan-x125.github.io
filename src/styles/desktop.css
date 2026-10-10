@@ -309,7 +309,6 @@
 .shell-popover::backdrop { background: transparent; backdrop-filter: none; }
 .shell-popover[open] { animation: bar-panel-open 420ms cubic-bezier(.22,1,.36,1) both; }
 .shell-popover[open].is-closing { animation: bar-panel-close 180ms cubic-bezier(.4,0,.8,.2) both; pointer-events: none; }
-.shell-bar button.is-panel-active { background: var(--shell-soft); color: var(--shell-accent); }
 .shell-panel-bridge { position: fixed; z-index: 125; pointer-events: none; background: hsl(var(--shell-hue) calc(var(--shell-saturation) * .4) var(--shell-bg-lightness) / var(--shell-opacity)); backdrop-filter: blur(18px); border-radius: 12px; animation: bridge-open 250ms ease-out both; }
 .shell-panel-bridge.is-closing { animation: bridge-close 180ms ease-in both; }
 @keyframes bar-panel-open {

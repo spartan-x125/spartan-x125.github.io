@@ -167,7 +167,7 @@
     $('#mobile-toc-panel')?.remove();
     $('#mobile-toc-toggle')?.remove();
     attachReadingControls(document.body, window, $('.article-content'));
-    document.addEventListener('pointerdown', () => send('focus'), { passive: true });
+    document.addEventListener('pointerdown', () => send('focus', { pointer: true }), { passive: true });
     document.addEventListener('focusin', () => send('focus'));
     document.addEventListener('click', event => {
       const a = event.target.closest?.('a[href]');
@@ -215,7 +215,7 @@
   main.className = 'desktop-space';
   main.replaceChildren();
   document.body.classList.add('desktop-ready');
-  const defaults = { hue: 200, opacity: .24, blur: 0, brightness: 1, wallpaperOpacity: 1, modifier: 'both', position: 'top', shellOpacity: 1, shellColorMode: 'wallpaper', shellColor: '#69558c' };
+  const defaults = { hue: 200, opacity: .24, blur: 0, barBlur: 18, brightness: 1, wallpaperOpacity: 1, modifier: 'both', position: 'top', shellOpacity: 1, shellColorMode: 'wallpaper', shellColor: '#69558c' };
   const legacy = readStorage('blog-appearance-settings', {});
   const stored = readStorage('desktop-settings', { hue: legacy.hue, opacity: legacy.cardOpacity, blur: legacy.backgroundBlur, wallpaperOpacity: legacy.backgroundOpacity });
   const bounded = (value, min, max, fallback) => Number.isFinite(Number(value)) ? Math.min(max, Math.max(min, Number(value))) : fallback;
@@ -226,6 +226,7 @@
     wallpaperOpacity: bounded(stored.wallpaperOpacity, .2, 1, defaults.wallpaperOpacity),
     position: ['top', 'bottom', 'left', 'right'].includes(stored.position) ? stored.position : 'top',
     shellOpacity: bounded(stored.shellOpacity, .08, 1, defaults.shellOpacity),
+    barBlur: bounded(stored.barBlur, 0, 40, defaults.barBlur),
     shellColorMode: stored.shellColorMode === 'custom' ? 'custom' : 'wallpaper',
     shellColor: /^#[\da-f]{6}$/i.test(stored.shellColor || '') ? stored.shellColor : defaults.shellColor,
   };
@@ -253,6 +254,8 @@
   const panelTimers = new Map();
   const panelBridge = make('div', 'shell-panel-bridge');
   let panelSurface = null, surfaceFrame = 0;
+  let surfaceHitContext, wallpaperPage = 0;
+  const wallpapers = JSON.parse(document.body.dataset.backgrounds || '[]');
   panelBridge.hidden = true;
   panelBridge.setAttribute('aria-hidden', 'true');
   document.body.append(panelBridge);
@@ -877,6 +880,7 @@
   }
   function closeDialog(dialog, immediate = false) {
     if (!dialog?.open) return;
+    if (!immediate && dialog.classList.contains('is-closing')) return;
     clearTimeout(panelTimers.get(dialog));
     const finish = () => {
       panelTimers.delete(dialog);
@@ -884,12 +888,12 @@
       dialog.close();
       restoreTerminalFocus();
       if (!dialogs.some(d => d.open)) {
-        panelBridge.hidden = true;
         panelSurface = null;
         cancelAnimationFrame(surfaceFrame);
         delete root.dataset.barPanel;
         panelAnchor?.classList.remove('is-panel-active');
         panelAnchor?.setAttribute('aria-expanded', 'false');
+        paintPanelSurface();
       }
     };
     if (immediate || reduceMotion.matches) { finish(); return; }
@@ -900,21 +904,41 @@
   function paintPanelSurface() {
     cancelAnimationFrame(surfaceFrame);
     surfaceFrame = 0;
-    if (!panelSurface?.dialog.open) return;
-    const { dialog, bar, edge, horizontal, start, length, depth, gap, flare, origin } = panelSurface;
-    const transform = getComputedStyle(dialog).transform;
-    const matrix = transform === 'none' ? { a: 1, d: 1 } : new DOMMatrix(transform);
-    const along = horizontal ? matrix.a : matrix.d, outward = horizontal ? matrix.d : matrix.a;
-    const left = origin + (start - origin) * along, right = left + length * along;
-    const near = gap * outward, far = (gap + depth) * outward;
-    const shoulder = flare * along, radiusX = 20 * along, radiusY = 20 * outward;
+    const surface = panelSurface?.dialog.open ? panelSurface : null;
+    const bar = surface?.bar || $('.shell-bar').getBoundingClientRect();
+    const edge = surface?.edge || root.dataset.shellPosition || 'top';
+    const horizontal = edge === 'top' || edge === 'bottom';
     const barStart = horizontal ? bar.left : bar.top, barEnd = horizontal ? bar.right : bar.bottom;
     const thickness = horizontal ? bar.height : bar.width, radius = Math.min(12, thickness / 2);
-    const path = `M${barStart + radius} ${-thickness}H${barEnd - radius}Q${barEnd} ${-thickness} ${barEnd} ${-thickness + radius}V${-radius}Q${barEnd} 0 ${barEnd - radius} 0H${right + shoulder}C${right + shoulder * .45} 0 ${right} ${near * .45} ${right} ${near}V${far - radiusY}Q${right} ${far} ${right - radiusX} ${far}H${left + radiusX}Q${left} ${far} ${left} ${far - radiusY}V${near}C${left} ${near * .45} ${left - shoulder * .45} 0 ${left - shoulder} 0H${barStart + radius}Q${barStart} 0 ${barStart} ${-radius}V${-thickness + radius}Q${barStart} ${-thickness} ${barStart + radius} ${-thickness}Z`;
+    let extension = '';
+    if (surface) {
+      const { dialog, start, length, depth, gap, flare, origin } = surface;
+      const transform = getComputedStyle(dialog).transform;
+      const matrix = transform === 'none' ? { a: 1, d: 1 } : new DOMMatrix(transform);
+      const along = horizontal ? matrix.a : matrix.d, outward = horizontal ? matrix.d : matrix.a;
+      const left = origin + (start - origin) * along, right = left + length * along;
+      const near = gap * outward, far = (gap + depth) * outward;
+      const shoulder = flare * along, radiusX = 20 * along, radiusY = 20 * outward;
+      extension = `H${right + shoulder}C${right + shoulder * .45} 0 ${right} ${near * .45} ${right} ${near}V${far - radiusY}Q${right} ${far} ${right - radiusX} ${far}H${left + radiusX}Q${left} ${far} ${left} ${far - radiusY}V${near}C${left} ${near * .45} ${left - shoulder * .45} 0 ${left - shoulder} 0`;
+    }
+    const path = `M${barStart + radius} ${-thickness}H${barEnd - radius}A${radius} ${radius} 0 0 1 ${barEnd} ${-thickness + radius}V${-radius}A${radius} ${radius} 0 0 1 ${barEnd - radius} 0${extension}H${barStart + radius}A${radius} ${radius} 0 0 1 ${barStart} ${-radius}V${-thickness + radius}A${radius} ${radius} 0 0 1 ${barStart + radius} ${-thickness}Z`;
     const orientation = edge === 'top' ? `translate(0 ${bar.bottom})` : edge === 'bottom' ? `matrix(1 0 0 -1 0 ${bar.top})` : edge === 'left' ? `matrix(0 1 1 0 ${bar.right} 0)` : `matrix(0 1 -1 0 ${bar.left} 0)`;
     const mask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${innerWidth} ${innerHeight}"><path transform="${orientation}" d="${path}"/></svg>`;
     panelBridge.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(mask)}")`;
-    if (dialog.getAnimations().some(animation => animation.playState === 'running')) surfaceFrame = requestAnimationFrame(paintPanelSurface);
+    Object.assign(panelBridge.style, { left: '0px', top: '0px', width: `${innerWidth}px`, height: `${innerHeight}px` });
+    panelBridge.hidden = false;
+    if (surface) {
+      surface.hitPath = new Path2D(path);
+      if (surface.dialog.getAnimations().some(animation => animation.playState === 'running')) surfaceFrame = requestAnimationFrame(paintPanelSurface);
+    }
+  }
+  function insidePanelSurface(x, y) {
+    if (!panelSurface?.dialog.open || !panelSurface.hitPath) return false;
+    const { edge, bar, horizontal } = panelSurface;
+    const along = horizontal ? x : y;
+    const outward = edge === 'top' ? y - bar.bottom : edge === 'bottom' ? bar.top - y : edge === 'left' ? x - bar.right : bar.left - x;
+    surfaceHitContext ||= document.createElement('canvas').getContext('2d');
+    return surfaceHitContext?.isPointInPath(panelSurface.hitPath, along, outward) || false;
   }
   function positionPanel(dialog) {
     if (!dialog?.open) return;
@@ -966,6 +990,10 @@
     if (name === 'overview') renderOverview();
     if (name === 'launcher') { $('#launcher-query').value = ''; launcherIndex = 0; renderLauncher(); }
     if (name === 'calendar') renderCalendar();
+    if (name === 'wallpaper') {
+      wallpaperPage = Math.floor(Math.max(0, currentWallpaper()) / 9);
+      renderWallpapers();
+    }
     root.dataset.barPanel = 'true';
     dialog.show();
     positionPanel(dialog);
@@ -1018,6 +1046,34 @@
     ['日', '一', '二', '三', '四', '五', '六'].forEach(day => grid.append(make('span', '', day)));
     for (let i = 0; i < new Date(year, month, 1).getDay(); i++) grid.append(make('span'));
     for (let day = 1; day <= new Date(year, month + 1, 0).getDate(); day++) grid.append(make('span', day === now.getDate() ? 'today' : '', String(day)));
+  }
+  function currentWallpaper() {
+    const source = $('.background-layer')?.style.backgroundImage || '';
+    const index = wallpapers.findIndex(url => source.includes(url));
+    return index >= 0 ? index : readStorage('blog-background-state', {}).index ?? 0;
+  }
+  function renderWallpapers() {
+    const pages = Math.max(1, Math.ceil(wallpapers.length / 9));
+    wallpaperPage = Math.max(0, Math.min(pages - 1, wallpaperPage));
+    const grid = $('#wallpaper-grid'); grid.replaceChildren();
+    const selected = currentWallpaper();
+    for (let slot = 0; slot < 9; slot++) {
+      const index = wallpaperPage * 9 + slot, source = wallpapers[index];
+      if (!source) { const empty = make('div', 'wallpaper-empty'); empty.setAttribute('aria-hidden', 'true'); grid.append(empty); continue; }
+      const tile = button('', `选择壁纸 ${index + 1}`);
+      tile.className = 'wallpaper-tile'; tile.setAttribute('aria-pressed', String(index === selected));
+      const image = make('img'); image.src = source; image.alt = `壁纸 ${index + 1}`; image.loading = 'lazy'; image.decoding = 'async';
+      tile.append(image);
+      tile.onclick = () => {
+        $('.background-layer').style.backgroundImage = `url("${source}")`;
+        root.style.setProperty('--active-background-image', `url("${source}")`);
+        saveStorage('blog-background-state', { index, changedAt: Date.now() });
+        $$('.wallpaper-tile', grid).forEach((item, i) => item.setAttribute('aria-pressed', String(wallpaperPage * 9 + i === index)));
+      };
+      grid.append(tile);
+    }
+    $('#wallpaper-page').textContent = `${wallpaperPage + 1} / ${pages}`;
+    $$('[data-wallpaper-page]').forEach(item => { item.disabled = Number(item.dataset.wallpaperPage) < 0 ? wallpaperPage === 0 : wallpaperPage === pages - 1; });
   }
   function terminal({ column = null, width = 720, focus = true } = {}) {
     const content = make('div', 'desktop-terminal');
@@ -1090,11 +1146,14 @@
     root.style.setProperty('--wallpaper-brightness', settings.brightness);
     root.style.setProperty('--background-opacity', settings.wallpaperOpacity);
     root.style.setProperty('--shell-opacity', settings.shellOpacity);
+    root.style.setProperty('--bar-blur', `${settings.barBlur}px`);
     applyShellPalette();
     root.dataset.shellPosition = settings.position;
-    ['hue', 'opacity', 'blur', 'brightness', 'wallpaperOpacity', 'shellOpacity'].forEach(key => {
+    ['hue', 'opacity', 'blur', 'barBlur', 'brightness', 'wallpaperOpacity', 'shellOpacity'].forEach(key => {
       $(`#shell-${key}`).value = settings[key];
-      $(`#shell-${key}-value`).textContent = key === 'hue' ? `${settings[key]}°` : key === 'blur' ? `${settings[key]}px` : `${Math.round(settings[key] * 100)}%`;
+      $(`#shell-${key}-value`).textContent = key === 'hue' ? `${settings[key]}°` : ['blur', 'barBlur'].includes(key) ? `${settings[key]}px` : `${Math.round(settings[key] * 100)}%`;
+      const range = $(`#shell-${key}`);
+      range.style.setProperty('--range-progress', `${(settings[key] - Number(range.min)) / (Number(range.max) - Number(range.min)) * 100}%`);
     });
     $('#shell-modifier').value = settings.modifier;
     $('#shell-position').value = settings.position;
@@ -1103,13 +1162,20 @@
     $('#shell-custom-color').hidden = settings.shellColorMode !== 'custom';
     saveStorage('desktop-settings', settings);
     windows.forEach(syncAppearance);
+    const panel = dialogs.find(dialog => dialog.open);
+    panel ? positionPanel(panel) : paintPanelSurface();
   }
   function action(name, anchor = null) {
-    if (['launcher', 'overview', 'controls', 'help', 'calendar', 'notifications', 'network', 'session'].includes(name)) {
+    if (['launcher', 'overview', 'controls', 'help', 'calendar', 'wallpaper', 'notifications', 'network', 'session'].includes(name)) {
       if (name === 'network') $('#shell-network-state').textContent = navigator.onLine ? '当前网络已连接' : '当前处于离线状态';
       showDialog(name, anchor); return;
     }
-    if (name === 'audio') { $('#shell-audio-volume').value = Math.round(($('#music-audio')?.volume ?? .8) * 100); showDialog('audio', anchor); return; }
+    if (name === 'audio') {
+      const range = $('#shell-audio-volume');
+      range.value = Math.round(($('#music-audio')?.volume ?? .8) * 100);
+      range.style.setProperty('--range-progress', `${range.value}%`);
+      showDialog('audio', anchor); return;
+    }
     if (name === 'mute') { const audio = $('#music-audio'); if (audio) { audio.muted = !audio.muted; announce(audio.muted ? '音乐已静音' : '已恢复音乐音量'); } return; }
     if (name === 'clipboard') {
       navigator.clipboard?.writeText(location.origin + cleanURL(location.href)).then(() => announce('页面链接已复制')).catch(() => announce('未能复制链接，请从地址栏复制'));
@@ -1122,16 +1188,6 @@
     if (name === 'next') navigateColumn(1);
     if (name === 'terminal') terminal();
     if (name === 'reset-settings') { settings = { ...defaults }; applySettings(); announce('已恢复默认外观'); }
-    if (name === 'wallpaper') {
-      const backgrounds = JSON.parse(document.body.dataset.backgrounds || '[]');
-      if (!backgrounds.length) return;
-      const saved = readStorage('blog-background-state', {});
-      const choices = backgrounds.map((_, i) => i).filter(i => i !== saved.index);
-      const index = choices.length ? choices[Math.floor(Math.random() * choices.length)] : 0;
-      $('.background-layer').style.backgroundImage = `url("${backgrounds[index]}")`;
-      root.style.setProperty('--active-background-image', `url("${backgrounds[index]}")`);
-      saveStorage('blog-background-state', { index, changedAt: Date.now() });
-    }
     if (name === 'music') showDialog('music', anchor);
   }
   function isMod(event, preference = 'both') {
@@ -1283,6 +1339,9 @@
     const url = internalURL(a.href);
     if (url) { event.preventDefault(); openURL(url, a.textContent.trim()); }
   });
+  document.addEventListener('pointerdown', event => {
+    if (!event.target.closest('.shell-dialog, .shell-bar') && !insidePanelSurface(event.clientX, event.clientY)) closeDialogs(false);
+  }, { passive: true });
   document.addEventListener('keydown', handleKey);
   document.addEventListener('wheel', event => {
     if (dialogs.some(d => d.open)) return;
@@ -1300,7 +1359,7 @@
     const win = [...windows.values()].find(w => w.frame?.contentWindow === event.source);
     if (!win) return;
     const data = event.data;
-    if (data.type === 'focus') focusWindow(win, { scroll: false, history: true });
+    if (data.type === 'focus') { if (data.pointer) closeDialogs(false); focusWindow(win, { scroll: false, history: true }); }
     if (data.type === 'ready') syncAppearance(win);
     if (data.type === 'open' && typeof data.url === 'string') { focusWindow(win, { scroll: false }); openURL(data.url, String(data.title || '博客页面')); }
     if (data.type === 'key') { focusWindow(win, { scroll: false }); handleKey(data); }
@@ -1326,7 +1385,8 @@
     }
     if (event.key === 'Enter') { event.preventDefault(); list[launcherIndex]?.click(); }
   });
-  ['hue', 'opacity', 'blur', 'brightness', 'wallpaperOpacity', 'shellOpacity'].forEach(key => $(`#shell-${key}`).addEventListener('input', event => { settings[key] = Number(event.target.value); applySettings(); }));
+  ['hue', 'opacity', 'blur', 'barBlur', 'brightness', 'wallpaperOpacity', 'shellOpacity'].forEach(key => $(`#shell-${key}`).addEventListener('input', event => { settings[key] = Number(event.target.value); applySettings(); }));
+  $$('[data-wallpaper-page]').forEach(item => item.addEventListener('click', () => { wallpaperPage += Number(item.dataset.wallpaperPage); renderWallpapers(); }));
   $('#shell-color-mode').addEventListener('change', event => { settings.shellColorMode = event.target.value; applySettings(); });
   $('#shell-color').addEventListener('input', event => { settings.shellColor = event.target.value; applySettings(); });
   $('#shell-modifier').addEventListener('change', event => { settings.modifier = event.target.value; applySettings(); });
@@ -1335,9 +1395,11 @@
     applySettings();
     workspaces.filter(ws => ws.autoLayout).forEach(layoutWorkspace);
     if (focused) focusWindow(focused);
-    positionPanel(dialogs.find(dialog => dialog.open));
+    const panel = dialogs.find(dialog => dialog.open);
+    panel ? positionPanel(panel) : paintPanelSurface();
   });
   $('#shell-audio-volume').addEventListener('input', event => {
+    event.target.style.setProperty('--range-progress', `${event.target.value}%`);
     const audio = $('#music-audio');
     const volume = $('#music-volume');
     if (audio) { audio.volume = Number(event.target.value) / 100; audio.muted = false; }
@@ -1371,7 +1433,8 @@
   addEventListener('resize', () => {
     workspaces.filter(ws => ws.autoLayout).forEach(layoutWorkspace);
     if (focused) focusWindow(focused);
-    positionPanel(dialogs.find(dialog => dialog.open));
+    const panel = dialogs.find(dialog => dialog.open);
+    panel ? positionPanel(panel) : paintPanelSurface();
   });
   mobile.addEventListener('change', () => {
     restoreFullscreen();

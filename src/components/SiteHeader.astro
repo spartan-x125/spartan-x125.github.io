@@ -67,6 +67,7 @@ const apps = [
   </div>
   <div class="shell-settings">
     <label><span><span class="setting-name"><Icon name="opacity" size={15} />bar 不透明度</span><output id="shell-shellOpacity-value"></output></span><input aria-label="bar 不透明度" id="shell-shellOpacity" type="range" min="0.08" max="1" step="0.01" value="1" /></label>
+    <label><span><span class="setting-name"><Icon name="blur" size={15} />bar 模糊度</span><output id="shell-barBlur-value"></output></span><input aria-label="bar 模糊度" id="shell-barBlur" type="range" min="0" max="40" value="18" /></label>
     <label><span class="setting-name"><Icon name="palette" size={15} />bar 主题色</span><select aria-label="bar 主题色" id="shell-color-mode"><option value="wallpaper">跟随壁纸</option><option value="custom">自定义</option></select></label>
     <label id="shell-custom-color" hidden><span class="setting-name"><Icon name="palette" size={15} />自定义颜色</span><input aria-label="自定义颜色" id="shell-color" type="color" value="#69558c" /></label>
     <label><span><span class="setting-name"><Icon name="palette" size={15} />主题色相</span><output id="shell-hue-value"></output></span><input aria-label="主题色相" id="shell-hue" type="range" min="0" max="360" value="200" /></label>
@@ -102,8 +103,17 @@ const apps = [
 <dialog id="shell-network" class="shell-dialog controls-dialog" aria-labelledby="network-title"><div class="shell-dialog-heading"><h2 id="network-title">网络状态</h2></div><p id="shell-network-state"></p></dialog>
 <dialog id="shell-audio" class="shell-dialog controls-dialog" aria-labelledby="audio-title"><div class="shell-dialog-heading"><h2 id="audio-title">音乐音量</h2></div><label class="shell-volume-label"><span class="setting-name"><Icon name="volume" size={16} />音量</span><input aria-label="音乐音量" id="shell-audio-volume" type="range" min="0" max="100" value="80" /></label><button class="shell-text-button" data-shell-action="mute"><Icon name="mute" size={16} />静音 / 恢复</button><button class="shell-text-button" data-shell-action="music"><Icon name="music" size={16} />打开播放器</button></dialog>
 <dialog id="shell-music" class="shell-dialog music-dialog" aria-labelledby="music-panel-title"><div class="shell-dialog-heading"><h2 id="music-panel-title">音乐</h2></div><div id="shell-music-content"></div></dialog>
+<dialog id="shell-wallpaper" class="shell-dialog wallpaper-dialog" aria-labelledby="wallpaper-panel-title">
+  <div class="shell-dialog-heading"><h2 id="wallpaper-panel-title">壁纸</h2></div>
+  <div id="wallpaper-grid" class="wallpaper-grid"></div>
+  <nav class="wallpaper-pages" aria-label="壁纸翻页">
+    <button data-wallpaper-page="-1" aria-label="上一页壁纸"><Icon name="left" size={18} /></button>
+    <output id="wallpaper-page" aria-label="壁纸页码"></output>
+    <button data-wallpaper-page="1" aria-label="下一页壁纸"><Icon name="right" size={18} /></button>
+  </nav>
+</dialog>
 <dialog id="shell-session" class="shell-dialog controls-dialog" aria-labelledby="session-title"><div class="shell-dialog-heading"><h2 id="session-title">桌面会话</h2></div><button class="shell-text-button" data-shell-action="home"><Icon name="home" size={16} />返回首页</button><button class="shell-text-button" data-shell-action="restart"><Icon name="restart" size={16} />重新加载桌面</button></dialog>
 <noscript><nav class="shell-fallback-nav">{apps.map(app => <a href={app.url}>{app.name}</a>)}</nav></noscript>
 <div id="shell-announcement" class="shell-toast" role="status" aria-live="polite"></div>
-<script is:inline defer src="/terminal.js?v=20261009-9"></script>
-<script is:inline defer src="/desktop.js?v=20261009-9"></script>
+<script is:inline defer src="/terminal.js?v=20261010-1"></script>
+<script is:inline defer src="/desktop.js?v=20261010-1"></script>
