@@ -13,13 +13,14 @@ const makeContext = fetch => {
   };
   runInNewContext(code, context); return window.BlogStars;
 };
-const observation = id => ({ data: [{ media_type: 'image', nasa_id: id, title: `Galaxy ${id}`, description: `<p>A telescope observation of a distant galaxy. Credit: NASA/ESA.</p>`, date_created: '2024-02-15', center: 'GSFC' }], links: [{ rel: 'preview', href: `https://images-assets.nasa.gov/image/${id}/${id}~thumb.jpg` }] });
+const observation = id => ({ data: [{ media_type: 'image', nasa_id: id, title: `Andromeda Galaxy ${id}`, description: `<p>A telescope observation of the Andromeda galaxy. Credit: NASA/ESA.</p>`, date_created: '2024-02-15', center: 'GSFC' }], links: [{ rel: 'preview', href: `https://images-assets.nasa.gov/image/${id}/${id}~thumb.jpg` }] });
 let calls = 0;
 const service = makeContext(async url => {
   assert.equal(new URL(url).hostname, 'images-api.nasa.gov');
   if (new URL(url).pathname.startsWith('/asset/')) { const id = new URL(url).pathname.split('/').at(-1); return { ok: true, json: async () => ({ collection: { items: [ { href: `https://images-assets.nasa.gov/image/${id}/${id}~orig.jpg` }, { href: `https://images-assets.nasa.gov/image/${id}/${id}~medium.jpg` } ] } }) }; }
   calls++;
-  return { ok: true, json: async () => ({ collection: { metadata: { total_hits: 2 }, items: [observation('alpha'), observation('beta'), { ...observation('unsafe'), links: [{ rel: 'preview', href: 'https://example.com/image.jpg' }] }, { ...observation('drawing'), data: [{ ...observation('drawing').data[0], description: "An artist's impression of a galaxy." }] }] } }) };
+  assert.equal(new URL(url).searchParams.get('title'), 'Andromeda Galaxy');
+  return { ok: true, json: async () => ({ collection: { metadata: { total_hits: 2 }, items: [observation('alpha'), observation('beta'), { ...observation('unsafe'), links: [{ rel: 'preview', href: 'https://example.com/image.jpg' }] }, { ...observation('drawing'), data: [{ ...observation('drawing').data[0], description: "An artist's impression of a galaxy." }] }, { ...observation('facility'), data: [{ ...observation('facility').data[0], title: 'Andromeda Telescope Facility' }] }, { ...observation('mission'), data: [{ ...observation('mission').data[0], title: 'Future Andromeda Mission Plan' }] }, { ...observation('unrelated'), data: [{ ...observation('unrelated').data[0], title: 'A different galaxy' }] }] } }) };
 });
 const first = await service.next(), second = await service.next();
 assert.notEqual(first.id, second.id);
@@ -28,7 +29,8 @@ assert.equal(first.source, 'https://images.nasa.gov/details/alpha');
 assert.match(first.image, /~medium\.jpg$/); assert.match(first.imageSource, /~orig\.jpg$/);
 assert.equal(first.facts['影像归档'], '2024-02-15');
 assert.match(first.credit, /NASA\/ESA/); assert.ok(!first.description.includes('<p>'));
-assert.ok(!['unsafe', 'drawing'].includes(first.id));
+assert.equal(first.name, 'Andromeda Galaxy');
+assert.ok(!['unsafe', 'drawing', 'facility', 'mission', 'unrelated'].includes(first.id));
 let fallbackCalls = 0;
 const fallback = makeContext(async url => {
   if (url === '/stars.json') { fallbackCalls++; return { ok: true, json: async () => catalogue }; }

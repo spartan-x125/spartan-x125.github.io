@@ -1,0 +1,61 @@
+.desktop-window[data-kind=video] { background: #0a0d14; backdrop-filter: none; }
+.easter-egg { display: flex; flex-direction: column; min-height: 100%; background: #080c13; }
+.easter-egg-video { display: block; width: 100%; border: 0; aspect-ratio: 16 / 9; flex: 1 0 auto; min-height: 220px; background: #080c13; }
+.easter-egg-getta .easter-egg-video { aspect-ratio: 16 / 6; }
+.getter-stage { position: relative; flex: 0 0 auto; width: 100%; overflow: hidden; }
+.getter-scene { display: block; width: 100%; max-height: 360px; }
+.getter-replay { position: absolute; bottom: 14px; right: 16px; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid #9dffc32e; border-radius: 50%; background: #122d25; color: #baffdc; cursor: pointer; transition: background 180ms, transform 180ms; }
+.getter-replay:hover { background: #23523f; transform: rotate(-25deg); }
+.getter-replay:active { transform: scale(.9); }
+.getter-jet, .getter-lock, .getter-flare, .getter-label, .getter-cape, .getter-legs, .getter-arms, .getter-torso, .getter-head { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.getter-robot { transform-origin: 360px 190px; }
+.is-combining .getter-eagle { animation: getter-eagle 7s cubic-bezier(.22,.65,.3,1) both; }
+.is-combining .getter-jaguar { animation: getter-jaguar 7s cubic-bezier(.22,.65,.3,1) both; }
+.is-combining .getter-bear { animation: getter-bear 7s cubic-bezier(.22,.65,.3,1) both; }
+.is-combining .getter-lock { animation: getter-lock 7s ease both; }
+.is-combining .getter-flare { animation: getter-flare 7s ease both; }
+.is-combining .getter-speed { animation: getter-speed 7s ease both; }
+.is-combining .getter-cape { animation: getter-cape 7s ease both; }
+.is-combining .getter-arms { animation: getter-arms 7s ease both; }
+.is-combining .getter-legs { animation: getter-legs 7s ease both; }
+.is-combining .getter-torso { animation: getter-torso 7s ease both; }
+.is-combining .getter-head { animation: getter-head 7s ease both; }
+.is-combining .getter-robot { animation: getter-settle 7s ease both; }
+.is-combining .getter-label { animation: getter-label 7s ease both; }
+@keyframes getter-eagle {
+  0% { opacity: 0; transform: translate(-180px,80px) scale(.75) rotate(-12deg); }
+  8% { opacity: 1; }
+  23% { transform: translate(325px,85px) scale(.8) rotate(-8deg); }
+  42% { opacity: 1; transform: translate(360px,113px) scale(.66) rotate(-90deg); }
+  52%,100% { opacity: 0; transform: translate(360px,125px) scale(.2) rotate(-90deg); }
+}
+@keyframes getter-jaguar {
+  0%,8% { opacity: 0; transform: translate(900px,175px) scale(.7) rotate(175deg); }
+  16% { opacity: 1; }
+  29% { transform: translate(405px,175px) scale(.75) rotate(185deg); }
+  46% { opacity: 1; transform: translate(360px,163px) scale(.6) rotate(270deg); }
+  56%,100% { opacity: 0; transform: translate(360px,167px) scale(.2) rotate(270deg); }
+}
+@keyframes getter-bear {
+  0%,15% { opacity: 0; transform: translate(145px,470px) scale(.7) rotate(-50deg); }
+  23% { opacity: 1; }
+  35% { transform: translate(340px,247px) scale(.72) rotate(-75deg); }
+  50% { opacity: 1; transform: translate(360px,211px) scale(.6) rotate(-90deg); }
+  60%,100% { opacity: 0; transform: translate(360px,208px) scale(.2) rotate(-90deg); }
+}
+@keyframes getter-lock { 0%,30% { opacity: 0; transform: scale(.3); } 42% { opacity: .6; transform: scale(1) rotate(-45deg); } 57% { opacity: .7; transform: scale(.8) rotate(90deg); } 65%,100% { opacity: 0; transform: scale(1.8) rotate(140deg); } }
+@keyframes getter-flare { 0%,51% { opacity: 0; transform: scale(.05); } 57% { opacity: .65; transform: scale(.75); } 67%,100% { opacity: 0; transform: scale(1.7); } }
+@keyframes getter-speed { 0%,4% { opacity: 0; } 12%,37% { opacity: .35; } 54%,100% { opacity: 0; } }
+@keyframes getter-torso { 0%,43% { opacity: 0; transform: translateY(-35px) scaleX(.25) rotate(-90deg); } 57%,100% { opacity: 1; transform: none; } }
+@keyframes getter-arms { 0%,47% { opacity: 0; transform: scaleX(.25) rotate(90deg); } 61%,100% { opacity: 1; transform: none; } }
+@keyframes getter-legs { 0%,51% { opacity: 0; transform: translateY(32px) scaleX(.3); } 65%,100% { opacity: 1; transform: none; } }
+@keyframes getter-head { 0%,54% { opacity: 0; transform: translateY(25px) scale(.6); } 66%,100% { opacity: 1; transform: none; } }
+@keyframes getter-cape { 0%,61% { opacity: 0; transform: scale(.4,.8); } 74% { opacity: 1; transform: scale(1.08,1); } 85%,100% { opacity: 1; transform: none; } }
+@keyframes getter-settle { 0%,68% { transform: scale(.93); } 80% { transform: scale(1.03); } 92%,100% { transform: none; } }
+@keyframes getter-label { 0%,73% { opacity: 0; transform: translateY(8px); } 87%,100% { opacity: 1; transform: none; } }
+@media (max-width: 700px) { .easter-egg-video { min-height: 195px; } .easter-egg-getta .easter-egg-video { aspect-ratio: 16 / 9; } }
+@media (prefers-reduced-motion: reduce) {
+  .getter-stage.is-combining * { animation: none; }
+  .getter-cape, .getter-legs, .getter-arms, .getter-torso, .getter-head, .getter-label { opacity: 1; }
+  .getter-replay { transition: none; }
+}

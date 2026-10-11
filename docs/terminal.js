@@ -73,7 +73,7 @@
   const commands = {
     help: ['help [-d | -s | -m] [command]', 'Display command help.', 'Use help for an overview, help COMMAND for details, -s for syntax, -d for a short description, or -m for a manual page.', ['help posts', 'help -m open']],
     man: ['man <command>', 'Read a command manual.', 'Equivalent to help -m COMMAND.', ['man read']],
-    home: ['home', 'Browse the site directory.', 'Open the keyboard-driven site browser in a separate terminal card. The command shell stays available.', ['home']],
+    home: ['home', 'Browse the site directory.', 'Browse pages inside this shell. Only individual articles and external websites open new cards. Press q or Esc to return to the command prompt.', ['home']],
     posts: ['posts [search terms]', 'Browse and search articles.', 'Select an article with j/k or the arrow keys. Press Right or Enter to read it in a new terminal card. Left returns to the parent page. Search matches titles, summaries, categories and tags.', ['posts', 'posts ISAC']],
     read: ['read <slug | number>', 'Read an article.', 'Use an article slug or the number shown by ls posts. The reader supports scrolling, text search, headings and links.', ['read welcome', 'read 1']],
     cat: ['cat <slug | number>', 'Read an article.', 'Alias for read.', ['cat welcome']],
@@ -81,9 +81,11 @@
     friends: ['friends', 'Browse friend links.', 'Select or hover over a site to preview it. Right/Enter opens it in a separate browser card. Use its address bar to navigate, or its top-right button to open a real browser tab.', ['friends']],
     browser: ['browser [URL]', 'Open a browser card.', 'Browse HTTP or HTTPS addresses in a separate card. Some sites restrict embedding; use the top-right button to open those sites in a real browser tab.', ['browser https://for-each.cn/', 'browser /about/']],
     stars: ['stars', 'Discover a random celestial object.', 'Open a randomly placed card with a NASA photograph, an introduction, facts and source links. Run again to discover another object.', ['stars']],
+    suki: ['suki', 'Play the Shuki Shuki music video.', 'Open the official 自己肯定感爆上げ↑↑しゅきしゅきソング music video in a new card.', ['suki']],
+    getta: ['getta', 'Play HEATS and combine Getter-1.', 'Open HEATS in a new card with an animated Eagle, Jaguar and Bear combination. Use the replay button to combine Getter-1 again.', ['getta']],
     guestbook: ['guestbook', 'Open the guestbook.', 'Read the guestbook in the terminal and press c to load the live GitHub discussion. Tab reaches its controls; GitHub handles sign-in and posting.', ['guestbook']],
     updates: ['updates', 'Browse the update history.', 'Articles are sorted by their latest update. Enter reads the selected article.', ['updates']],
-    open: ['open [--gui] <path>', 'Open a site page.', 'By default, pages open in separate terminal cards. --gui opens the original graphical page as a desktop window. Paths may include article search parameters.', ['open /about/', 'open /posts/welcome/', 'open --gui /posts/']],
+    open: ['open [--gui] <path>', 'Open a site page.', 'Directories and site pages open inside this shell. Individual articles open a new terminal reader card. --gui opens a graphical desktop window. Paths may include article search parameters.', ['open /about/', 'open /posts/welcome/', 'open --gui /posts/']],
     cd: ['cd <path>', 'Navigate to a site page.', 'Open a virtual directory or article. This browser does not access your device filesystem.', ['cd posts', 'cd /about/']],
     ls: ['ls [posts]', 'List virtual directories or articles.', 'ls lists page commands. ls posts lists article numbers, slugs and titles.', ['ls', 'ls posts']],
     fastfetch: ['fastfetch', 'Display the site profile and statistics.', 'Show the avatar, site details, contact links and statistics.', ['fastfetch']],
@@ -163,7 +165,7 @@
     return article;
   }
   window.BlogTerminal = {
-    mount({ content, win, profile, openURL, openBrowser, openStars, close, internalURL, openTerminal, page = null, goBack }) {
+    mount({ content, win, profile, openURL, openBrowser, openStars, openEasterEgg, close, internalURL, openTerminal, page = null, goBack }) {
       const prompt = () => {
         const el = node('span', 'terminal-prompt');
         el.append(node('span', 'terminal-user', `${profile.name}@blog`), node('span', '', ':'), node('span', 'terminal-directory', '~'), node('span', '', '$ ')); return el;
@@ -236,7 +238,12 @@
         if (!internalURL(href) && !href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
         return link;
       };
-      function showPage(value) { return openTerminal(value, win); }
+      function showPage(value) {
+        const url = browserURL(value);
+        if (!url) throw new Error('Unknown site path. Use home to browse pages.');
+        const path = new URL(url, location.origin).pathname.replace(/\/$/, '');
+        return path.startsWith('/posts/') ? openTerminal(url, win) : loadPage(url);
+      }
       async function loadPage(value, rememberPage = true) {
         const url = browserURL(value);
         if (!url) throw new Error('Unknown site path. Use home to browse pages.');
@@ -491,6 +498,7 @@
         else if (command === 'exit') close(win);
         else if (command === 'reboot') location.reload();
         else if (command === 'stars') await openStars();
+        else if (command === 'suki' || command === 'getta') openEasterEgg(command);
         else if (command === 'browser') { if (!openBrowser(args[0] || location.origin)) print('browser: invalid HTTP or HTTPS address.', 'terminal-error'); }
         else if (command === 'ls') {
           if (args[0] === 'posts') { const data = await loadData(); data.posts.forEach((post, index) => print(`${String(index + 1).padStart(2)}  ${post.slug.padEnd(24)} ${post.title}`)); }

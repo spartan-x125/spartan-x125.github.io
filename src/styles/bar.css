@@ -15,7 +15,7 @@
 .shell-popover[data-edge=bottom] { border-radius: 20px 20px 0 0; }
 .shell-popover[data-edge=left] { border-radius: 0 20px 20px 0; }
 .shell-popover[data-edge=right] { border-radius: 20px 0 0 20px; }
-.shell-panel-bridge { z-index: 125; border: 0; border-radius: 0; background: hsl(var(--shell-hue) calc(var(--shell-saturation) * .4) var(--shell-bg-lightness) / var(--shell-opacity)); backdrop-filter: blur(var(--bar-blur,18px)); mask-position: center; mask-size: 100% 100%; mask-repeat: no-repeat; }
+.shell-panel-bridge { z-index: 125; border: 0; border-radius: 0; background: hsl(var(--shell-hue) calc(var(--shell-saturation) * .4) var(--shell-bg-lightness) / var(--shell-opacity)); -webkit-backdrop-filter: blur(var(--bar-blur,18px)); backdrop-filter: blur(var(--bar-blur,18px)); }
 .shell-panel-bridge, .shell-panel-bridge.is-closing { animation: none; }
 .shell-popover[open] { animation: bar-surface-open 420ms cubic-bezier(.2,.9,.2,1) both; }
 .shell-popover[open].is-closing { animation: bar-surface-close 180ms cubic-bezier(.4,0,.8,.2) both; }

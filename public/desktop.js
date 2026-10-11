@@ -255,12 +255,23 @@
   let panelAnchor = null;
   const panelTimers = new Map();
   const panelBridge = make('div', 'shell-panel-bridge');
+  const surfaceSVG = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  surfaceSVG.setAttribute('aria-hidden', 'true');
+  surfaceSVG.setAttribute('width', '0'); surfaceSVG.setAttribute('height', '0');
+  surfaceSVG.style.cssText = 'position:fixed;pointer-events:none';
+  const surfaceDefs = document.createElementNS(surfaceSVG.namespaceURI, 'defs');
+  const surfaceClip = document.createElementNS(surfaceSVG.namespaceURI, 'clipPath');
+  surfaceClip.id = 'bar-surface-clip'; surfaceClip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+  const surfacePath = document.createElementNS(surfaceSVG.namespaceURI, 'path');
+  surfaceClip.append(surfacePath); surfaceDefs.append(surfaceClip); surfaceSVG.append(surfaceDefs);
+  panelBridge.style.clipPath = 'url("#bar-surface-clip")';
+  let surfaceBounds = '';
   let panelSurface = null, surfaceFrame = 0;
   let surfaceHitContext, wallpaperPage = 0;
   let recordingShortcut = null, keyboardLocked = false, keyboardRequest = 0;
   panelBridge.hidden = true;
   panelBridge.setAttribute('aria-hidden', 'true');
-  document.body.append(panelBridge);
+  document.body.append(surfaceSVG, panelBridge);
   const announce = message => {
     const toast = $('#shell-announcement');
     toast.textContent = message;
@@ -718,6 +729,7 @@
       windows.delete(win.id);
       win.terminal?.destroy();
       win.browser?.destroy();
+      win.easterEgg?.destroy();
       win.readingControls?.destroy();
       win.el.remove();
       if (!col.children.length) col.remove();
@@ -841,6 +853,21 @@
     win.el.dataset.kind = 'browser';
     win.browser = window.BlogBrowser.mount({ content, win, url, iconButton, internalURL, changed: () => { syncAppearance(win); refreshChrome(); } });
     win.frame = win.browser.frame;
+    focusWindow(win, { history: true, keyboard: true });
+    return win;
+  }
+  function openEasterEgg(id) {
+    const video = window.BlogEasterEggs.video(id);
+    if (!video) return;
+    $('#music-audio')?.pause();
+    const content = make('div');
+    const url = `https://www.bilibili.com/video/${video.bvid}/`;
+    const win = createWindow({ title: video.title, content, url, icon: 'music', width: 760 });
+    win.el.dataset.kind = 'video';
+    win.easterEgg = window.BlogEasterEggs.mount({ content, id, iconButton });
+    const external = iconButton('external', '在浏览器新标签页播放');
+    external.onclick = () => window.open(url, '_blank', 'noopener,noreferrer');
+    $('.window-actions', win.bar).prepend(external);
     focusWindow(win, { history: true, keyboard: true });
     return win;
   }
@@ -993,9 +1020,27 @@
     }
     const path = `M${barStart + radius} ${-thickness}H${barEnd - radius}A${radius} ${radius} 0 0 1 ${barEnd} ${-thickness + radius}V${-radius}A${radius} ${radius} 0 0 1 ${barEnd - radius} 0${extension}H${barStart + radius}A${radius} ${radius} 0 0 1 ${barStart} ${-radius}V${-thickness + radius}A${radius} ${radius} 0 0 1 ${barStart + radius} ${-thickness}Z`;
     const orientation = edge === 'top' ? `translate(0 ${bar.bottom})` : edge === 'bottom' ? `matrix(1 0 0 -1 0 ${bar.top})` : edge === 'left' ? `matrix(0 1 1 0 ${bar.right} 0)` : `matrix(0 1 -1 0 ${bar.left} 0)`;
-    const mask = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${innerWidth} ${innerHeight}"><path transform="${orientation}" d="${path}"/></svg>`;
-    panelBridge.style.maskImage = `url("data:image/svg+xml,${encodeURIComponent(mask)}")`;
-    Object.assign(panelBridge.style, { left: '0px', top: '0px', width: `${innerWidth}px`, height: `${innerHeight}px` });
+    let left = bar.left, top = bar.top, right = bar.right, bottom = bar.bottom;
+    if (surface) {
+      const { start, length, gap, depth, flare } = surface;
+      const pad = Math.ceil(Math.max(length, depth) * .025) + 2;
+      const startEdge = start - flare - pad, endEdge = start + length + flare + pad;
+      if (horizontal) { left = Math.min(left, startEdge); right = Math.max(right, endEdge); }
+      else { top = Math.min(top, startEdge); bottom = Math.max(bottom, endEdge); }
+      if (edge === 'top') bottom += gap + depth + pad;
+      else if (edge === 'bottom') top -= gap + depth + pad;
+      else if (edge === 'left') right += gap + depth + pad;
+      else left -= gap + depth + pad;
+    }
+    left = Math.max(0, Math.floor(left)); top = Math.max(0, Math.floor(top));
+    right = Math.min(innerWidth, Math.ceil(right)); bottom = Math.min(innerHeight, Math.ceil(bottom));
+    const bounds = `${left},${top},${right},${bottom}`;
+    if (surfaceBounds !== bounds) {
+      Object.assign(panelBridge.style, { left: `${left}px`, top: `${top}px`, width: `${right - left}px`, height: `${bottom - top}px` });
+      surfaceBounds = bounds;
+    }
+    surfacePath.setAttribute('transform', `translate(${-left} ${-top}) ${orientation}`);
+    surfacePath.setAttribute('d', path);
     panelBridge.hidden = false;
     if (surface) {
       surface.hitPath = new Path2D(path);
@@ -1037,7 +1082,6 @@
     const scaleX = horizontal ? '.28' : '.025', scaleY = horizontal ? '.025' : '.28';
     dialog.style.setProperty('--panel-scale-x', scaleX);
     dialog.style.setProperty('--panel-scale-y', scaleY);
-    Object.assign(panelBridge.style, { left: '0px', top: '0px', width: `${innerWidth}px`, height: `${innerHeight}px` });
     panelSurface = { dialog, bar, edge, horizontal, start: horizontal ? left : top, length: horizontal ? width : height, depth: horizontal ? height : width, gap, flare, origin: horizontal ? left + originX : top + originY };
     panelBridge.dataset.edge = edge;
     panelBridge.classList.remove('is-closing');
@@ -1150,7 +1194,7 @@
     const profile = JSON.parse($('#shell-launcher').dataset.profile);
     const win = createWindow({ title: `${profile.name}@blog: ~`, content, width, column, icon: 'terminal' });
     win.el.dataset.kind = 'terminal';
-    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, openBrowser, openStars, close: closeWindow, internalURL, page,
+    win.terminal = window.BlogTerminal.mount({ content, win, profile, openURL, openBrowser, openStars, openEasterEgg, close: closeWindow, internalURL, page,
       openTerminal: (url, source) => terminal({ page: url, origin: source, width: colOf(source)?.offsetWidth || 720 }),
       goBack: (parent = false) => {
         let destination = origin && windows.has(origin.id) && !origin.closing ? origin : null;
@@ -1158,10 +1202,8 @@
           const path = new URL(win.terminal.path, location.origin).pathname.replace(/\/$/, '') || '/';
           if (path === '/') { closeWindow(win, { returnTo: destination }); return; }
           const parentPath = path.startsWith('/posts/') ? '/posts/' : '/';
-          if (!destination?.terminal?.path || new URL(destination.terminal.path, location.origin).pathname !== parentPath) {
-            destination = windowList().find(item => item !== win && !item.closing && item.terminal?.path && new URL(item.terminal.path, location.origin).pathname === parentPath)
-              || terminal({ page: parentPath, origin: destination, width: colOf(win)?.offsetWidth || 720 });
-          }
+          destination ||= windowList().find(item => item !== win && !item.closing && item.terminal);
+          if (destination?.terminal && (!destination.terminal.path || new URL(destination.terminal.path, location.origin).pathname !== parentPath)) destination.terminal.browse(parentPath);
         }
         closeWindow(win, { returnTo: destination });
       },
