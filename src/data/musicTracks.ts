@@ -63,6 +63,6 @@ export const musicTracks = [
     title: "風の名前 (feat. ヰ世界情緒)",
     artist: "MIMI,ヰ世界情緒",
     src: "/music/MIMI,ヰ世界情緒 - 風の名前 (feat. ヰ世界情緒) .mp3",
-    cover: "/music/MIMI,ヰ世界情緒 - 風の名前 (feat. ヰ世界情緒) .jpg",
+    cover: "/music/MIMI,ヰ世界情緒 - 風の名前 (feat. ヰ世界情緒) _cover .jpg",
   },
 ];
