@@ -76,11 +76,11 @@ export function computeScene(scene,cache=new Map(),onProgress=()=>{}) {
         const bins=Array.from({length:N},(_,k)=>{const f=(k<N/2?k:k-N)/(N*dt);return mul(obj.fn(f),exp(c(0,2*Math.PI*f*tMin)));});
         return arraySignal(fft(bins,true).map(v=>scale(v,1/dt)),tMin,dt,{model:'有限频率区间 IFFT，Δf=1/(NΔt)，周期时间边界'});
       }
-      case 'Filter': {
+      case 'Filter':case 'PeriodicFilter': {
         const x=timeSignal(a[0]),h=a[1];if(h?.domain!=='f')throw new MathError('Filter 第二参数应为 H(f)；h(t) 请使用 Convolve',p);
-        const L=2*N,values=[...sampleFn(x.fn),...Array.from({length:N},()=>c())],X=fft(values);
+        const L=name==='PeriodicFilter'?N:2*N,values=[...sampleFn(x.fn),...Array.from({length:L-N},()=>c())],X=fft(values);
         const Y=X.map((v,k)=>mul(v,h.fn((k<L/2?k:k-L)/(L*dt))));
-        return arraySignal(fft(Y,true).slice(0,N),tMin,dt,{model:'双倍补零 FFT 频域滤波；在补零记录上采用周期边界，窗口边缘可能有截断与振铃；理想 H 未判定因果性'});
+        return arraySignal(fft(Y,true).slice(0,N),tMin,dt,{model:name==='PeriodicFilter'?'单窗周期FFT滤波；适用于周期教学模型；非整周期首尾可能不连续，理想H未判定因果性':'双倍补零 FFT 频域滤波；在补零记录上采用周期边界，窗口边缘可能有截断与振铃；理想 H 未判定因果性'});
       }
       case 'Sample': {
         const x=timeSignal(a[0]),fs=real(a[1],'采样率'),offset=a[2]?real(a[2],'采样起始相位'):0;
@@ -108,7 +108,7 @@ export function computeScene(scene,cache=new Map(),onProgress=()=>{}) {
         return {...x,values:x.values.map((v,i)=>add(v,c(sigma*z[2*i],sigma*z[2*i+1]))),model:`理想同步符号 AWGN；Es=${Es.toPrecision(4)}，Eb=Es/${x.bitsPerSymbol}，每正交维噪声方差 Eb/(2·10^(EbN0/10))；${x.values.length} 符号`};
       }
       case 'Noise': {
-        const x=timeSignal(a[0]),sigma=real(a[1]);if(sigma<0)throw new MathError('噪声标准差不能为负',p);const z=normalSequence(seed,N*2),values=sampleFn(x.fn).map((v,i)=>add(v,c(sigma*z[2*i],sigma*z[2*i+1])));
+        const x=timeSignal(a[0]),sigma=real(a[1]);if(sigma<0)throw new MathError('噪声标准差不能为负',p);const noiseSeed=a[2]?real(a[2]):seed;if(!Number.isInteger(noiseSeed)||noiseSeed<0||noiseSeed>4294967295)throw new MathError('噪声种子须为非负32位整数',p);const z=normalSequence(noiseSeed,N*2),values=sampleFn(x.fn).map((v,i)=>add(v,c(sigma*z[2*i],sigma*z[2*i+1])));
         return arraySignal(values,tMin,dt,{symbolPeriod:x.symbolPeriod,model:'有限带宽复采样噪声；sigma 为每正交维标准差；未将它等同于 Eb/N0 或理想连续白噪声'});
       }
       case 'Phase': {const x=sequence(a[0]),phi=real(a[1]);return {...x,values:x.values.map(v=>mul(v,exp(c(0,phi)))),model:'符号复平面旋转；phi 单位 rad'};}
@@ -116,9 +116,13 @@ export function computeScene(scene,cache=new Map(),onProgress=()=>{}) {
         const x=a[0],seq=x.type==='sequence',Ts=seq?real(a[1]):null,fc=real(seq?a[2]:a[1]);if(seq&&(!a[2]||Ts<=0))throw new MathError('符号载波使用 Carrier(symbols,Ts,fc)，Ts>0',p);if(!seq)timeSignal(x);
         return signal(t=>{const v=seq?x.values[Math.floor(t/Ts)]??c():x.fn(t),angle=2*Math.PI*fc*t;return c(v.re*Math.cos(angle)-v.im*Math.sin(angle));},{symbolPeriod:Ts??x.symbolPeriod,model:'I·cos(2πfct)−Q·sin(2πfct)；符号序列默认矩形保持'});
       }
-      case 'SSB':case 'Envelope': {
+      case 'Integrate': {const x=timeSignal(a[0]),v=sampleFn(x.fn),initial=a[1]?real(a[1]):0;let sum=c(initial);const values=v.map((z,i)=>{if(i)sum=add(sum,scale(add(v[i-1],z),dt/2));return sum;});return arraySignal(values,tMin,dt,{model:'观察窗起点为积分起点；复合梯形积分；初值独立指定，不是从负无穷积分'});}
+      case 'Differentiate': {const x=timeSignal(a[0]),v=sampleFn(x.fn),values=v.map((z,i)=>scale(add(v[Math.min(N-1,i+1)],scale(v[Math.max(0,i-1)],-1)),1/((i===0||i===N-1?1:2)*dt)));return arraySignal(values,tMin,dt,{model:'内点中心差分，端点单边差分；高频噪声会被放大'});}
+      case 'SSB':case 'Hilbert':case 'PhaseDelay':case 'Envelope': {
         const x=timeSignal(a[0]),values=sampleFn(x.fn);if(values.some(v=>Math.abs(v.im)>1e-8))throw new MathError('SSB/Envelope 输入须为实信号',p);
         const X=fft(values),analytic=fft(X.map((v,k)=>scale(v,k===0||k===N/2?1:k<N/2?2:0)),true);
+        if(name==='PhaseDelay'){const phi=real(a[1]),shifted=fft(X.map((v,k)=>{const angle=k===0||k===N/2?0:k<N/2?-phi:phi;return mul(v,exp(c(0,angle)));}),true);return arraySignal(shifted.map(v=>c(v.re)),tMin,dt,{model:'实信号恒相移：正频延后phi、负频相反；直流/Nyquist保持；周期FFT模型，不等于固定时间延时'});}
+        if(name==='Hilbert')return arraySignal(analytic.map(v=>c(v.im)),tMin,dt,{model:'有限记录周期Hilbert变换；正频−π/2、负频+π/2；直流与Nyquist频点置零'});
         if(name==='Envelope')return arraySignal(analytic.map(v=>c(abs(v))),tMin,dt,{model:'有限记录 Hilbert 解析包络；周期边界，过调制 AM 的包络为绝对值而非原消息'});
         const fc=real(a[1]);return arraySignal(analytic.map((v,k)=>c(mul(v,exp(c(0,2*Math.PI*fc*(tMin+k*dt)))).re)),tMin,dt,{model:'上边带 SSB：m cos−Hilbert(m) sin；有限记录 FFT Hilbert，周期边界'});
       }

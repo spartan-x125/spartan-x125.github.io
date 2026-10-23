@@ -1,5 +1,6 @@
 import {MODEL_VERSION,validateSettings} from './engine.js';
 import {parseDefinition,normalize} from './math.js';
+import {describeSignal,roleOptions} from './signal-roles.js';
 export const COLORS=['#167a68','#cd8540','#636dc4','#dc647a','#2e88b4','#8c6ba7','#839444'];
 export const uid=()=>globalThis.crypto.randomUUID();
 export function object(definition,i=0,extra={}) {
@@ -86,6 +87,7 @@ export function makeScene(themeId='A01',index=2) {
   const ranges={q:[0,1,.01,''],e0:[0,1,.01,''],e1:[0,1,.01,''],cross:[0,1,.01,''],B:[100,12000,100,'Hz'],P:[0,5,.01,'W'],N0:[.00001,.001,.00001,'W/Hz'],snrDb:[-10,30,.1,'dB'],f0:[0,30,.1,'Hz'],f1:[0,40,.1,'Hz'],fc:[.1,60,.1,'Hz'],fm:[.1,10,.1,'Hz'],mu:[0,2,.01,''],Ts:[.02,.2,.001,'s'],alpha:[0,1,.01,''],sigma:[0,1,.01,''],phi:[-Math.PI,Math.PI,.01,'rad'],EbN0:[-5,20,.1,'dB'],T:[.02,.5,.01,'s'],offset:[0,.09,.001,'s']};
   for(const obj of scene.objects) {
     const def=parseDefinition(obj.definition),r=ranges[def.name];
+    const meaning=describeSignal(obj,null,scene);obj.role=meaning.role;obj.label=meaning.label;
     if(r&&obj.slider)obj.slider={min:r[0],max:r[1],step:r[2],unit:r[3]};
     if(themeId==='E01'&&def.name==='f0')obj.slider={min:100,max:2500,step:10,unit:'Hz'};
     if(themeId==='E01'&&def.name==='fs')obj.slider={min:1000,max:6000,step:50,unit:'Hz'};
@@ -116,10 +118,13 @@ export function validateScene(scene) {
   for(const obj of scene.objects) {
     if(typeof obj.id!=='string'||obj.id.length>80||ids.has(obj.id)||typeof obj.definition!=='string'||obj.definition.length>4096||!/^#[a-fA-F0-9]{6}$/.test(obj.color))throw new Error('对象标识、表达式或颜色不合法');
     ids.add(obj.id);if(!['re','im','abs','arg'].includes(obj.representation))obj.representation='re';
+    if(obj.label!==undefined&&(typeof obj.label!=='string'||obj.label.length>40))throw new Error('信号含义最多40字符');
+    if(obj.role!==undefined&&!roleOptions[obj.role])throw new Error('信号角色不合法');
     if(obj.slider){const {min,max,step}=obj.slider;if(![min,max,step].every(Number.isFinite)||max<=min||step<=0)throw new Error('参数范围不合法');}
   }
   if(!scene.views||['time','spectrum','constellation','eye','guidance'].some(k=>typeof scene.views[k]!=='boolean'))throw new Error('视图格式不合法');
   if(scene.views.information!==undefined&&typeof scene.views.information!=='boolean')throw new Error('信息视图格式不合法');
+  if(scene.views.overlaySignals!==undefined&&typeof scene.views.overlaySignals!=='boolean')throw new Error('叠加选项格式不合法');
   if(scene.views.hiddenObjects)for(const values of Object.values(scene.views.hiddenObjects))if(!Array.isArray(values)||values.length>48||values.some(v=>typeof v!=='string'))throw new Error('视图对象选择格式不合法');
   if(scene.views.axes&&(!['s','n'].includes(scene.views.axes.time)||!['Hz','sampledHz','cycles/sample'].includes(scene.views.axes.spectrum)))throw new Error('视图坐标单位不合法');
   if(scene.views.plotRanges)for(const range of Object.values(scene.views.plotRanges))if(!range||!['xmin','xmax','ymin','ymax'].every(key=>Number.isFinite(range[key]))||range.xmax<=range.xmin||range.ymax<=range.ymin)throw new Error('视图缩放范围不合法');

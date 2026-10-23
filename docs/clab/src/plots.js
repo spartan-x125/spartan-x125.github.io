@@ -1,3 +1,4 @@
+import {describeSignal} from './signal-roles.js';
 export const format=(n,digits=4)=>{
   if(n===undefined||!Number.isFinite(n))return '—';
   if(Math.abs(n)<1e-11)return '0';
@@ -12,7 +13,7 @@ const labels={re:'实部',im:'虚部',abs:'模',arg:'相位 / rad'};
 const names={time:'时域与序列',spectrum:'双边幅度谱',response:'系统频率响应',constellation:'星座与复平面',eye:'眼图'};
 export class PlotManager {
   constructor(container,onSelect,onLayout=()=>{}){this.container=container;this.onSelect=onSelect;this.onLayout=onLayout;this.ranges={};this.axes={time:'s',spectrum:'Hz'};this.cursors={};this.cards=new Map();this.activeIndex=0;this.selected=null;this.observer=new ResizeObserver(()=>this.drawAll());this.observer.observe(container);}
-  update(scene,output,selected,index=0){this.scene=scene;this.output=output;this.selected=selected;this.activeIndex=index;this.axes={time:'s',spectrum:'Hz',...scene.views.axes};this.ranges=structuredClone(scene.views.plotRanges??{});this.syncCards();this.drawAll();}
+  update(scene,output,selected,index=0){this.scene=scene;this.output=output;this.selected=selected;const result=output?.results?.[selected];if(result&&!['scalar','information'].includes(result.type))this.focus=selected;if(!output?.results?.[this.focus])this.focus=scene.objects.find(o=>o.visible&&output?.results?.[o.id]&&!['scalar','information'].includes(output.results[o.id].type))?.id;this.activeIndex=index;this.axes={time:'s',spectrum:'Hz',...scene.views.axes};this.ranges=structuredClone(scene.views.plotRanges??{});this.syncCards();this.drawAll();}
   saveLayout(){this.onLayout({axes:{...this.axes},plotRanges:structuredClone(this.ranges)});}
   syncCards(){
     for(const view of Object.keys(names)){
@@ -48,7 +49,8 @@ export class PlotManager {
     const curves=[],hidden=scene.views.hiddenObjects?.[view]??[];let skipped=0;
     for(const obj of scene.objects){
       const result=output?.results?.[obj.id];if(!obj.visible||hidden.includes(obj.id)||!result||['scalar','information'].includes(result.type))continue;
-      const base={id:obj.id,name:result.name+(dashed?' · 冻结':''),color:obj.color,dashed,result,representation:obj.representation??'re'};
+      if(!scene.views.overlaySignals&&obj.id!==this.focus)continue;
+      const base={id:obj.id,name:describeSignal(obj,result,scene).title+(dashed?' · 冻结':''),color:obj.color,dashed,result,representation:obj.representation??'re'};
       if(view==='time'){
         const unit=result.domain==='t'?'s':result.axisUnit??'n';if(unit!==this.axes.time){if(result.domain!=='f')skipped++;continue;}
         if(result.type==='impulse')curves.push({...base,x:result.impulses.map(v=>v.delay),y:result.impulses.map(v=>component(v.weight,base.representation)),stems:true,impulse:true});

@@ -2,6 +2,7 @@ import {blank,makeScene,THEMES,TOOLS,object,uid,validateScene,renameInScene} fro
 import {parseDefinition,normalize,arities,reserved} from './math.js';
 import {PlotManager,format,complexText,phase} from './plots.js';
 import {InformationViews} from './information-views.js';
+import {describeSignal,roleOptions} from './signal-roles.js';
 const $=selector=>document.querySelector(selector),clone=value=>structuredClone(value);
 const el=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node;};
 const WORKSPACE_KEY='clab:workspace:v1',LIBRARY_KEY='clab:scenes:v1';
@@ -92,6 +93,8 @@ function renderObjects(){
     const savedDraft=drafts.get(obj.id);if(savedDraft&&savedDraft.value!==obj.definition)textarea.value=savedDraft.value;
     const draft=el('div','draft-toolbar');draft.hidden=textarea.value===obj.definition;draft.append(el('span',null,'草稿'));const apply=el('button','button compact','应用');apply.addEventListener('click',()=>applyDefinition(textarea));draft.append(apply);const error=el('p','inline-error');error.setAttribute('role','alert');if(savedDraft&&!draft.hidden)error.textContent=savedDraft.error;
     textarea.addEventListener('input',()=>{draft.hidden=textarea.value===obj.definition;error.textContent='';completeInput(textarea);});textarea.addEventListener('focus',()=>{selectObject(obj.id);trackEditor(textarea);});bindEditor(textarea);
+    const meaning=describeSignal(obj,result,scene);row.dataset.role=meaning.role;
+    if(meaning.role!=='parameter'){const semantic=el('div','semantic-role',meaning.label);row.append(semantic);}
     row.append(head,textarea,draft,error);
     if(output?.errors[obj.id])error.textContent=output.errors[obj.id].message;
     if(result?.type==='scalar'&&Math.abs(result.value.im)<1e-10&&obj.slider){
@@ -124,7 +127,9 @@ function readoutAt(result,id){
 function renderInspector(){
   const target=$('#inspector'),conditionsOpen=target.dataset.selected===selected&&target.querySelector('.object-conditions')?.open;target.replaceChildren();target.dataset.selected=selected;const obj=scene.objects.find(o=>o.id===selected),result=output?.results[selected];
   if(!obj)return;
-  const section=el('section','inspector-selected'),heading=el('div','selected-title',result?.name??'对象');heading.append(el('span',null,typeLabel(result,obj.definition)));section.append(heading,el('div','selected-formula',obj.definition));
+  const meaning=describeSignal(obj,result,scene);
+  const section=el('section','inspector-selected'),heading=el('div','selected-title',meaning.label+' · '+meaning.symbol);heading.append(el('span',null,typeLabel(result,obj.definition)));section.append(heading,el('div','selected-formula',obj.definition));
+  if(meaning.role!=='parameter'){const label=document.createElement('input');label.value=meaning.label;label.maxLength=40;label.setAttribute('aria-label','信号含义');label.addEventListener('change',()=>change(s=>s.objects.find(o=>o.id===obj.id).label=label.value.trim()));const role=document.createElement('select');role.setAttribute('aria-label','信号角色');role.innerHTML=Object.entries(roleOptions).map(([id,title])=>`<option value="${id}">${title}</option>`).join('');role.value=meaning.role;role.addEventListener('change',()=>change(s=>s.objects.find(o=>o.id===obj.id).role=role.value));const semantic=el('div','semantic-controls');semantic.append(label,role);section.append(semantic);}
   const controls=el('div','selected-controls'),color=document.createElement('input');color.type='color';color.value=obj.color;color.setAttribute('aria-label','对象颜色');color.addEventListener('change',()=>change(s=>s.objects.find(o=>o.id===obj.id).color=color.value));
   const representation=document.createElement('select');representation.setAttribute('aria-label','复数表示方式');for(const [value,text]of[['re','实部'],['im','虚部'],['abs','模'],['arg','相位（rad）']]){const option=el('option',null,text);option.value=value;representation.append(option);}representation.value=obj.representation;representation.hidden=result?.type==='information'||active==='W3';representation.addEventListener('change',()=>change(s=>s.objects.find(o=>o.id===obj.id).representation=representation.value));controls.append(color,representation);section.append(controls);
   const rename=el('div','rename-control'),nameInput=document.createElement('input');nameInput.value=result?.name??obj.definition.split(/[=(\[]/)[0].trim();nameInput.setAttribute('aria-label','对象新名称');const renameButton=el('button','button compact','改名');renameButton.addEventListener('click',()=>change(s=>renameInScene(s,obj.id,nameInput.value.trim()),{message:'对象与下游引用已一起改名'}));rename.append(nameInput,renameButton);section.append(rename);

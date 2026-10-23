@@ -1,0 +1,22 @@
+export const signalLibrary=[
+ {name:'余弦',group:'波形',domain:'time',expression:'cos(2*pi*3*t)'},
+ {name:'正弦',group:'波形',domain:'time',expression:'sin(2*pi*3*t)'},
+ {name:'复指数',group:'波形',domain:'time',expression:'exp(j*2*pi*3*t)'},
+ {name:'双音',group:'波形',domain:'time',expression:'cos(2*pi*3*t)+0.5*cos(2*pi*12*t)'},
+ {name:'AM',group:'波形',domain:'time',expression:'(1+0.6*cos(2*pi*2*t))*cos(2*pi*12*t)'},
+ {name:'线性调频',group:'波形',domain:'time',expression:'cos(2*pi*(2*t+4*t^2))'},
+ {name:'矩形脉冲',group:'脉冲',domain:'time',expression:'rect((t-0.2)/0.2)'},
+ {name:'高斯脉冲',group:'脉冲',domain:'time',expression:'exp(-((t-0.5)/0.08)^2/2)'},
+ {name:'sinc脉冲',group:'脉冲',domain:'time',expression:'sinc(10*(t-0.5))'},
+ {name:'升余弦脉冲',group:'脉冲',domain:'time',expression:'rc(t-0.5,0.1,0.35)'},
+ {name:'单位阶跃',group:'脉冲',domain:'time',expression:'u(t-0.2)'},
+ {name:'因果指数',group:'脉冲',domain:'time',expression:'exp(-5*t)*u(t)'},
+ {name:'理想低通 H(f)',group:'系统',domain:'frequency',expression:'rect(f/6)'},
+ {name:'理想带通 H(f)',group:'系统',domain:'frequency',expression:'rect((abs(f)-12)/6)'},
+ {name:'一阶低通 H(f)',group:'系统',domain:'frequency',expression:'1/(1+j*2*pi*f*0.1)'},
+ {name:'纯延时 H(f)',group:'系统',domain:'frequency',expression:'exp(-j*2*pi*f*0.1)'},
+ {name:'一阶低通 h(t)',group:'系统',domain:'impulse',expression:'10*exp(-10*t)*u(t)'},
+ {name:'单位冲激 h(t)',group:'系统',domain:'impulse',expression:'delta(t)'},
+ {name:'双径响应 h(t)',group:'系统',domain:'impulse',expression:'delta(t)+0.4*delta(t-0.1)'},
+ {name:'矩形匹配响应 h(t)',group:'系统',domain:'impulse',expression:'rect((t-0.3)/0.2)'}
+];

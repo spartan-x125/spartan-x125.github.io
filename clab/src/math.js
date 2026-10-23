@@ -43,8 +43,8 @@ export function normalize(source) {
 }
 export const constants={pi:c(Math.PI),e:c(Math.E),i:c(0,1),j:c(0,1)};
 export const informationArities={Probabilities:1,Entropy:1,BinaryChannel:3,BinaryCapacity:1,Capacity:3,CapacitySNR:2,Huffman:1,Hamming:1,HammingDecode:1,Xor:2,CRCEncode:2,CRCCheck:2,Convolutional:1,Viterbi:1,LFSR:2,PeriodicCorrelation:1};
-export const reserved=new Set(['t','f','n',...Object.keys(constants),...Object.keys(informationArities),'sin','cos','exp','ln','log10','sqrt','abs','arg','conj','re','im','sinc','rect','u','If','delta','rc','Convolve','Filter','Fourier','InverseFourier','Sample','Reconstruct','Shape','BPSK','QPSK','AWGN','Noise','Phase','Carrier','SSB','Envelope','Matched','Detect']);
-export const arities={...informationArities,sin:1,cos:1,exp:1,ln:1,log10:1,sqrt:1,abs:1,arg:1,conj:1,re:1,im:1,sinc:1,rect:1,u:1,If:3,delta:1,rc:3,Convolve:2,Filter:2,Fourier:1,InverseFourier:1,Sample:[2,3],Reconstruct:1,Shape:3,BPSK:1,QPSK:1,AWGN:2,Noise:2,Phase:2,Carrier:[2,3],SSB:2,Envelope:1,Matched:3,Detect:1};
+export const reserved=new Set(['t','f','n',...Object.keys(constants),...Object.keys(informationArities),'sin','cos','exp','ln','log10','sqrt','abs','arg','conj','re','im','sinc','rect','u','If','delta','rc','Convolve','Filter','PeriodicFilter','Fourier','InverseFourier','Sample','Reconstruct','Shape','BPSK','QPSK','AWGN','Noise','Phase','Carrier','SSB','Hilbert','PhaseDelay','Integrate','Differentiate','Envelope','Matched','Detect']);
+export const arities={...informationArities,sin:1,cos:1,exp:1,ln:1,log10:1,sqrt:1,abs:1,arg:1,conj:1,re:1,im:1,sinc:1,rect:1,u:1,If:3,delta:1,rc:3,Convolve:2,Filter:2,PeriodicFilter:2,Fourier:1,InverseFourier:1,Sample:[2,3],Reconstruct:1,Shape:3,BPSK:1,QPSK:1,AWGN:2,Noise:[2,3],Phase:2,Carrier:[2,3],SSB:2,Hilbert:1,PhaseDelay:2,Integrate:[1,2],Differentiate:1,Envelope:1,Matched:3,Detect:1};
 export function tokenize(source) {
   if(source.length>4096) throw new MathError('单条表达式最多 4096 字符');
   const tokens=[]; let p=0;
